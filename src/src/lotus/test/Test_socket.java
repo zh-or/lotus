@@ -6,7 +6,7 @@ import lotus.log.Log;
 import lotus.nio.IoHandler;
 import lotus.socket.client.Client;
 import lotus.socket.common.ClientCallback;
-import lotus.socket.server.Server;
+import lotus.socket.server.SocketServer;
 import lotus.util.Util;
 
 public class Test_socket {
@@ -14,7 +14,7 @@ public class Test_socket {
 	public static void main(String[] args) throws IOException {
 		log = Log.getInstance();
 		log.setProjectName("test");
-		Server server = new Server("0.0.0.0", 5000, 5, 1024, 3 * 60, 100, 20 * 1000, 
+		SocketServer server = new SocketServer("0.0.0.0", 5000, 5, 1024, 3 * 60, 100, 20 * 1000, 
 				new IoHandler() {
 					public void onConnection(lotus.nio.Session session) {
 						log.info("connection:" + session.getRemoteAddress());
@@ -26,7 +26,7 @@ public class Test_socket {
 						    return;
 						}
 						log.info("recv msg:" + new String(data) + " addr:" + session.getRemoteAddress());
-						Server.send(session, "收到你的消息了".getBytes());
+						SocketServer.send(session, "收到你的消息了".getBytes());
 					};
 					public void onClose(lotus.nio.Session session) {
 						log.warn("close:" + session.getRemoteAddress());

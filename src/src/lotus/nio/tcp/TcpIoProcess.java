@@ -89,11 +89,18 @@ public class TcpIoProcess extends IoProcess implements Runnable{
                         if(codec.decode(session, readcache, msgout)){
                             session.setLastActive(System.currentTimeMillis());
                             //readcache.clear();/*直接清空缓存有问题, 如若沾包的话, 后面的也被清空了 */
-                            /*此处有个bug 如果此 buff 是扩过容的, 且剩余数据大于 tmp_buff 的长度时则会出现问题*/
                             remaining = readcache.remaining();
-                            readcache.get(tmp_buffer, 0, remaining);/*把剩余的数据弄出来?*/
-                            readcache.clear();
-                            readcache.put(tmp_buffer, 0, remaining);
+                            limit = tmp_buffer.length;
+                            if(limit >= remaining){/*判断一下 如果扩过容的话, tmp_buff 可能不够存*/
+                                readcache.get(tmp_buffer, 0, remaining);/*把剩余的数据弄出来?*/
+                                readcache.clear();
+                                readcache.put(tmp_buffer, 0, remaining);
+                            }else{/*此buff是经过扩容的*/
+                            	byte[] tmp_exbuff = new byte[remaining];
+                            	readcache.get(tmp_exbuff, 0, remaining);
+                            	readcache.clear();
+                            	readcache.put(tmp_exbuff, 0, remaining);
+                            }
                             //callRecvMsg(msgout.read());
                             session.pushEventRunnable(new IoEventRunnable(msgout.read(), IoEventType.SESSION_RECVMSG, session, context));
                             msgout.write(null);
@@ -103,7 +110,7 @@ public class TcpIoProcess extends IoProcess implements Runnable{
                             if(position >= readcache.capacity()){/*已经读满了, 缓存不够. 就不写环形缓冲队列了 :(*/
                             //    System.out.println("不够?, 当前大小:" + readcache.capacity());
                                 byte[] tmpdata = readcache.array();
-                                session.resetCapacity(tmpdata, readcache.capacity() * 2);
+                                session.resetCapacity(tmpdata, readcache.capacity() * 2);/*直接扩容 缓存大小设置好点, 就不会有这些蛋疼的问题了*/
                                 
                             }
                         }

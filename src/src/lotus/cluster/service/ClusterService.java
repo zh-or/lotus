@@ -15,12 +15,12 @@ import lotus.cluster.NetPack;
 import lotus.cluster.Node;
 import lotus.nio.IoHandler;
 import lotus.nio.Session;
-import lotus.socket.server.Server;
+import lotus.socket.server.SocketServer;
 import lotus.util.Util;
 
 public class ClusterService {
     
-    private Server          server						=	null;
+    private SocketServer    server						=	null;
     private String          host                        =   "0.0.0.0";
     private int             port                        =   5000;
     private int             exthreadtotal               =   10;
@@ -88,7 +88,7 @@ public class ClusterService {
     
     public void start() throws IOException{
         
-        server = new Server(host,
+        server = new SocketServer(host,
                 port,
                 exthreadtotal,
                 read_buffer_size,
@@ -109,7 +109,7 @@ public class ClusterService {
         if(enableEncryption){
             data = Util.Encoded(data, session.getAttr(ENCRYPTION_KEY, DEF_ENCRYPTION_KEY) + "");
         }
-        Server.send(session, data);
+        SocketServer.send(session, data);
     }
     
     private void sessionAddSubscribe(Node node, String action){

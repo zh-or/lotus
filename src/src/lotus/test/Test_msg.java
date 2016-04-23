@@ -4,10 +4,19 @@ import java.nio.charset.Charset;
 
 import lotus.cluster.Message;
 import lotus.cluster.MessageFactory;
+import lotus.cluster.MessageResult;
 import lotus.util.Util;
 
 public class Test_msg {
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
+	    
+	    MessageResult mr = new MessageResult(true, "id", "to");
+	    byte[] data1 = mr.Encode(Charset.forName("gbk"));
+	    System.out.println(Util.byte2str(data1));
+	    
+	    System.out.println(new MessageResult(data1, Charset.forName("gbk")).toString());
+	    
+	    System.exit(0);
 		MessageFactory mf = MessageFactory.getInstance();
 		Message msg = mf.create(true, Message.MTYPE_BROADCAT, "123", "123", "123", "1234", new byte[]{1, 2, 3, 4, 5, 6, 7, 8, 9});
 		System.out.println(msg.toString());

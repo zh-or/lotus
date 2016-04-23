@@ -12,7 +12,7 @@ import lotus.socket.common.ClientCallback;
 import lotus.util.Util;
 
 /**
- * 客户端
+ * 客户端 这个类要重写
  * @author or
  */
 public class Client {
@@ -141,7 +141,6 @@ public class Client {
         public void run() {
             byte[] head = new byte[3];
             while(true){
-                /*Util.SLEEP(300);//;论测试的重要性*/
                 if(socket != null && !socket.isClosed() && !socket.isInputShutdown()){
                     try {
                         if(in.read(head) == -1){
@@ -171,10 +170,12 @@ public class Client {
                             send(keepcontent);
                         }
                     }
+                    continue;
                 }else{
                     if(!isclosed()) close();
                     break;
                 }
+                
             }
         }
         
