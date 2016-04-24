@@ -10,7 +10,7 @@ import lotus.util.Util;
 public class Test_msg {
 	public static void main(String[] args) throws Exception {
 	    
-	    MessageResult mr = new MessageResult(true, "id", "to");
+	    MessageResult mr = new MessageResult(false, "idawdawd", "todawdawd");
 	    byte[] data1 = mr.Encode(Charset.forName("gbk"));
 	    System.out.println(Util.byte2str(data1));
 	    
