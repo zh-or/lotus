@@ -87,10 +87,11 @@ public class NodeSession extends ClientCallback{
         this.encryptionKey = this.user_en_key;
     }
     
-    public void close(){
+    public synchronized void close(){
         if(client != null){
             client.close();
         }
+        subs.clear();
         encryptionKey = user_en_key;
         isinit = false;
     }

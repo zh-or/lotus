@@ -27,12 +27,11 @@ public class MessageResult {
 		int len = data[1];
 		isrecv = data[0] > 0;
 		byte[] id = new byte[len];
-		System.arraycopy(data, 2, id, 0, len);
-		msgid = new String(id, charset);
+		System.arraycopy(data, 1, id, 0, len);
+		msgid = new String(id, 1, len, charset);
 		len = data[len + 2];
-		byte[] _to = new byte[len];
-		System.arraycopy(data, data.length - len, _to, 0, len);
-		to = new String(_to, charset);
+		byte[] to = new byte[len];
+		System.arraycopy(data, data.length - len, to, 0, len);
 	}
 	
 	public byte[] Encode(Charset charset){

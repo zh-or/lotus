@@ -11,7 +11,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import lotus.cluster.Message;
 import lotus.cluster.MessageFactory;
 import lotus.cluster.MessageListenner;
-import lotus.cluster.MessageResult;
 import lotus.cluster.NetPack;
 import lotus.cluster.Node;
 import lotus.nio.IoHandler;
@@ -34,9 +33,11 @@ public class ClusterService {
     private MessageFactory  msgfactory                  =   null;
     
     private static String   NODE_ID                     =   "node-id";
+    private static String   KEEP_TIME                   =   "last-keep-time";
     private static String   CONN_TIME                   =   "commection-time";
     private static String   ENCRYPTION_KEY              =   "encryption-key";
     private static String   DEF_ENCRYPTION_KEY          =   "lotus-cluster-key";
+    private static String   LASAT_ACTIVE                =   "session-last-active";
     private static Charset  DEF_CHARSET                 =   Charset.forName("utf-8");
     
     
@@ -77,18 +78,10 @@ public class ClusterService {
     }
     
     public void pushMessage(Node node, Message msg){
-        sendPack(node.getSession(), new NetPack(NetPack.CMD_MSG, MessageFactory.encode(msg, DEF_CHARSET)).Encode());
+        
     }
     
     public void removeNode(String nodeid){
-        Node node = nodes.get(nodeid);
-        if(node != null){
-        	ArrayList<String> subactions = node.getSubscribeActions();
-            for(String action : subactions){
-                sessionRemoveSubscribe(node, action);
-            }
-            node.getSession().closeOnFlush();
-        }
         
     }
     
@@ -167,6 +160,8 @@ public class ClusterService {
             long t = System.currentTimeMillis();
             session.setAttr(ENCRYPTION_KEY, en_key);
             session.setAttr(CONN_TIME, t);
+            session.setAttr(KEEP_TIME, t);
+            session.setAttr(LASAT_ACTIVE, t);
             session.setAttr(NODE_ID, "");
         }
         
@@ -235,13 +230,7 @@ public class ClusterService {
                     }
                         break;
                     case NetPack.CMD_RES:/*消息回执*/
-                    {
-                    	MessageResult ms = new MessageResult(pack.body, DEF_CHARSET);
-                    	Node node = nodes.get(ms.to);
-                    	if(node != null){
-                    		sendPack(node.getSession(), data);
-                    	}
-                    }
+                        
                         break;
                     case NetPack.CMD_INIT:/*初始化*/
                     {
@@ -310,11 +299,7 @@ public class ClusterService {
         public void onIdle(Session session) throws Exception {
             String nodeid = session.getAttr(NODE_ID, "") + "";
             if(!Util.CheckNull(nodeid)){
-                long nowtime = System.currentTimeMillis();
-                nowtime = (nowtime - session.getLastActive()) / 1000;
-                if(idletime * 3 < nowtime){
-                	session.closeNow();
-                }
+                
             }else{
                 session.closeNow();/*滚蛋去*/
             }
@@ -322,10 +307,17 @@ public class ClusterService {
         
         @Override
         public void onClose(Session session) throws Exception {
-        	Node node = sessionCheck(session);
-        	if(node != null && node.getSession() == session){
-                removeNode(node.getNodeId());	
-        	}
+            String nodeid = session.getAttr(NODE_ID, "") + "";
+            if(!Util.CheckNull(nodeid)){
+                /*取消所有广播*/
+                Node node = nodes.get(nodeid);
+                if(node != null && node.getSession() == session){
+                    ArrayList<String> subactions = node.getSubscribeActions();
+                    for(String action : subactions){
+                        sessionRemoveSubscribe(node, action);
+                    }
+                }
+            }
         }
         
     }

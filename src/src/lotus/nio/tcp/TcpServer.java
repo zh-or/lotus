@@ -18,7 +18,7 @@ public class TcpServer extends NioContext{
 	private TcpIoProcess        ioprocess[] =   null;
     private int                 iipBound    =   0;
     private final ReentrantLock rliplock    =   new ReentrantLock();
-	
+	private AcceptThread        acceptrhread=   null;
     public TcpServer() {
 		this(0, 0, 0);
 	}
@@ -33,7 +33,8 @@ public class TcpServer extends NioContext{
 		ssc.configureBlocking(false);
 		brun = true;
 		/*一个线程 accept */
-		new Thread(new AcceptThread(), "lotus nio accept thread").start();
+		acceptrhread = new AcceptThread();
+		new Thread(acceptrhread, "lotus nio accept thread").start();
 		ioprocess = new TcpIoProcess[selector_thread_total];
 		
 		for(int i = 0; i < selector_thread_total; i++){
@@ -46,10 +47,13 @@ public class TcpServer extends NioContext{
 	public void unbind() {
 		try {
 		    for(int i = 0; i < selector_thread_total; i++){
-		        ioprocess[i].close();
+		        try {
+		            ioprocess[i].close();
+                } catch (Exception e) { }
 		    }
-            executor_e.shutdown();
+            executor_e.shutdownNow();
             bufferlist.clear();
+            acceptrhread.close();
 		    ssc.close();
         } catch (IOException e) {}
 	}
@@ -61,6 +65,10 @@ public class TcpServer extends NioContext{
             mslAccept = Selector.open();
         }
         
+        public void close(){
+            mslAccept.wakeup();
+        }
+        
         @Override
         public void run() {
             try {
@@ -68,6 +76,9 @@ public class TcpServer extends NioContext{
                 while(mslAccept != null && brun){
                     try {
                         if(mslAccept.select(SELECT_TIMEOUT) == 0){
+                            
+                            if(!brun) break;
+                            
                             Util.SLEEP(1);
                             continue;
                         }
