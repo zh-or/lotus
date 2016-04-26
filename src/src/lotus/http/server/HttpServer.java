@@ -49,7 +49,7 @@ public class HttpServer {
         @Override
         public void onRecvMessage(Session session, Object msg) {
             Request request = (Request) msg;
-            handler.service(request.getMothed(), request, new Response(session));
+            handler.service(request.getMothed(), request, new Response(session, request));
         }
         
         @Override
