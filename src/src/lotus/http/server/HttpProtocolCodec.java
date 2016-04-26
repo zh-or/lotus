@@ -34,7 +34,7 @@ public class HttpProtocolCodec implements ProtocolCodec{
                         final byte[] bheaders = new byte[in.position()];
                         in.reset();
                         in.get(bheaders);
-                        final Request req = new Request(session);
+                        final HttpRequest req = new HttpRequest(session);
                         final String sheaders = new String(bheaders, context.getCharset());
                         req.parseHeader(sheaders);
                         final int contentLength = Util.StrtoInt(req.getHeader("content-length"));
@@ -63,10 +63,10 @@ public class HttpProtocolCodec implements ProtocolCodec{
                 break;
             case BODY:
             {
-                final int contentLength = (int) session.removeAttr(CONTENT_LENGTH);
+                final int contentLength = (Integer) session.removeAttr(CONTENT_LENGTH);
                 if(contentLength > 0){
                     if(contentLength <= in.remaining()){
-                        Request req = (Request) session.removeAttr(REQUEST);
+                        HttpRequest req = (HttpRequest) session.removeAttr(REQUEST);
                         final byte[] body = new byte[contentLength];
                         in.get(body);
                         req.setBody(body);

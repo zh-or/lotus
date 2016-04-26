@@ -20,12 +20,13 @@ public class HttpServer {
     private Charset     charset;
     
     
-    public HttpServer(){
+    public HttpServer(int eventThreadTotal){
         this.handler = new HttpHandler() {};
-        server = new TcpServer(0, 100, 1024);
-        server.setSessionIdleTime(20000);
-        server.setSessionReadBufferSize(1024);
+        server = new TcpServer(0, eventThreadTotal, 1024);
+        server.setSessionIdleTime(0);
+        server.setSessionReadBufferSize(2048);
         server.setHandler(new EventHandler());
+        
         log = Log.getInstance();
         log.setProjectName("simpli http server");
         this.charset = Charset.forName("utf-8");
@@ -48,8 +49,9 @@ public class HttpServer {
         
         @Override
         public void onRecvMessage(Session session, Object msg) {
-            Request request = (Request) msg;
-            handler.service(request.getMothed(), request, new Response(session, request));
+            HttpRequest request = (HttpRequest) msg;
+            handler.service(request.getMothed(), request, new HttpResponse(session, request));
+            
         }
         
         @Override
@@ -63,17 +65,15 @@ public class HttpServer {
         }
         
         @Override
-        public void onIdle(Session session) {
-            
-            log.warn("idle:" + session.getRemoteAddress());
-        }
-        
-        @Override
         public void onClose(Session session) {
             log.info("close:" + session.getRemoteAddress());
         }
     }
 
+    /**
+     * 设置全局编码方式
+     * @param charset
+     */
     public void setCharset(Charset charset){
         this.charset = charset;
     }
