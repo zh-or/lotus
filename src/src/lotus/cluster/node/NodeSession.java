@@ -5,6 +5,7 @@ import java.util.ArrayList;
 
 import lotus.cluster.Message;
 import lotus.cluster.MessageFactory;
+import lotus.cluster.MessageResult;
 import lotus.cluster.NetPack;
 import lotus.socket.client.Client;
 import lotus.socket.common.ClientCallback;
@@ -186,7 +187,7 @@ public class NodeSession extends ClientCallback{
                 }
                     break;
                 case NetPack.CMD_RES:/*收到消息回执*/
-                    
+                    handler.onRecvMessageResponse(NodeSession.this, new MessageResult(pack.body, charset));
                     break;
                 case NetPack.CMD_KEEP:/*心跳*/
                     

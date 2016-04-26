@@ -123,7 +123,7 @@ public class HTTPS {
 	        in = conn.getInputStream();
 	        if (in != null) {
 	            ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-	            byte[] buffer = new byte[1024];
+	            byte[] buffer = new byte[1024 * 2];
 	            int len = 0;
 	            while ((len = in.read(buffer)) != -1) {
 	                outStream.write(buffer, 0, len);
@@ -212,7 +212,6 @@ public class HTTPS {
 	            return new String(outStream.toByteArray(), "UTF-8");
 	        }
 		} catch (Exception e) {
-			e.printStackTrace();
 		}finally{
 			try {
 				if(is != null) is.close();
