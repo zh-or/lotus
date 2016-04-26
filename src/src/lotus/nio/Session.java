@@ -38,8 +38,8 @@ public abstract class Session {
     	attrs.put(key, val);
     }
     
-    public void removeAttr(Object key){
-        attrs.remove(key);
+    public Object removeAttr(Object key){
+        return attrs.remove(key);
     }
     
     public void setLastActive(long t){

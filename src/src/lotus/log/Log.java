@@ -4,7 +4,14 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class Log implements ILog{
-    
+    public abstract class LogFilter{
+        /**
+         * @param lvl
+         * @param logstr
+         * @return 返回true表示拦截将不输出
+         */
+        public boolean log(int lvl, String logstr){return false;}
+    }
     
     private static String    PROJECT_NAME         =    "";
     private static final String lvl[]             =   {"[INFO]", "[WARN]", "[ERROR]", "[DEBUG]"};
@@ -13,8 +20,12 @@ public class Log implements ILog{
     private static Log log                        =   null;
     private static Object lock_obj                =   new Object();
     
+    private LogFilter   logfilter   =   null;
+    
+    
     private Log(){
-        
+        logfilter = new LogFilter() {
+        };
     }
     
     public static Log getInstance(){
@@ -39,11 +50,17 @@ public class Log implements ILog{
     public void log(int l, String str){
         String msg_ = format.format(new Date(System.currentTimeMillis()));
         msg_ = String.format("%s %s %s \t%s", msg_, PROJECT_NAME, lvl[l], str);
-        System.out.println(msg_);
+        if(!logfilter.log(l, msg_)){
+            System.out.println(msg_);
+        }
     }
     
     public void setProjectName(String name){
         PROJECT_NAME = "[" + name + "] ";
+    }
+    
+    public void setLogFilter(LogFilter logfilter){
+        this.logfilter = logfilter;
     }
 
     @Override
