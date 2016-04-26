@@ -80,7 +80,7 @@ public class HttpRequest {
     }
     
     public String getParameter(String name){
-        Matcher m = Pattern.compile("[&]"+name+"=([^&]*)").matcher("&"+queryString);
+        Matcher m = Pattern.compile("[&]" + name + "=([^&]*)").matcher("&" + queryString);
         if(m.find()){
             return m.group(1);
         }

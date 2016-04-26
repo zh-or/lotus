@@ -1,5 +1,9 @@
 package lotus.http.server;
 
+/**
+ * copy from mina
+ * @author or
+ */
 public enum ResponseStatus {
     /**
      * 100 - Continue

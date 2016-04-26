@@ -3,7 +3,7 @@ package lotus.http.server;
 
 public abstract class HttpHandler {
 
-    public void service(HttpMethod mothed, HttpRequest request, HttpResponse response){
+    public void service(HttpMethod mothed, HttpRequest request, HttpResponse response) throws Exception{
         switch (mothed) {
             case GET:
                 this.get(request, response);
@@ -32,12 +32,12 @@ public abstract class HttpHandler {
         }
     }
     
-    public void get(HttpRequest request, HttpResponse response){}
-    public void post(HttpRequest request, HttpResponse response){}
-    public void connect(HttpRequest request, HttpResponse response){}
-    public void delete(HttpRequest request, HttpResponse response){}
-    public void head(HttpRequest request, HttpResponse response){}
-    public void options(HttpRequest request, HttpResponse response){}
-    public void put(HttpRequest request, HttpResponse response){}
-    public void trace(HttpRequest request, HttpResponse response){}
+    public void get(HttpRequest request, HttpResponse response) throws Exception{}
+    public void post(HttpRequest request, HttpResponse response) throws Exception{}
+    public void connect(HttpRequest request, HttpResponse response) throws Exception{}
+    public void delete(HttpRequest request, HttpResponse response) throws Exception{}
+    public void head(HttpRequest request, HttpResponse response) throws Exception{}
+    public void options(HttpRequest request, HttpResponse response) throws Exception{}
+    public void put(HttpRequest request, HttpResponse response) throws Exception{}
+    public void trace(HttpRequest request, HttpResponse response) throws Exception{}
 }

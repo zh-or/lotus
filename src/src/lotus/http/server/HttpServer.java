@@ -48,15 +48,20 @@ public class HttpServer {
     private class EventHandler extends lotus.nio.IoHandler{
         
         @Override
-        public void onRecvMessage(Session session, Object msg) {
+        public void onRecvMessage(Session session, Object msg)throws Exception {
             HttpRequest request = (HttpRequest) msg;
-            handler.service(request.getMothed(), request, new HttpResponse(session, request));
-            
+            HttpResponse response = HttpResponse.defaultResponse(session, request);
+            handler.service(request.getMothed(), request, response);
+            response.flush();
+            if("close".equals(request.getHeader("connection"))){
+            	session.closeOnFlush();
+            }
         }
         
         @Override
         public void onException(Session session, Exception e) {
-            e.printStackTrace();
+            
+        	e.printStackTrace();
         }
         
         @Override

@@ -23,5 +23,8 @@ public class Test_http extends HttpHandler{
     public void service(HttpMethod mothed, HttpRequest request, HttpResponse response) {
     	
         System.out.println(request.toString());
+        
+        response.write("hello world");
+        
     }
 }
