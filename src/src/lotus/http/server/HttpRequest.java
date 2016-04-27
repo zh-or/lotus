@@ -119,7 +119,11 @@ public class HttpRequest {
         builder.append("body=");
         builder.append(Arrays.toString(body));
         builder.append("\nbodystr=");
-        builder.append(new String(body));
+        String sbody = "{}";
+        if(body != null){
+            sbody = new String(body);
+        }
+        builder.append(sbody);
         builder.append("\n]");
         return builder.toString();
     }

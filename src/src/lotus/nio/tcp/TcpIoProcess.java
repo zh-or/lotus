@@ -89,7 +89,15 @@ public class TcpIoProcess extends IoProcess implements Runnable{
                         limit = readcache.limit();
                         readcache.flip();
                         ProtocolDecoderOutput msgout = session.getProtocolDecoderOutput();
-                        if(codec.decode(session, readcache, msgout)){
+                        boolean ishavepack = false;
+                        
+                        try {
+                            ishavepack = codec.decode(session, readcache, msgout);
+                        } catch (Exception e) {
+                            session.pushEventRunnable(new IoEventRunnable(e, IoEventType.SESSION_EXCEPTION, session, context));
+                        }
+                        
+                        if(ishavepack){
                             session.setLastActive(System.currentTimeMillis());
                             //readcache.clear();/*直接清空缓存有问题, 如若沾包的话, 后面的也被清空了 */
                             remaining = readcache.remaining();
@@ -123,10 +131,15 @@ public class TcpIoProcess extends IoProcess implements Runnable{
                 if(key.isWritable()){/*call encode*/
                     final Object msg = session.poolMessage();
                     if(msg != null){
-                        ByteBuffer out = codec.encode(session, msg);
+                        ByteBuffer out = null;
+                        try {
+                            out = codec.encode(session, msg);
+                        } catch (Exception e) {
+                            session.pushEventRunnable(new IoEventRunnable(e, IoEventType.SESSION_EXCEPTION, session, context));
+                        }
                         if(out != null){
                             while(out.hasRemaining()) {  
-                                session.getChannel().write(out);  
+                                session.getChannel().write(out);
                             }
                             session.setLastActive(System.currentTimeMillis());
                             /*call message sent*/

@@ -18,7 +18,7 @@ public class HttpProtocolCodec implements ProtocolCodec{
     }
     
     @Override
-    public boolean decode(Session session, ByteBuffer in, ProtocolDecoderOutput out) {
+    public boolean decode(Session session, ByteBuffer in, ProtocolDecoderOutput out)  throws Exception{
         HttpStatus status = (HttpStatus) session.getAttr(STATUS);
         if(status == null){
             session.setAttr(STATUS, HttpStatus.HEAD);
@@ -28,7 +28,7 @@ public class HttpProtocolCodec implements ProtocolCodec{
             case HEAD:
             {
                 in.mark();
-                while(in.remaining() > 0){
+                while(in.remaining() > 3){
                     /*\r\n\r\n*/
                     if(in.get() == 13 && in.get() == 10 && in.get() == 13 && in.get() == 10){/*消息头完了*/
                         final byte[] bheaders = new byte[in.position()];
@@ -86,7 +86,7 @@ public class HttpProtocolCodec implements ProtocolCodec{
     }
 
     @Override
-    public ByteBuffer encode(Session session, Object msg) {
+    public ByteBuffer encode(Session session, Object msg) throws Exception {
         return (ByteBuffer) msg;
     }
 }

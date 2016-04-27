@@ -22,7 +22,7 @@ public class HttpResponse {
     
     public static HttpResponse defaultResponse(Session session, HttpRequest request){
     	HttpResponse response = new HttpResponse(session, ResponseStatus.SUCCESS_OK);
-    	//response.setHeader("Server", "simpli http server by lotus");
+    	response.setHeader("Server", "simpli http server by lotus");
     	Calendar cal = Calendar.getInstance();
     	Date time = cal.getTime();
     	response.setHeader("Expires", time + "");
@@ -50,6 +50,7 @@ public class HttpResponse {
     public void sendRedirect(String path){
         this.status = ResponseStatus.REDIRECTION_FOUND;
         headers.put("Location", path);
+    //    headers.put("Connection", "close");
         sendHeader();
     }
     
@@ -57,10 +58,10 @@ public class HttpResponse {
         return headers.containsKey(name);
     }
     
-    public void openGzip(){
+    public void openSync(){
     	headers.put("Content-Encoding", "gzip");
     	headers.put("Transfer-Encoding", "chunked");
-    	/**/
+    	headers.remove("Content-Length");
     	sendHeader();
     }
     
@@ -94,9 +95,10 @@ public class HttpResponse {
     		sb.append("\r\n");
     	}
     	sb.append("\r\n");
-    	System.out.println(sb.toString());
+    	
     	ByteBuffer buffer = ByteBuffer.allocate(sb.length());
     	buffer.put(sb.toString().getBytes());
+    	buffer.flip();
     	session.write(buffer);
     	issendheader = true;
     }
@@ -107,6 +109,7 @@ public class HttpResponse {
     		sendHeader();
     	}
     	if(buff.limit() > 0){
+    	    buff.flip();
     		session.write(buff);
     	}
     }

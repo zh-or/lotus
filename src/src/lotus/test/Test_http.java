@@ -21,10 +21,10 @@ public class Test_http extends HttpHandler{
     
     @Override
     public void service(HttpMethod mothed, HttpRequest request, HttpResponse response) {
-    	
-        System.out.println(request.toString());
-        
-        response.write("hello world");
+    	response.sendRedirect("/?a=b");
+//        System.out.println(request.toString());
+//        
+//        response.write("hello world");
         
     }
 }
