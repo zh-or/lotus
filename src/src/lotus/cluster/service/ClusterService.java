@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import lotus.cluster.Message;
 import lotus.cluster.MessageFactory;
 import lotus.cluster.MessageListenner;
+import lotus.cluster.MessageResult;
 import lotus.cluster.NetPack;
 import lotus.cluster.Node;
 import lotus.nio.IoHandler;
@@ -78,7 +79,7 @@ public class ClusterService {
     }
     
     public void pushMessage(Node node, Message msg){
-        
+        sendPack(node.getSession(), new NetPack(MessageFactory.encode(msg, DEF_CHARSET)).Encode());
     }
     
     public void removeNode(String nodeid){
@@ -205,8 +206,10 @@ public class ClusterService {
                                 if(node != null){
                                     sendPack(node.getSession(), data);
                                     listenner.onRecvMessage(ClusterService.this, tmsg);
-                                }else{/*直接返回失败*/
-                                    
+                                }else{
+                                    if(tmsg.needReceipt){/*此消息需要回执, 直接返回失败*/
+                                        sendPack(session, new NetPack(NetPack.CMD_RES, new MessageResult(false, tmsg.msgid, tmsg.from).Encode(DEF_CHARSET)).Encode());
+                                    }
                                 }
                             }
                                 break;
@@ -230,7 +233,13 @@ public class ClusterService {
                     }
                         break;
                     case NetPack.CMD_RES:/*消息回执*/
-                        
+                    {
+                        MessageResult mr = new MessageResult(pack.body, DEF_CHARSET);
+                        Node node = nodes.get(mr.to);
+                        if(node != null){
+                            sendPack(node.getSession(), data);
+                        }
+                    }
                         break;
                     case NetPack.CMD_INIT:/*初始化*/
                     {

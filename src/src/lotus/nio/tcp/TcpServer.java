@@ -53,8 +53,8 @@ public class TcpServer extends NioContext{
 		    }
             executor_e.shutdownNow();
             bufferlist.clear();
-            acceptrhread.close();
-		    ssc.close();
+            if(acceptrhread != null) acceptrhread.close();
+		    if(ssc != null) ssc.close();
         } catch (IOException e) {}
 	}
 	   

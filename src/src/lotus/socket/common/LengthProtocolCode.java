@@ -10,7 +10,7 @@ import lotus.util.Util;
 public class LengthProtocolCode implements ProtocolCodec{
 
 	@Override
-	public boolean decode(Session session, ByteBuffer in, ProtocolDecoderOutput out) {
+	public boolean decode(Session session, ByteBuffer in, ProtocolDecoderOutput out) throws Exception {
 		int total = in.remaining();
 		if(total > 3){
 			in.mark();
@@ -41,7 +41,7 @@ public class LengthProtocolCode implements ProtocolCodec{
 	}
 
 	@Override
-	public ByteBuffer encode(Session session, Object msg) {
+	public ByteBuffer encode(Session session, Object msg) throws Exception{
 		
 		return (ByteBuffer) msg;
 	}

@@ -20,11 +20,11 @@ public class HttpServer {
     private Charset     charset;
     
     
-    public HttpServer(int eventThreadTotal){
+    public HttpServer(int selectorThreadTotal, int eventThreadTotal, int readBufferSize){
         this.handler = new HttpHandler() {};
-        server = new TcpServer(0, eventThreadTotal, 1024);
+        server = new TcpServer(selectorThreadTotal, eventThreadTotal, 1024);
         server.setSessionIdleTime(0);
-        server.setSessionReadBufferSize(2048);
+        server.setSessionReadBufferSize(readBufferSize);
         server.setHandler(new EventHandler());
         
         log = Log.getInstance();

@@ -14,7 +14,7 @@ public class LineProtocolCodec implements ProtocolCodec{
 	}
 	
 	@Override
-	public boolean decode(Session session, ByteBuffer in, ProtocolDecoderOutput out) {
+	public boolean decode(Session session, ByteBuffer in, ProtocolDecoderOutput out) throws Exception {
 		in.mark();
 		int size = in.remaining();
 		for(int i = 0; i < size; i++){
@@ -31,7 +31,7 @@ public class LineProtocolCodec implements ProtocolCodec{
 	}
 
 	@Override
-	public ByteBuffer encode(Session session, Object msg) {
+	public ByteBuffer encode(Session session, Object msg)  throws Exception{
 		byte[] data = (byte[]) msg;
 	    ByteBuffer out = ByteBuffer.wrap(data);
 		return out;
