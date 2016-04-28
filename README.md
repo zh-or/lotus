@@ -5,7 +5,7 @@
 
     1. Util    : 一些常用的方法
     2. socket  : tcp 长连接 服务端&客户端(已处理:断包/沾包问题)
-    3. nio     : java nio 的服务端(目前就写了tcp的, udp 还没有写, kcp 是一个基于udp协议的东西, 原版是c/c++写的, 有空了再写个java版本的. 关于nio的客户端就放到最后再写咯.)
+    3. nio     : java nio 的服务端框架(目前就写了tcp的, udp 还没有写, kcp 是一个基于udp协议的东西, 原版是c/c++写的, 有空了再写个java版本的. 关于nio的客户端就放到最后再写咯.)
     4. map     : 目前就一个 intmap 是从Android源代码中copy出来的, 用来代替 HashMap<Integer, Object> 的一个东西
     5. log     : 格式化日志输出
     6. json    : json操作相关, copy from android source
