@@ -140,7 +140,6 @@ public class ClusterService {
                 nodes.remove(action);
             }
         }
-        /*没有注册上? 那就不管了, 出现了这个问题了再说吧. :(*/
     }
     
     private Node sessionCheck(Session session){

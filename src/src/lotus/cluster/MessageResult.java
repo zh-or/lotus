@@ -3,7 +3,6 @@ package lotus.cluster;
 import java.nio.charset.Charset;
 
 /**
- * tcp 本身是不丢包
  * @author or
  */
 public class MessageResult {

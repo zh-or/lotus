@@ -8,6 +8,9 @@ import java.util.concurrent.ExecutorService;
 import lotus.socket.common.ClientCallback;
 
 public class SocketClient {
+    
+    /* 待重写*/
+    
 	private Socket              socket                   = null;
     private ClientCallback      callback                 = null;
     private ExecutorService     sendpool                 = null;
