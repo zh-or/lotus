@@ -19,7 +19,6 @@ public class HttpServer {
     private Log         log;
     private Charset     charset;
     
-    
     public HttpServer(int selectorThreadTotal, int eventThreadTotal, int readBufferSize){
         this.handler = new HttpHandler() {};
         server = new TcpServer(selectorThreadTotal, eventThreadTotal, 1024);
@@ -31,6 +30,16 @@ public class HttpServer {
         log.setProjectName("simpli http server");
         this.charset = Charset.forName("utf-8");
         server.setProtocolCodec(new HttpProtocolCodec(this));
+        
+        server.setSessionIdleTime(20000);/*keep-alive*/
+    }
+    
+    /**
+     * 设置连接超时时间, 超时后会关闭该连接
+     * @param t 毫秒
+     */
+    public void setTimeOut(int t){
+        server.setSessionIdleTime(t);/*keep-alive*/
     }
     
     public void setHandler(HttpHandler handler){
@@ -53,7 +62,7 @@ public class HttpServer {
             HttpResponse response = HttpResponse.defaultResponse(session, request);
             handler.service(request.getMothed(), request, response);
             response.flush();
-            if("close".equals(request.getHeader("connection"))){
+            if("close".equals(request.getHeader("connection"))){/*简单判断*/
             	session.closeOnFlush();
             }
         }
@@ -72,6 +81,11 @@ public class HttpServer {
         @Override
         public void onClose(Session session) {
             log.info("close:" + session.getRemoteAddress());
+        }
+        
+        @Override
+        public void onIdle(Session session) throws Exception {
+            session.closeNow();
         }
     }
 
