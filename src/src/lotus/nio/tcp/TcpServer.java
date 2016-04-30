@@ -14,7 +14,7 @@ import lotus.util.Util;
 
 public class TcpServer extends NioContext{
 	private ServerSocketChannel ssc			=	null;
-	private volatile boolean    brun        =   false;
+	private volatile boolean    isrun       =   false;
 	private TcpIoProcess        ioprocess[] =   null;
     private int                 iipBound    =   0;
     private final ReentrantLock rliplock    =   new ReentrantLock();
@@ -31,7 +31,7 @@ public class TcpServer extends NioContext{
 		ssc = ServerSocketChannel.open();
 		ssc.socket().bind(addr);
 		ssc.configureBlocking(false);
-		brun = true;
+		isrun = true;
 		/*一个线程 accept */
 		acceptrhread = new AcceptThread();
 		new Thread(acceptrhread, "lotus nio accept thread").start();
@@ -45,6 +45,7 @@ public class TcpServer extends NioContext{
 	
 	@Override
 	public void unbind() {
+		isrun = false;
 		try {
 		    for(int i = 0; i < selector_thread_total; i++){
 		        try {
@@ -73,11 +74,11 @@ public class TcpServer extends NioContext{
         public void run() {
             try {
                 ssc.register(mslAccept, SelectionKey.OP_ACCEPT);
-                while(mslAccept != null && brun){
+                while(mslAccept != null && isrun){
                     try {
                         if(mslAccept.select(SELECT_TIMEOUT) == 0){
                             
-                            if(!brun) break;
+                            if(!isrun) break;
                             
                             Util.SLEEP(1);
                             continue;

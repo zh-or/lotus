@@ -2,7 +2,7 @@ package lotus.nio;
 
 public abstract class IoProcess{
     protected NioContext                  context    	   = null;
-    protected volatile boolean            brun       	   = false;
+    protected volatile boolean            isrun       	   = false;
     protected ProtocolCodec               codec      	   = null;
     protected volatile int                isessiontimeout  = 0;
 
@@ -10,6 +10,6 @@ public abstract class IoProcess{
 		this.context = context;
         this.codec = context.getProtocoCodec();
         this.isessiontimeout = context.getSessionIdleTimeOut();
-        this.brun = true;
+        this.isrun = true;
 	}
 }

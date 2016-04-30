@@ -38,7 +38,7 @@ public class TcpIoProcess extends IoProcess implements Runnable{
     @Override
     public void run() {
         
-        while(brun && selector != null){
+        while(isrun && selector != null){
             try {
                 if(isessiontimeout != 0){
                     handleTimeOut();
@@ -60,13 +60,13 @@ public class TcpIoProcess extends IoProcess implements Runnable{
 	
     private void handleIoEvent() throws IOException {
         if(selector.select(NioContext.SELECT_TIMEOUT) == 0){
-            if(!brun) return;
+            if(!isrun) return;
             Util.SLEEP(1);
             return;
         }
         Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
         while(keys.hasNext()){
-            if(!brun) break;
+            if(!isrun) break;
             
             SelectionKey key = keys.next();
             keys.remove();
@@ -170,7 +170,7 @@ public class TcpIoProcess extends IoProcess implements Runnable{
         final long nowtime = System.currentTimeMillis();
         while(keys.hasNext()){
             SelectionKey key = keys.next();
-            if(!brun) break;
+            if(!isrun) break;
             
             if (key.channel() instanceof ServerSocketChannel) {
                 continue;
@@ -202,7 +202,7 @@ public class TcpIoProcess extends IoProcess implements Runnable{
     }
 
     public void close(){
-        brun = false;
+        isrun = false;
         try {
             selector.wakeup();
             if(selector != null) selector.close();

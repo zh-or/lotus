@@ -11,7 +11,6 @@ public abstract class NioContext {
     public static final int         SELECT_TIMEOUT                  =   1000;
     
 	protected int                   selector_thread_total           =   0;
-    protected boolean               isrun                           =   false;
     protected int                   session_idle_time               =   0;
     protected int                   socket_time_out                 =   1000 * 10;
     protected int                   buff_read_cache                 =   1024;/*读缓冲区*/
