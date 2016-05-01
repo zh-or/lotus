@@ -48,6 +48,7 @@ public class NodeSession extends ClientCallback{
     public synchronized boolean init(int timeout){
         isinit = false;
         try {
+        	
             client = new Client(host, port, timeout, this);
             if(client.connection()){
                 sendPack(new NetPack(NetPack.CMD_INIT, nodeid.getBytes(charset)));
@@ -89,9 +90,7 @@ public class NodeSession extends ClientCallback{
     }
     
     public synchronized void close(){
-        if(client != null){
-            client.close();
-        }
+        
         subs.clear();
         encryptionKey = user_en_key;
         isinit = false;
@@ -157,6 +156,8 @@ public class NodeSession extends ClientCallback{
     @Override
     public void onClose(Client sc) {
         this.encryptionKey = this.user_en_key;
+        close();
+        handler.onClose(NodeSession.this);
     }
     
     @Override
