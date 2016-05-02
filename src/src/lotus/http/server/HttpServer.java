@@ -10,7 +10,7 @@ import lotus.nio.Session;
 import lotus.nio.tcp.TcpServer;
 
 /*
- * 一个简单的http服务器
+ * 一个简单的http服务器 还未完成
  * */
 public class HttpServer {
 
@@ -22,7 +22,6 @@ public class HttpServer {
     public HttpServer(int selectorThreadTotal, int eventThreadTotal, int readBufferSize){
         this.handler = new HttpHandler() {};
         server = new TcpServer(selectorThreadTotal, eventThreadTotal, 1024);
-        server.setSessionIdleTime(0);
         server.setSessionReadBufferSize(readBufferSize);
         server.setHandler(new EventHandler());
         
@@ -85,7 +84,7 @@ public class HttpServer {
         
         @Override
         public void onIdle(Session session) throws Exception {
-            session.closeNow();
+           // session.closeNow();
         }
     }
 
