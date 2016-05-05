@@ -2,6 +2,10 @@ package lotus.nio;
 
 import java.nio.ByteBuffer;
 
+/**
+ * 示例解码器 一行一个包
+ * @author OR
+ */
 public class LineProtocolCodec implements ProtocolCodec{
 	private char line			=	'\n';
 
