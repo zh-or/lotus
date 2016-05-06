@@ -74,7 +74,7 @@ public abstract class Session {
         }
     }
     
-    public Runnable poolEventRunnable(){
+    public Runnable pullEventRunnable(){
         return eventlist.poll();
     }
     
@@ -88,6 +88,8 @@ public abstract class Session {
     public void resetCapacity(byte[] data, int size){
         data = Arrays.copyOf(data, size);
         readcache = ByteBuffer.wrap(data);
+        /*这里可以计算一下如果60%以上的buff都需要扩容,
+         * 说明大小设置有问题. 则需要改变 NioContext->buff_read_cache 的大小*/
     }
     
     public abstract SocketAddress getRemoteAddress();

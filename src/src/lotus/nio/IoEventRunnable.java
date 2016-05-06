@@ -55,7 +55,7 @@ public class IoEventRunnable implements Runnable{
                     break;
             }
             IoEventRunnable iorun = null;
-            while((iorun = (IoEventRunnable) session.poolEventRunnable()) != null){
+            while((iorun = (IoEventRunnable) session.pullEventRunnable()) != null){
                 iorun.run();
             }
         } catch (Exception e) {
