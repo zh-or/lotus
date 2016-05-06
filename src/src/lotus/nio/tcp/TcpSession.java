@@ -6,6 +6,8 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import lotus.nio.IoEventRunnable;
+import lotus.nio.IoEventRunnable.IoEventType;
 import lotus.nio.NioContext;
 import lotus.nio.Session;
 
@@ -41,11 +43,12 @@ public class TcpSession extends Session{
 	public void write(Object data) {
         qwrite.add(data);
         if(key == null || !key.isValid()){/*没有准备好?*/
+            context.ExecuteEvent(new IoEventRunnable(new Exception("session is not valid"), IoEventType.SESSION_EXCEPTION, this, context));
             return;
         }
-        setLastActive(System.currentTimeMillis());
         key.interestOps(key.interestOps() | SelectionKey.OP_WRITE);/*注册写事件*/
         key.selector().wakeup();
+        setLastActive(System.currentTimeMillis());
 	}
 	
 	public void write(Object data, boolean sentclose){

@@ -43,4 +43,17 @@ public class Node {
         ArrayList<String> tmp = (ArrayList<String>) subscribeActions.clone();
         return tmp;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("remoteaddress=");
+        builder.append(session.getRemoteAddress());
+        builder.append(", subscribeActions=");
+        builder.append(subscribeActions);
+        builder.append(", nodeid=");
+        builder.append(nodeid);
+        return builder.toString();
+    }
+    
 }

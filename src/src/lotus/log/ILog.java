@@ -3,10 +3,12 @@ package lotus.log;
 
 public interface ILog {
     
-    public static final int L_I        = 0;
+    public static final int L_E        = 0;
     public static final int L_W        = 1;
-    public static final int L_E        = 2;
+    public static final int L_I        = 2;
     public static final int L_D        = 3;
+
+    static final String lvl[]             =   {"[ERROR]", "[WARN]", "[INFO]", "[DEBUG]"};
     
     public void log(String str);
     

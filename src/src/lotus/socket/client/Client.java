@@ -24,7 +24,7 @@ public class Client {
     private OutputStream        out                      = null;
     private InputStream         in                       = null;
     private long                lasthtime                = 0;
-    private int                 keepalive                = 180 * 1000;
+    private int                 keepalive                = 0;
     private byte[]              keepcontent              = {};
     private Object              attr                     = null;//辅助参数
     private String              host                     = "0.0.0.0";

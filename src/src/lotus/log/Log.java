@@ -4,17 +4,16 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class Log implements ILog{
-    public abstract class LogFilter{
+    public interface LogFilter{
         /**
          * @param lvl
          * @param logstr
          * @return 返回true表示拦截将不输出
          */
-        public boolean log(int lvl, String logstr){return false;}
+        public boolean log(int lvl, String logstr);
     }
     
     private static String    PROJECT_NAME         =    "";
-    private static final String lvl[]             =   {"[INFO]", "[WARN]", "[ERROR]", "[DEBUG]"};
     private static SimpleDateFormat format        =   new SimpleDateFormat("MM-dd hh:mm:ss");
     
     private static Log log                        =   null;
@@ -25,6 +24,11 @@ public class Log implements ILog{
     
     private Log(){
         logfilter = new LogFilter() {
+
+            @Override
+            public boolean log(int lvl, String logstr) {
+                return true;
+            }
         };
     }
     
@@ -50,7 +54,7 @@ public class Log implements ILog{
     public void log(int l, String str){
         String msg_ = format.format(new Date(System.currentTimeMillis()));
         msg_ = String.format("%s %s %s \t%s", msg_, PROJECT_NAME, lvl[l], str);
-        if(!logfilter.log(l, msg_)){
+        if(logfilter.log(l, msg_)){
             System.out.println(msg_);
         }
     }

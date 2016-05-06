@@ -158,7 +158,7 @@ public class TcpIoProcess extends IoProcess implements Runnable{
                 //
             } catch (Exception e) {
                 /*call exception*/
-                session.pushEventRunnable(new IoEventRunnable(e, IoEventType.SESSION_EXCEPTION, session, context));
+                //session.pushEventRunnable(new IoEventRunnable(e, IoEventType.SESSION_EXCEPTION, session, context));
                 session.closeNow();
                 cancelKey(key);/*对方关闭了?*/
             } 
