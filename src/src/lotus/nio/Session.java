@@ -14,10 +14,12 @@ public abstract class Session {
     protected LinkedBlockingQueue<Runnable>     eventlist       =   null;
     protected volatile boolean                  runingevent     =   false;
     protected ProtocolDecoderOutput             deout           =   null;
+    protected long                              id              =   0l;
     
-    public Session (NioContext context){
+    public Session (NioContext context, long id){
         this.context = context;
         this.attrs = new ConcurrentHashMap<Object, Object>();
+        this.id = id;
         setLastActive(System.currentTimeMillis());
         readcache = context.getByteBufferFormCache();
         eventlist = new LinkedBlockingQueue<Runnable>();

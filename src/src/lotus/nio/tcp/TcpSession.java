@@ -18,8 +18,8 @@ public class TcpSession extends Session{
 	private SocketAddress                  remoteaddr;
 	private TcpIoProcess                   ioprocess;
 	
-	public TcpSession(NioContext context, SocketChannel channel, TcpIoProcess ioprocess) {
-		super(context);
+	public TcpSession(NioContext context, SocketChannel channel, TcpIoProcess ioprocess, long id) {
+		super(context, id);
 		this.channel = channel;
 		this.qwrite = new LinkedBlockingQueue<Object>();
 		this.ioprocess = ioprocess;

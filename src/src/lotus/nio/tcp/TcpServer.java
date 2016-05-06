@@ -19,6 +19,8 @@ public class TcpServer extends NioContext{
     private int                 iipBound    =   0;
     private final ReentrantLock rliplock    =   new ReentrantLock();
 	private AcceptThread        acceptrhread=   null;
+	private long                idcount     =   0l;
+	
     public TcpServer() {
 		this(0, 0, 0);
 	}
@@ -99,11 +101,14 @@ public class TcpServer extends NioContext{
                                     if(iipBound >= ioprocess.length){
                                         iipBound = 0;
                                     }
-                                    ioprocess[iipBound].putChannel(client);
+                                    ioprocess[iipBound].putChannel(client, ++idcount);
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }finally{
                                     rliplock.unlock();
+                                }
+                                if(idcount >= Long.MAX_VALUE){
+                                    idcount = 0l;
                                 }
                             }
                         }

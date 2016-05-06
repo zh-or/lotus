@@ -25,9 +25,9 @@ public class TcpIoProcess extends IoProcess implements Runnable{
 		tmp_buffer = new byte[context.getSessionReadBufferSize()];
 	}
     
-    public void putChannel(SocketChannel channel) throws Exception{
+    public void putChannel(SocketChannel channel, long id) throws Exception{
         if(channel == null || selector == null) throw new Exception("null");
-        TcpSession session = new TcpSession(context, channel, this);
+        TcpSession session = new TcpSession(context, channel, this, id);
         SelectionKey key = channel.register(selector, SelectionKey.OP_READ, session);
         session.setKey(key);
         /*call on connection*/
