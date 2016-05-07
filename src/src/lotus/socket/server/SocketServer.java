@@ -2,13 +2,10 @@ package lotus.socket.server;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 
 import lotus.nio.IoHandler;
-import lotus.nio.Session;
 import lotus.nio.tcp.TcpServer;
 import lotus.socket.common.LengthProtocolCode;
-import lotus.util.Util;
 
 
 public class SocketServer {
@@ -62,39 +59,4 @@ public class SocketServer {
         return port;
     }
     
-    
-    /**
-     * @param session
-     * @param type
-     * @param deviceMark
-     * @param content
-     */
-    public static void send(Session session, byte[] content){
-        send(session, content, false);
-    }
-    
-    /**
-     * @param session
-     * @param type
-     * @param deviceMark
-     * @param content
-     * @param isclose 发送完成后是否关闭该链接
-     */
-    public static void send(Session session, byte[] content, boolean isclose){
-        
-        byte[] send =  new byte[content.length + 2 + 2];
-        send[0] = 0x02;
-        send[send.length - 1] = 0x03;
-        byte[] len = Util.short2byte(send.length);
-
-        send[1] = len[0];
-        send[2] = len[1];
-
-        System.arraycopy(content, 0, send, 3, content.length);
-        ByteBuffer buff = ByteBuffer.wrap(send);
-        session.write(buff);
-        if(isclose){
-        	session.closeOnFlush();
-        }
-    }
 }

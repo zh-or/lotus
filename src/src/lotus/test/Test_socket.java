@@ -26,7 +26,7 @@ public class Test_socket {
 						    return;
 						}
 						log.info("recv msg:" + new String(data) + " addr:" + session.getRemoteAddress());
-						SocketServer.send(session, "收到你的消息了".getBytes());
+						session.write("收到你的消息了".getBytes());
 					};
 					public void onClose(lotus.nio.Session session) {
 						log.warn("close:" + session.getRemoteAddress());

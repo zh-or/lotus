@@ -42,8 +42,22 @@ public class LengthProtocolCode implements ProtocolCodec{
 
 	@Override
 	public ByteBuffer encode(Session session, Object msg) throws Exception{
-		
-		return (ByteBuffer) msg;
+	    
+	    byte[] content = (byte[]) msg;
+	    
+        byte[] send =  new byte[content.length + 2 + 2];
+        send[0] = 0x02;
+        send[send.length - 1] = 0x03;
+        byte[] len = Util.short2byte(send.length);
+
+        send[1] = len[0];
+        send[2] = len[1];
+
+        System.arraycopy(content, 0, send, 3, content.length);
+        ByteBuffer buff = ByteBuffer.wrap(send);
+        session.write(buff);
+        
+		return buff;
 	}
 
 }

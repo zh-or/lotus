@@ -110,7 +110,7 @@ public class ClusterService {
         if(enableEncryption){
             data = Util.Encoded(data, session.getAttr(ENCRYPTION_KEY, DEF_ENCRYPTION_KEY) + "");
         }
-        SocketServer.send(session, data);
+        session.write(data);
     }
     
     private void sessionAddSubscribe(Node node, String action){
