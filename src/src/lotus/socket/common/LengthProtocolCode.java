@@ -55,8 +55,6 @@ public class LengthProtocolCode implements ProtocolCodec{
 
         System.arraycopy(content, 0, send, 3, content.length);
         ByteBuffer buff = ByteBuffer.wrap(send);
-        session.write(buff);
-        
 		return buff;
 	}
 

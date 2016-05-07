@@ -75,7 +75,12 @@ public class TcpIoProcess extends IoProcess implements Runnable{
             if(session == null) {
                 continue;
             }
+            
+            
             try {
+                if(!key.isValid()){
+                    
+                }
                 
                 if(key.isReadable()){/*call decode */
                     ByteBuffer readcache = session.getReadCacheBuffer();
@@ -129,7 +134,7 @@ public class TcpIoProcess extends IoProcess implements Runnable{
                 }
                 
                 if(key.isWritable()){/*call encode*/
-                    final Object msg = session.poolMessage();
+                    Object msg = session.poolMessage();
                     if(msg != null){
                         ByteBuffer out = null;
                         try {
@@ -138,7 +143,7 @@ public class TcpIoProcess extends IoProcess implements Runnable{
                             session.pushEventRunnable(new IoEventRunnable(e, IoEventType.SESSION_EXCEPTION, session, context));
                         }
                         if(out != null){
-                            while(out.hasRemaining()) {  
+                            while(out.hasRemaining()) {
                                 session.getChannel().write(out);
                             }
                             session.setLastActive(System.currentTimeMillis());
@@ -152,10 +157,6 @@ public class TcpIoProcess extends IoProcess implements Runnable{
                         }
                     }
                 }
-            } catch (java.nio.channels.ClosedSelectorException cse) {
-                //
-            } catch (java.nio.channels.CancelledKeyException cke) {
-                //
             } catch (Exception e) {
                 /*call exception*/
                 //session.pushEventRunnable(new IoEventRunnable(e, IoEventType.SESSION_EXCEPTION, session, context));

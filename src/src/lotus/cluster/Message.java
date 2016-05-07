@@ -16,7 +16,7 @@ public class Message {
      */
     public static final byte MTYPE_SUBSCRIBE         =   0x03;
     
-    public boolean      needReceipt;
+    public boolean      needReceipt = false;
     public byte         type;
     public String       to;
     public String       from;
@@ -24,17 +24,23 @@ public class Message {
     public String       head;
     public byte[]       body;
     
-	public Message(boolean needReceipt, byte type, String to, String from, String msgid, String head, byte[] body) {
-		this.needReceipt = needReceipt;
+	public Message(byte type, String to, String msgid, String head, byte[] body) {
 		this.type = type;
 		this.to = to;
-		this.from = from;
 		this.msgid = msgid;
 		this.head = head;
 		this.body = body;
 	}
 
+	public Message IsNeedReceipt(boolean needReceipt){
+	    this.needReceipt = needReceipt;
+	    return this;
+	}
 	
+	public static Message obtainMessage(byte type, String to, String msgid, String head, byte[] body){
+	    final MessageFactory mf = MessageFactory.getInstance();
+	    return mf.create(type, to, msgid, head, body);
+	}
 	
 	@Override
 	public String toString() {

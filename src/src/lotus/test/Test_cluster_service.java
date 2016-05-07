@@ -1,7 +1,6 @@
 package lotus.test;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -93,7 +92,7 @@ public class Test_cluster_service extends MessageListenner{
     
     
     @Override
-    public void onMessageSent(ClusterService service, ByteBuffer buff) {
+    public void onMessageSent(ClusterService service, Object obj) {
         synchronized(lock_send){
             send ++;
         }

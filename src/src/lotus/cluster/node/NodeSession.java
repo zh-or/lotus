@@ -111,6 +111,7 @@ public class NodeSession extends ClientCallback{
     }
     
     public void sendMessage(Message msg) throws Exception{
+        msg.from = nodeid;
         sendPack(new NetPack(NetPack.CMD_MSG, MessageFactory.encode(msg, charset)));
     }
     

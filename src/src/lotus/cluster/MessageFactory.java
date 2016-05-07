@@ -52,16 +52,16 @@ public class MessageFactory {
         int len_body = data.length - bound;
         byte[] body = new byte[len_body];
         System.arraycopy(data, bound, body, 0, len_body);
-        
-        return getInstance().create(
-					        		(type & -128)  == -128,
+        Message msg = getInstance().create(
 					        		(byte) (type & 127),
 					        		new String(to, charset),
-					        		new String(from, charset),
 					        		new String(msgid, charset),
 					        		new String(head, charset),
 					        		body
 					        		);
+        msg.IsNeedReceipt((type & -128)  == -128);
+        msg.from = new String(from, charset);
+        return msg;
     }
     
     private static byte[] destr(byte[] data, int offset){
@@ -134,15 +134,13 @@ public class MessageFactory {
         return msgdata;
     }
     
-    public Message create(boolean needReceipt, byte type, String to, String from, String msgid, String head, byte[] body){
+    public Message create(byte type, String to, String msgid, String head, byte[] body){
         Message msg = mq.poll();
         if(msg == null){
-        	msg = new Message(needReceipt, type, to, from, msgid, head, body);
+        	msg = new Message(type, to, msgid, head, body);
         }else{
-        	msg.needReceipt = needReceipt;
         	msg.type = type;
         	msg.to = to;
-        	msg.from = from;
         	msg.msgid = msgid;
         	msg.head = head;
         	msg.body = body;

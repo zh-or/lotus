@@ -74,10 +74,8 @@ public class Test_cluster_node extends MessageHandler{
                      for(int i = 0; i < total; i++){
                          node.sendMessage(
                                  msgfactory.create(
-                                         false,
                                          Message.MTYPE_SUBSCRIBE,
                                          "fuck",
-                                         node.getNodeId(),
                                          Util.getUUID(),
                                          "MTYPE_SUBSCRIBE",
                                          new byte[]{1, 2, 3}));

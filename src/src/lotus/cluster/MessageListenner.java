@@ -1,11 +1,10 @@
 package lotus.cluster;
 
-import java.nio.ByteBuffer;
-
 import lotus.cluster.service.ClusterService;
 
 public abstract class MessageListenner {
     public void onNodeInit(ClusterService service, Node node){}
+    public void onNodeUnInit(ClusterService service, Node node){}
     /**
      * @param node
      * @param msg
@@ -15,7 +14,7 @@ public abstract class MessageListenner {
     public void onRecvSubscribe(ClusterService service, Node node, Message msg){}
     
     public void onRecvMessage(ClusterService service, Message msg){}
-    public void onMessageSent(ClusterService service, ByteBuffer buff){}
+    public void onMessageSent(ClusterService service, Object obj){}
     public void onSubscribeMessage(ClusterService service, Node node, String action){}
     public void onUnSubscribeMessage(ClusterService service, Node node, String action){}
 }

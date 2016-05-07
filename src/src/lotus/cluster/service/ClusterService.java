@@ -1,7 +1,6 @@
 package lotus.cluster.service;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -97,6 +96,7 @@ public class ClusterService {
                 buffer_list_maxsize,
                 socket_timeout,
                 new ExIoHandler());
+        
         server.start();
     }
     
@@ -300,7 +300,7 @@ public class ClusterService {
         
         @Override
         public void onSentMessage(Session session, Object msg) throws Exception {
-            listenner.onMessageSent(ClusterService.this, (ByteBuffer) msg);
+            listenner.onMessageSent(ClusterService.this, msg);
         }
         
         @Override
@@ -319,6 +319,7 @@ public class ClusterService {
             if(!Util.CheckNull(nodeid)){
                 /*取消所有广播*/
                 Node node = nodes.get(nodeid);
+                listenner.onNodeUnInit(ClusterService.this, node);
                 if(node != null && node.getSession() == session){
                     ArrayList<String> subactions = node.getSubscribeActions();
                     for(String action : subactions){

@@ -80,7 +80,7 @@ public class Client {
     public boolean connection(){
         try {
             socket = new Socket();
-            socket.setSoTimeout(5 * 1000);/*socket 读超时时间*/
+            socket.setSoTimeout(1000);/*socket 读超时时间*/
             socket.setReceiveBufferSize(RECV_BUFF_SIZE);
             socket.connect(new InetSocketAddress(host, port), timeout);
             in = socket.getInputStream();
@@ -144,7 +144,7 @@ public class Client {
                 if(socket != null && !socket.isClosed() && !socket.isInputShutdown()){
                     try {
                         if(in.read(head) == -1){
-                            Util.SLEEP(200);/*连接被关闭了?*/
+                            break;
                         }
                         if(head[0] == 0x02){/*是包头*/
                             int length = Util.byte2short(head, 1);
@@ -153,8 +153,6 @@ public class Client {
                                 byte[] content = new byte[length - 1];
                                 in.read(content);
                                 if(in.read() == 0x03){
-                                 //    callback.onMessageRecv(Client.this, content);
-                                    /*难道是这个逗逼的问题?*/
                                     eventpool.execute(new EventRun(Client.this, content, callback));
                                     lasthtime = System.currentTimeMillis();
                                 }
@@ -172,11 +170,12 @@ public class Client {
                     }
                     continue;
                 }else{
-                    if(!isclosed()) close();
                     break;
                 }
                 
             }
+
+            if(!isclosed()) close();
         }
         
     }
