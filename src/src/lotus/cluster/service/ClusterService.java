@@ -78,7 +78,7 @@ public class ClusterService {
     }
     
     public void pushMessage(Node node, Message msg){
-        sendPack(node.getSession(), new NetPack(MessageFactory.encode(msg, DEF_CHARSET)).Encode());
+        sendPack(node.getSession(), new NetPack(NetPack.CMD_MSG, MessageFactory.encode(msg, DEF_CHARSET)).Encode());
     }
     
     public void removeNode(String nodeid){
