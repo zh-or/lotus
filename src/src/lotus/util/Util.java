@@ -304,4 +304,9 @@ public class Util {
             h = h ^ ((h << 5) + (h >> 2) + (long) str.charAt(i - 1));
         return h;
     }
+
+    public static boolean StrtoBoolean(String str) {
+        if(!CheckNull(str) && "true".equals(str)) return true;
+        return false;
+    }
 }
