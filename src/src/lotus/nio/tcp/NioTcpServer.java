@@ -12,21 +12,21 @@ import java.util.concurrent.locks.ReentrantLock;
 import lotus.nio.NioContext;
 import lotus.util.Util;
 
-public class TcpServer extends NioContext{
+public class NioTcpServer extends NioContext{
 	private ServerSocketChannel ssc			=	null;
 	private volatile boolean    isrun       =   false;
-	private TcpIoProcess        ioprocess[] =   null;
+	private NioTcpIoProcess     ioprocess[] =   null;
     private int                 iipBound    =   0;
     private final ReentrantLock rliplock    =   new ReentrantLock();
 	private AcceptThread        acceptrhread=   null;
 	private long                idcount     =   0l;
 	
-    public TcpServer() {
-		this(0, 0, 0);
+    public NioTcpServer() {
+		this(0, 0);
 	}
 
-	public TcpServer(int selector_thread_total, int expoolsize, int buffer_list_maxsize) {
-		super(selector_thread_total, expoolsize, buffer_list_maxsize);
+	public NioTcpServer(int expoolsize, int buffer_list_maxsize) {
+		super(expoolsize, buffer_list_maxsize);
 	}
 
 	public void bind(InetSocketAddress addr) throws IOException {
@@ -37,10 +37,10 @@ public class TcpServer extends NioContext{
 		/*一个线程 accept */
 		acceptrhread = new AcceptThread();
 		new Thread(acceptrhread, "lotus nio accept thread").start();
-		ioprocess = new TcpIoProcess[selector_thread_total];
+		ioprocess = new NioTcpIoProcess[selector_thread_total];
 		
 		for(int i = 0; i < selector_thread_total; i++){
-		    ioprocess[i] = new TcpIoProcess(this);
+		    ioprocess[i] = new NioTcpIoProcess(this);
 		    new Thread(ioprocess[i], "lotus nio selector thread-" + i).start();
 		}
 	}
@@ -60,7 +60,7 @@ public class TcpServer extends NioContext{
 		    if(ssc != null) ssc.close();
         } catch (IOException e) {}
 	}
-	   
+	
     private class AcceptThread implements Runnable{
         Selector mslAccept = null;
         

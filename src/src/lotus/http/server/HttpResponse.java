@@ -34,6 +34,12 @@ public class HttpResponse {
     	return response;
     }
     
+    
+    
+    public HttpResponse(Session session) {
+       this(session, ResponseStatus.SUCCESS_OK);
+    }
+
     public HttpResponse(Session session, ResponseStatus status) {
         this.session = session;
         this.status = status;
@@ -42,7 +48,11 @@ public class HttpResponse {
         this.buff = ByteBuffer.allocate(write_buffer_size);
         this.headers.put("Content-Type", "text/html");
     }
-    	
+    
+    public void setStatus(ResponseStatus status){
+        this.status = status;
+    }
+    
     /**
      * 发送302跳转
      * @param path

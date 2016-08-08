@@ -11,16 +11,16 @@ import lotus.nio.IoEventRunnable.IoEventType;
 import lotus.nio.NioContext;
 import lotus.nio.Session;
 
-public class TcpSession extends Session{
+public class NioTcpSession extends Session{
 	private SocketChannel                  channel;
 	private SelectionKey                   key;
 	private LinkedBlockingQueue<Object>    qwrite;
 	private volatile boolean               sentclose  = false;
 	private volatile boolean               closed     = false;
 	private SocketAddress                  remoteaddr;
-	private TcpIoProcess                   ioprocess;
+	private NioTcpIoProcess                ioprocess;
 	
-	public TcpSession(NioContext context, SocketChannel channel, TcpIoProcess ioprocess, long id) {
+	public NioTcpSession(NioContext context, SocketChannel channel, NioTcpIoProcess ioprocess, long id) {
 		super(context, id);
 		this.channel = channel;
 		this.qwrite = new LinkedBlockingQueue<Object>();
@@ -48,7 +48,6 @@ public class TcpSession extends Session{
         }
         key.interestOps(key.interestOps() | SelectionKey.OP_WRITE);/*注册写事件*/
         key.selector().wakeup();
-        setLastActive(System.currentTimeMillis());
 	}
 	
 	public void write(Object data, boolean sentclose){

@@ -2,7 +2,6 @@ package lotus.nio;
 
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -24,6 +23,10 @@ public abstract class Session {
         readcache = context.getByteBufferFormCache();
         eventlist = new LinkedBlockingQueue<Runnable>();
         deout = new ProtocolDecoderOutput();
+    }
+    
+    public long getId(){
+        return id;
     }
     
     public Object getAttr(Object key){
@@ -60,6 +63,10 @@ public abstract class Session {
     	return readcache;
     }
     
+    public void updateReadCacheBuffer(ByteBuffer buffer){
+        this.readcache = buffer;
+    }
+    
     public boolean IsRuningEvent(){
         return runingevent;
     }
@@ -86,13 +93,7 @@ public abstract class Session {
     public void closeNow(){
         context.putByteBufferToCache(readcache);/*回收*/
     }
-    
-    public void resetCapacity(byte[] data, int size){
-        data = Arrays.copyOf(data, size);
-        readcache = ByteBuffer.wrap(data);
-        /*这里可以计算一下如果60%以上的buff都需要扩容,
-         * 说明大小设置有问题. 则需要改变 NioContext->buff_read_cache 的大小*/
-    }
+
     
     public abstract SocketAddress getRemoteAddress();
     public abstract void write(Object data);

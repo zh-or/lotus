@@ -7,7 +7,7 @@ import java.nio.charset.Charset;
 import lotus.log.Log;
 import lotus.nio.NioContext;
 import lotus.nio.Session;
-import lotus.nio.tcp.TcpServer;
+import lotus.nio.tcp.NioTcpServer;
 
 /*
  * 一个简单的http服务器 还未完成
@@ -18,10 +18,11 @@ public class HttpServer {
     private NioContext  server;
     private Log         log;
     private Charset     charset;
+    private int         maxheadbuffersize = 20480;
     
-    public HttpServer(int selectorThreadTotal, int eventThreadTotal, int readBufferSize){
+    public HttpServer(int eventThreadTotal, int readBufferSize){
         this.handler = new HttpHandler() {};
-        server = new TcpServer(selectorThreadTotal, eventThreadTotal, 1024);
+        server = new NioTcpServer(eventThreadTotal, 1024);
         server.setSessionReadBufferSize(readBufferSize);
         server.setHandler(new EventHandler());
         
@@ -45,6 +46,15 @@ public class HttpServer {
         this.handler = handler;
     }
     
+    
+    public int getMaxheadbuffersize() {
+        return maxheadbuffersize;
+    }
+
+    public void setMaxheadbuffersize(int maxheadbuffersize) {
+        this.maxheadbuffersize = maxheadbuffersize;
+    }
+
     public void start(InetSocketAddress addr) throws IOException{
         server.bind(addr);
     }

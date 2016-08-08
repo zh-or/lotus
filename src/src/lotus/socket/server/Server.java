@@ -6,13 +6,13 @@ import java.nio.ByteBuffer;
 
 import lotus.nio.IoHandler;
 import lotus.nio.Session;
-import lotus.nio.tcp.TcpServer;
+import lotus.nio.tcp.NioTcpServer;
 import lotus.socket.common.LengthProtocolCode;
 import lotus.util.Util;
 
 
 public class Server {
-	private TcpServer			     server;
+	private NioTcpServer			     server;
 	private IoHandler				 handler;
     private String                   host;
     private int                      port;
@@ -44,7 +44,7 @@ public class Server {
     }
     
     public void start() throws IOException{
-    	server = new TcpServer(0, tcount, bufferlistmaxsize);
+    	server = new NioTcpServer(tcount, bufferlistmaxsize);
     	server.setSessionReadBufferSize(readbuffsize);
     	server.setSessionIdleTime(idletime);
     	server.setSocketTimeOut(sockettimeout);

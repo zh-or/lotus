@@ -20,11 +20,13 @@ public class LineProtocolCodec implements ProtocolCodec{
 	@Override
 	public boolean decode(Session session, ByteBuffer in, ProtocolDecoderOutput out) throws Exception {
 		in.mark();
-		int size = in.remaining();
+		byte[] arr = in.array();
+        int size = in.limit();
 		for(int i = 0; i < size; i++){
-			if(in.get() == line){
+			if(arr[i] == line){
 				in.reset();
-				byte[] dst = new byte[i];
+				byte[] dst = new byte[i + 1];
+				
 				in.get(dst);
 				out.write(dst);
 				return true;

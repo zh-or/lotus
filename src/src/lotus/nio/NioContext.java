@@ -22,19 +22,15 @@ public abstract class NioContext {
     protected LinkedBlockingQueue<ByteBuffer> bufferlist            =   null;/*缓存*//*应付像http这样的服务时大量的短连接用*/
     
     public NioContext(){
-        this(0, 10, 100);
+        this(10, 100);
     }
     
     /**
-     * 
-     * @param selector_thread_total 选择器线程数
      * @param extpoolsize 事件线程池大小
      * @param BufferListMaxSize buffer缓存队列大小
      */
-    public NioContext(int selector_thread_total, int extpoolsize, int buffer_list_maxsize){
-        if(selector_thread_total <= 0){
-            selector_thread_total = Runtime.getRuntime().availableProcessors() + 1;/* cpu + 1 */
-        }
+    public NioContext(int extpoolsize, int buffer_list_maxsize){
+        selector_thread_total = Runtime.getRuntime().availableProcessors() + 1;/* cpu + 1 */
         if(buffer_list_maxsize <= 0) {
             buffer_list_maxsize = 50;
         }
@@ -42,8 +38,7 @@ public abstract class NioContext {
             extpoolsize = 10;
         }
         this.buffer_list_max_size = buffer_list_maxsize;
-        this.selector_thread_total = selector_thread_total;
-        this.executor_e = Executors.newFixedThreadPool(extpoolsize);
+        if(extpoolsize > 0) this.executor_e = Executors.newFixedThreadPool(extpoolsize);
         this.bufferlist = new LinkedBlockingQueue<ByteBuffer>(buffer_list_maxsize);
         this.handler = new IoHandler() { };
     }
@@ -51,6 +46,10 @@ public abstract class NioContext {
     public abstract void bind(InetSocketAddress addr) throws IOException;
     
     public abstract void unbind();
+    
+    public void setSelectorThreadTotal(int c){
+        this.selector_thread_total = c;
+    }
     
     /**
      * 如果为 0 则不会检测空闲
@@ -102,6 +101,10 @@ public abstract class NioContext {
     }
     
     public void ExecuteEvent(Runnable run){
+        if(this.executor_e == null){
+            run.run();
+            return;
+        }
     	this.executor_e.execute(run);
     }
     
@@ -125,7 +128,9 @@ public abstract class NioContext {
         if(buffer != null && (buffer.capacity() <= buff_read_cache) && (bufferlist.size() < buffer_list_max_size)){
             buffer.clear();
             bufferlist.add(buffer);
-        }/*丢弃被扩容过的buffer*/
+        }else{/*丢弃被扩容过的buffer*/
+            buffer = null;
+        }
     }
     
 }

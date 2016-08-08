@@ -67,7 +67,4 @@ public class IoEventRunnable implements Runnable{
             session.pushEventRunnable(new IoEventRunnable(_e, IoEventType.SESSION_EXCEPTION, session, context));
         }
     }
-
-    
-
 }

@@ -56,6 +56,9 @@ public class HttpProtocolCodec implements ProtocolCodec{
                             session.setAttr(STATUS, HttpStatus.HEAD);/*没有body*/
                             return true;
                         }
+                    }else if(in.remaining() > context.getMaxheadbuffersize()){/*消息头过大*/
+                        
+                        session.closeNow();
                     }
                 }
                 in.reset();

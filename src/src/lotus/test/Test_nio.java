@@ -11,22 +11,24 @@ import lotus.nio.IoHandler;
 import lotus.nio.LineProtocolCodec;
 import lotus.nio.NioContext;
 import lotus.nio.Session;
-import lotus.nio.tcp.TcpServer;
+import lotus.nio.tcp.NioTcpClient;
+import lotus.nio.tcp.NioTcpServer;
 import lotus.util.Util;
 
 
 public class Test_nio {
     static Log log;
     public static void main(String[] args) throws IOException {
-        NioContext nio = new TcpServer();
         log = Log.getInstance();
         log.setProjectName("test");
-        nio.setProtocolCodec(new LineProtocolCodec());
+        NioContext server = new NioTcpServer();
+        server.setProtocolCodec(new LineProtocolCodec());
         
-        nio.setHandler(new IoHandler() {
+        server.setHandler(new IoHandler() {
             @Override
             public void onConnection(Session session) {
                 log.info("server event connection:" + session.getRemoteAddress());
+
             }
             @Override
             public void onClose(Session session) {
@@ -39,15 +41,39 @@ public class Test_nio {
             @Override
             public void onRecvMessage(Session session, Object obj) {
                 String msg = new String((byte[])obj);
-                Util.SLEEP(10000);
                 log.info("server event recv msg->" + session.getRemoteAddress() + "  msg:" + msg);
                 session.write(obj);
             }
         });
-        nio.setSessionIdleTime(60 * 1000);
-        nio.setSessionReadBufferSize(5);
-        nio.bind(new InetSocketAddress(4000));
+        server.setSessionIdleTime(60 * 1000);
+        server.setSessionReadBufferSize(5);
+        server.bind(new InetSocketAddress(4000));
+        
+        
+        NioTcpClient client = new NioTcpClient(new LineProtocolCodec());
+        client.setSessionReadBufferSize(5);
+        client.setHandler(new IoHandler() {
+            @Override
+            public void onConnection(Session session) throws Exception {
+                log.info("client event connectioned...");
+                Util.SLEEP(2000);
 
+                session.write(("fuck -> " + session.getId() + "\n").getBytes());
+            }
+            @Override
+            public void onRecvMessage(Session session, Object msg) throws Exception {
+                log.info("client recv:%s", new String((byte[])msg));
+
+                session.write(("fuck -> " + session.getId() + "\n").getBytes());
+            }
+        });
+        
+        for(int i = 0; i < 100; i++){
+            boolean isconn = client.connection(new InetSocketAddress("127.0.0.1", 4000), 3000);
+            log.info("wait:" + isconn);
+            
+        }
+        
         new Thread(new Runnable() {
             
             @Override
@@ -63,10 +89,10 @@ public class Test_nio {
                     byte[] cache = new byte[1024];
                     int i = 0;
                     while(true){
-                        out.write(("hello world! - > " + i).getBytes());
+                        out.write(("hello->:" + i).getBytes());
                         out.flush();
                         if(i % 2 == 0){
-                        	out.write('\n');
+                        	out.write("\n".getBytes());
                         }
                         try {
                             int len = in.read(cache);
@@ -84,6 +110,6 @@ public class Test_nio {
                     e.printStackTrace();
                 }
             }
-        }).start();
+        });
     }
 }

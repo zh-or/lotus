@@ -6,6 +6,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.Arrays;
 import java.util.Iterator;
 
 import lotus.nio.IoEventRunnable;
@@ -15,24 +16,34 @@ import lotus.nio.NioContext;
 import lotus.nio.ProtocolDecoderOutput;
 import lotus.util.Util;
 
-/*所有的事件都在此处发生*/
-public class TcpIoProcess extends IoProcess implements Runnable{
+
+public class NioTcpIoProcess extends IoProcess implements Runnable{
 	private Selector                    selector    = null;    
     
-    public TcpIoProcess(NioContext context) throws IOException {
+    public NioTcpIoProcess(NioContext context) throws IOException {
     	super(context);
 		selector = Selector.open();
 		tmp_buffer = new byte[context.getSessionReadBufferSize()];
 	}
     
-    public void putChannel(SocketChannel channel, long id) throws Exception{
+    public NioTcpSession putChannel(SocketChannel channel, long id) throws Exception{
+        return putChannel(channel, id, true);
+    }
+    
+    public NioTcpSession putChannel(SocketChannel channel, long id, boolean event) throws Exception{
         if(channel == null || selector == null) throw new Exception("null");
-        TcpSession session = new TcpSession(context, channel, this, id);
-        SelectionKey key = channel.register(selector, SelectionKey.OP_READ, session);
-        session.setKey(key);
-        /*call on connection*/
-        session.pushEventRunnable(new IoEventRunnable(null, IoEventType.SESSION_CONNECTION, session, context));
+        NioTcpSession session = new NioTcpSession(context, channel, this, id);
+        SelectionKey key = null;
+        if(event){
+            /*call on connection*/
+            session.pushEventRunnable(new IoEventRunnable(null, IoEventType.SESSION_CONNECTION, session, context));
+            key = channel.register(selector, SelectionKey.OP_READ, session);
+        }else{
+            key = channel.register(selector, SelectionKey.OP_CONNECT, session);
+        }
         
+        session.setKey(key);
+        return session;
     }
     
     @Override
@@ -71,15 +82,24 @@ public class TcpIoProcess extends IoProcess implements Runnable{
             SelectionKey key = keys.next();
             keys.remove();
             
-            TcpSession session = (TcpSession) key.attachment();
+            NioTcpSession session = (NioTcpSession) key.attachment();
             if(session == null) {
                 continue;
             }
             
             
             try {
-                if(!key.isValid()){
+                /*if(!key.isValid()){//没有准备好?
                     
+                }*/
+                
+                if(key.isConnectable()){
+                    synchronized (session) {
+                        session.notifyAll();
+                    }
+                    session.pushEventRunnable(new IoEventRunnable(null, IoEventType.SESSION_CONNECTION, session, context));
+                    key.interestOps(key.interestOps() & (~SelectionKey.OP_CONNECT));//取消连接成功事件
+                    key.interestOps(key.interestOps() | SelectionKey.OP_READ);//注册读事件
                 }
                 
                 if(key.isReadable()){/*call decode */
@@ -89,7 +109,7 @@ public class TcpIoProcess extends IoProcess implements Runnable{
                         session.closeNow();
                         continue;
                     }else{
-                    //  readcache.mark();
+                      //readcache.mark();
                         position = readcache.position();
                         limit = readcache.limit();
                         readcache.flip();
@@ -107,17 +127,16 @@ public class TcpIoProcess extends IoProcess implements Runnable{
                             //readcache.clear();/*直接清空缓存有问题, 如若沾包的话, 后面的也被清空了 */
                             remaining = readcache.remaining();
                             limit = tmp_buffer.length;
-                            if(limit >= remaining){/*判断一下 如果扩过容的话, tmp_buff 可能不够存*/
+                            if(limit >= remaining){
                                 readcache.get(tmp_buffer, 0, remaining);/*把剩余的数据弄出来?*/
                                 readcache.clear();
                                 readcache.put(tmp_buffer, 0, remaining);
-                            }else{/*此buff是经过扩容的*/
+                            }else{/*此buff是经过扩容的*//*判断一下 如果扩过容的话, tmp_buff 可能不够存*/
                             	byte[] tmp_exbuff = new byte[remaining];
                             	readcache.get(tmp_exbuff, 0, remaining);
                             	readcache.clear();
                             	readcache.put(tmp_exbuff, 0, remaining);
                             }
-                            //callRecvMsg(msgout.read());
                             session.pushEventRunnable(new IoEventRunnable(msgout.read(), IoEventType.SESSION_RECVMSG, session, context));
                             msgout.write(null);
                         }else{
@@ -126,8 +145,16 @@ public class TcpIoProcess extends IoProcess implements Runnable{
                             if(position >= readcache.capacity()){/*已经读满了, 缓存不够. 就不写环形缓冲队列了 :(*/
                             //    System.out.println("不够?, 当前大小:" + readcache.capacity());
                                 byte[] tmpdata = readcache.array();
-                                session.resetCapacity(tmpdata, readcache.capacity() * 2);/*直接扩容 缓存大小设置好点, 就不会有这些蛋疼的问题了*/
-                                
+                                limit = readcache.capacity() * 2;
+                                tmpdata = Arrays.copyOf(tmpdata, limit);
+                                readcache.clear();
+                                context.putByteBufferToCache(readcache);/*回收了*/
+                                readcache = ByteBuffer.wrap(tmpdata);
+                                //session.resetCapacity(tmpdata, limit);/*直接扩容 缓存大小设置好点, 就不会有这些蛋疼的问题了*/
+                                /*扩容后这便是一个新的obj了, 故手动更新*/
+                                readcache.position(position);
+                                readcache.limit(limit);
+                                session.updateReadCacheBuffer(readcache);/*update*/
                             }
                         }
                     }
@@ -150,6 +177,7 @@ public class TcpIoProcess extends IoProcess implements Runnable{
                             /*call message sent*/
                             session.pushEventRunnable(new IoEventRunnable(msg, IoEventType.SESSION_SENT, session, context));
                         }
+                        session.setLastActive(System.currentTimeMillis());
                     }else{
                         key.interestOps(key.interestOps() & (~SelectionKey.OP_WRITE));/*取消写事件*/
                         if(session.isSentClose()){
@@ -170,7 +198,7 @@ public class TcpIoProcess extends IoProcess implements Runnable{
         Iterator<SelectionKey> keys = selector.keys().iterator();
         final long nowtime = System.currentTimeMillis();
         while(keys.hasNext()){
-            SelectionKey key = keys.next();
+            SelectionKey key = keys.next();/*这里报错?*/
             if(!isrun) break;
             
             if (key.channel() instanceof ServerSocketChannel) {
@@ -180,7 +208,7 @@ public class TcpIoProcess extends IoProcess implements Runnable{
             if (key.isValid() == false) {
                 continue;
             }
-            TcpSession session = (TcpSession) key.attachment();
+            NioTcpSession session = (NioTcpSession) key.attachment();
             if(session != null && nowtime - session.getLastActive() > isessiontimeout){
                 /*call on idle */
                 session.pushEventRunnable(new IoEventRunnable(null, IoEventType.SESSION_IDLE, session, context));
@@ -190,7 +218,7 @@ public class TcpIoProcess extends IoProcess implements Runnable{
         }
     }
     
-    public void cancelSession(TcpSession session){
+    public void cancelSession(NioTcpSession session){
         /*call close*/
         session.pushEventRunnable(new IoEventRunnable(null, IoEventType.SESSION_CLOSE, session, context));
     }
