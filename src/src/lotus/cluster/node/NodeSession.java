@@ -7,7 +7,7 @@ import lotus.cluster.Message;
 import lotus.cluster.MessageFactory;
 import lotus.cluster.MessageResult;
 import lotus.cluster.NetPack;
-import lotus.socket.client.Client;
+import lotus.socket.client.SocketClient;
 import lotus.socket.common.ClientCallback;
 import lotus.util.Util;
 
@@ -16,7 +16,7 @@ public class NodeSession extends ClientCallback{
     
     private String      host            =   "0.0.0.0";
     private int         port            =   5000;
-    private Client      client          =   null;
+    private SocketClient      client          =   null;
     private String      nodeid          =   null;
     private String      user_en_key     =   DEF_ENCRYPTION_KEY;//用户设置的密码
     private String      encryptionKey   =   user_en_key;
@@ -49,8 +49,8 @@ public class NodeSession extends ClientCallback{
         isinit = false;
         try {
         	
-            client = new Client(host, port, timeout, this);
-            if(client.connection()){
+            client = new SocketClient(this);
+            if(client.connection(host, port, timeout)){
                 sendPack(new NetPack(NetPack.CMD_INIT, nodeid.getBytes(charset)));
                 _wait(timeout);
                 return isinit;
@@ -155,14 +155,14 @@ public class NodeSession extends ClientCallback{
     }
     
     @Override
-    public void onClose(Client sc) {
+    public void onClose(SocketClient sc) {
         this.encryptionKey = this.user_en_key;
         close();
         handler.onClose(NodeSession.this);
     }
     
     @Override
-    public void onMessageRecv(Client sc, byte[] msg) {
+    public void onMessageRecv(SocketClient sc, byte[] msg) {
         if(enableEncryption){
             msg = Util.Decode(msg, encryptionKey);
         }

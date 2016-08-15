@@ -5,17 +5,16 @@ import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 
 import lotus.log.Log;
-import lotus.nio.NioContext;
 import lotus.nio.Session;
 import lotus.nio.tcp.NioTcpServer;
 
 /*
- * 一个简单的http服务器 还未完成
+ * 一个简单的http服务器
  * */
 public class HttpServer {
 
     private HttpHandler handler;
-    private NioContext  server;
+    private NioTcpServer  server;
     private Log         log;
     private Charset     charset;
     private int         maxheadbuffersize = 20480;

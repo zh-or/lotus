@@ -9,15 +9,15 @@ import lotus.socket.common.LengthProtocolCode;
 
 
 public class SocketServer {
-	private NioTcpServer			     server;
+	private NioTcpServer			 server;
 	private IoHandler				 handler;
     private String                   host;
     private int                      port;
-    private int                      tcount;
-    private int                      readbuffsize;
-    private int                      idletime;
-    private int 					 bufferlistmaxsize;
-    private int  				     sockettimeout;
+    private int                      tcount = 0;
+    private int                      readbuffsize = 1024 * 2;
+    private int                      idletime = 0;
+    private int 					 bufferlistmaxsize = 1024;
+    private int  				     sockettimeout = 1000 * 10;
     
     /**
      * @param host 
@@ -29,17 +29,35 @@ public class SocketServer {
      * @param handler 
      * @throws Exception
      */
-    public SocketServer(String host, int port, int tcount, int read_buffer_size, int idletime, int buffer_list_maxsize, int sockettimeout, IoHandler handler){
+    public SocketServer(String host, int port){
         this.host = host;
         this.port = port;
-        this.tcount = tcount;
-        this.handler = handler;
-        this.readbuffsize = read_buffer_size;
-        this.idletime = idletime * 1000;
-        this.bufferlistmaxsize = buffer_list_maxsize;
-        this.sockettimeout = sockettimeout;
     }
     
+    public void setHandler(IoHandler handler) {
+        this.handler = handler;
+    }
+
+    public void setTcount(int tcount) {
+        this.tcount = tcount;
+    }
+
+    public void setReadbuffsize(int readbuffsize) {
+        this.readbuffsize = readbuffsize;
+    }
+    
+    public void setIdletime(int idletime) {
+        this.idletime = idletime;
+    }
+
+    public void setBufferlistmaxsize(int bufferlistmaxsize) {
+        this.bufferlistmaxsize = bufferlistmaxsize;
+    }
+
+    public void setSockettimeout(int sockettimeout) {
+        this.sockettimeout = sockettimeout;
+    }
+
     public void start() throws IOException{
     	server = new NioTcpServer(tcount, bufferlistmaxsize);
     	server.setSessionReadBufferSize(readbuffsize);

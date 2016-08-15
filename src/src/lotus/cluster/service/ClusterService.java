@@ -88,15 +88,13 @@ public class ClusterService {
     
     public void start() throws IOException{
         
-        server = new SocketServer(host,
-                port,
-                exthreadtotal,
-                read_buffer_size,
-                idletime,
-                buffer_list_maxsize,
-                socket_timeout,
-                new ExIoHandler());
-        
+        server = new SocketServer(host, port);
+        server.setTcount(exthreadtotal);
+        server.setReadbuffsize(read_buffer_size);
+        server.setBufferlistmaxsize(buffer_list_maxsize);
+        server.setIdletime(idletime);
+        server.setSockettimeout(socket_timeout);
+        server.setHandler(new ExIoHandler());
         server.start();
     }
     

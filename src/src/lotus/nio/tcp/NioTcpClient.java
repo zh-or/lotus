@@ -7,6 +7,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import lotus.nio.NioContext;
 import lotus.nio.ProtocolCodec;
+import lotus.nio.Session;
 
 public class NioTcpClient extends NioContext{
     
@@ -36,15 +37,7 @@ public class NioTcpClient extends NioContext{
         }
     }
     
-    @Override
-    public void bind(InetSocketAddress addr) throws IOException {
-        throw new IOException("only NioTcpServer available");
-    }
-
-    @Override
-    public void unbind() {}
-    
-    public boolean connection(InetSocketAddress address){
+    public Session connection(InetSocketAddress address){
         return connection(address, 0);
     }
     
@@ -52,9 +45,9 @@ public class NioTcpClient extends NioContext{
      * 
      * @param address
      * @param timeout 如果此参数不为0, 则表示为同步连接 
-     * @return
+     * @return 如果设置了timeout则连接成功返回session, 否则直接返回null
      */
-    public boolean connection(InetSocketAddress address, int timeout){
+    public Session connection(InetSocketAddress address, int timeout){
         SocketChannel sc;
         NioTcpSession session = null;
         try {
@@ -83,12 +76,14 @@ public class NioTcpClient extends NioContext{
                         session.wait(timeout);
                     }
                 } catch (InterruptedException e) {}
-                return sc.finishConnect();
+                if(sc.finishConnect()){
+                    return session;
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return false;
+        return null;
     }
     
     

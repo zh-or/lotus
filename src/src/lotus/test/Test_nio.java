@@ -8,11 +8,10 @@ import java.net.Socket;
 
 import lotus.log.Log;
 import lotus.nio.IoHandler;
-import lotus.nio.LineProtocolCodec;
-import lotus.nio.NioContext;
 import lotus.nio.Session;
 import lotus.nio.tcp.NioTcpClient;
 import lotus.nio.tcp.NioTcpServer;
+import lotus.socket.common.LengthProtocolCode;
 import lotus.util.Util;
 
 
@@ -21,8 +20,8 @@ public class Test_nio {
     public static void main(String[] args) throws IOException {
         log = Log.getInstance();
         log.setProjectName("test");
-        NioContext server = new NioTcpServer();
-        server.setProtocolCodec(new LineProtocolCodec());
+        NioTcpServer server = new NioTcpServer();
+        server.setProtocolCodec(new LengthProtocolCode());
         
         server.setHandler(new IoHandler() {
             @Override
@@ -50,7 +49,7 @@ public class Test_nio {
         server.bind(new InetSocketAddress(4000));
         
         
-        NioTcpClient client = new NioTcpClient(new LineProtocolCodec());
+        NioTcpClient client = new NioTcpClient(new LengthProtocolCode());
         client.setSessionReadBufferSize(5);
         client.setHandler(new IoHandler() {
             @Override
@@ -69,7 +68,7 @@ public class Test_nio {
         });
         
         for(int i = 0; i < 100; i++){
-            boolean isconn = client.connection(new InetSocketAddress("127.0.0.1", 4000), 3000);
+            Session isconn = client.connection(new InetSocketAddress("127.0.0.1", 4000), 3000);
             log.info("wait:" + isconn);
             
         }

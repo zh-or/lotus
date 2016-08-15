@@ -52,7 +52,11 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
         while(isrun && selector != null){
             try {
                 if(isessiontimeout != 0){
-                    handleTimeOut();
+                    try {
+                        handleTimeOut();
+                    } catch (Exception e) {
+                        // TODO: handle exception
+                    }
                 }
                 handleIoEvent();
             } catch (Exception e) {

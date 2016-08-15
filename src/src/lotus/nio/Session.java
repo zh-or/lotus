@@ -101,4 +101,9 @@ public abstract class Session {
      * 数据发送完毕后关闭
      */
     public abstract void closeOnFlush();
+    
+    @Override
+    public String toString() {
+        return "[SESSIONID:" + id + "]";
+    }
 }

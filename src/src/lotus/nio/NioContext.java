@@ -1,7 +1,5 @@
 package lotus.nio;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -26,7 +24,7 @@ public abstract class NioContext {
     }
     
     /**
-     * @param extpoolsize 事件线程池大小
+     * @param extpoolsize 事件线程池大小 0 则不使用线程池
      * @param BufferListMaxSize buffer缓存队列大小
      */
     public NioContext(int extpoolsize, int buffer_list_maxsize){
@@ -34,18 +32,12 @@ public abstract class NioContext {
         if(buffer_list_maxsize <= 0) {
             buffer_list_maxsize = 50;
         }
-        if(extpoolsize <= 0){
-            extpoolsize = 10;
-        }
+        
         this.buffer_list_max_size = buffer_list_maxsize;
         if(extpoolsize > 0) this.executor_e = Executors.newFixedThreadPool(extpoolsize);
         this.bufferlist = new LinkedBlockingQueue<ByteBuffer>(buffer_list_maxsize);
         this.handler = new IoHandler() { };
     }
-    
-    public abstract void bind(InetSocketAddress addr) throws IOException;
-    
-    public abstract void unbind();
     
     public void setSelectorThreadTotal(int c){
         this.selector_thread_total = c;
@@ -132,5 +124,6 @@ public abstract class NioContext {
             buffer = null;
         }
     }
+
     
 }
