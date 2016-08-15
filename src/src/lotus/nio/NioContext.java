@@ -6,6 +6,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public abstract class NioContext {
+    private static final int        DEF_BUFFER_LIST_MAX_SIZE        =   2048;
+    private static final int        DEF_EVENT_THREAD_POOL_SIZE      =   100;
     public static final int         SELECT_TIMEOUT                  =   1000;
     
 	protected int                   selector_thread_total           =   0;
@@ -20,27 +22,35 @@ public abstract class NioContext {
     protected LinkedBlockingQueue<ByteBuffer> bufferlist            =   null;/*缓存*//*应付像http这样的服务时大量的短连接用*/
     
     public NioContext(){
-        this(10, 100);
-    }
-    
-    /**
-     * @param extpoolsize 事件线程池大小 0 则不使用线程池
-     * @param BufferListMaxSize buffer缓存队列大小
-     */
-    public NioContext(int extpoolsize, int buffer_list_maxsize){
         selector_thread_total = Runtime.getRuntime().availableProcessors() + 1;/* cpu + 1 */
-        if(buffer_list_maxsize <= 0) {
-            buffer_list_maxsize = 50;
-        }
-        
-        this.buffer_list_max_size = buffer_list_maxsize;
-        if(extpoolsize > 0) this.executor_e = Executors.newFixedThreadPool(extpoolsize);
-        this.bufferlist = new LinkedBlockingQueue<ByteBuffer>(buffer_list_maxsize);
+        this.buffer_list_max_size = DEF_BUFFER_LIST_MAX_SIZE;
+        this.executor_e = Executors.newFixedThreadPool(DEF_EVENT_THREAD_POOL_SIZE);
+        this.bufferlist = new LinkedBlockingQueue<ByteBuffer>(buffer_list_max_size);
         this.handler = new IoHandler() { };
     }
     
-    public void setSelectorThreadTotal(int c){
+
+    public NioContext setSelectorThreadTotal(int c){
         this.selector_thread_total = c;
+        return this;
+    }
+    
+    public NioContext setReadBufferCacheListSize(int size){
+        this.buffer_list_max_size = size;
+        this.bufferlist = null;
+        this.bufferlist = new LinkedBlockingQueue<ByteBuffer>(buffer_list_max_size);
+        return this;
+    }
+    
+    /**
+     * 设置事件线程池大小
+     * @param size 如果为0则表示不使用单独的线程池
+     * @return
+     */
+    public NioContext setEventThreadPoolSize(int size){
+        this.executor_e = null;
+        if(size > 0) this.executor_e = Executors.newFixedThreadPool(size);
+        return this;
     }
     
     /**

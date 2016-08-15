@@ -16,19 +16,16 @@ public class NioTcpClient extends NioContext{
     private int                 iipBound            =   0;
     private final ReentrantLock rliplock            =   new ReentrantLock();
     
-    public NioTcpClient(ProtocolCodec codec) throws IOException {
-        this(codec, 0, 0);
+    public NioTcpClient(ProtocolCodec codec){
+        this.procodec = codec;
     }
     
-    public NioTcpClient(ProtocolCodec codec, int expoolsize, int buffer_list_maxsize) throws IOException{
-        super(expoolsize, buffer_list_maxsize);
-        this.procodec = codec;
+    public void init() throws IOException{
         ioprocess  = new NioTcpIoProcess[selector_thread_total];
         for(int i = 0; i < selector_thread_total; i++){
             ioprocess[i] = new NioTcpIoProcess(this);
             new Thread(ioprocess[i], "lotus nio selector thread-" + i).start();
         }
-        
     }
     
     public void stop(){

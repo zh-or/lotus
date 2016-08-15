@@ -10,12 +10,7 @@ public class UdpServer extends NioContext{
     private DatagramChannel   dc            =   null;
     
     public UdpServer() {
-        this(0, 0);
-        
-    }
-
-    public UdpServer(int extpoolsize, int BufferListMaxSize) {
-        super(extpoolsize, BufferListMaxSize);
+        super();
     }
     
     public void bind(InetSocketAddress addr) throws IOException {

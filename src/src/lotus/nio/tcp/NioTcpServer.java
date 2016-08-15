@@ -22,11 +22,7 @@ public class NioTcpServer extends NioContext{
 	private long                idcount     =   0l;
 	
     public NioTcpServer() {
-		this(0, 0);
-	}
-
-	public NioTcpServer(int expoolsize, int buffer_list_maxsize) {
-		super(expoolsize, buffer_list_maxsize);
+		super();
 	}
 
 	public void bind(InetSocketAddress addr) throws IOException {

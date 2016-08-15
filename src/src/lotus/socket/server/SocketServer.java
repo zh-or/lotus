@@ -13,7 +13,7 @@ public class SocketServer {
 	private IoHandler				 handler;
     private String                   host;
     private int                      port;
-    private int                      tcount = 0;
+    private int                      EventThreadPoolSize = 100;
     private int                      readbuffsize = 1024 * 2;
     private int                      idletime = 0;
     private int 					 bufferlistmaxsize = 1024;
@@ -38,20 +38,20 @@ public class SocketServer {
         this.handler = handler;
     }
 
-    public void setTcount(int tcount) {
-        this.tcount = tcount;
+    public void setEventThreadPoolSize(int size) {
+        this.EventThreadPoolSize = size;
     }
 
-    public void setReadbuffsize(int readbuffsize) {
-        this.readbuffsize = readbuffsize;
+    public void setReadbuffsize(int size) {
+        this.readbuffsize = size;
     }
     
     public void setIdletime(int idletime) {
         this.idletime = idletime;
     }
 
-    public void setBufferlistmaxsize(int bufferlistmaxsize) {
-        this.bufferlistmaxsize = bufferlistmaxsize;
+    public void setReadBufferCacheListSize(int size) {
+        this.bufferlistmaxsize = size;
     }
 
     public void setSockettimeout(int sockettimeout) {
@@ -59,7 +59,10 @@ public class SocketServer {
     }
 
     public void start() throws IOException{
-    	server = new NioTcpServer(tcount, bufferlistmaxsize);
+    	server = new NioTcpServer();
+    	server.setReadBufferCacheListSize(bufferlistmaxsize);
+    	server.setEventThreadPoolSize(EventThreadPoolSize);
+    	server.setSessionReadBufferSize(readbuffsize);
     	server.setSessionReadBufferSize(readbuffsize);
     	server.setSessionIdleTime(idletime);
     	server.setSocketTimeOut(sockettimeout);

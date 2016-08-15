@@ -37,10 +37,6 @@ public class Message {
 	    return this;
 	}
 	
-	public static Message obtainMessage(byte type, String to, String msgid, String head, byte[] body){
-	    final MessageFactory mf = MessageFactory.getInstance();
-	    return mf.create(type, to, msgid, head, body);
-	}
 	
 	@Override
 	public String toString() {

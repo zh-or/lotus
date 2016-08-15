@@ -1,5 +1,6 @@
 package lotus.cluster.node;
 
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 
@@ -7,54 +8,56 @@ import lotus.cluster.Message;
 import lotus.cluster.MessageFactory;
 import lotus.cluster.MessageResult;
 import lotus.cluster.NetPack;
+import lotus.nio.IoHandler;
+import lotus.nio.tcp.NioTcpClient;
 import lotus.socket.client.SocketClient;
 import lotus.socket.common.ClientCallback;
+import lotus.socket.common.LengthProtocolCode;
 import lotus.util.Util;
 
-public class NodeSession extends ClientCallback{
-    private static final String DEF_ENCRYPTION_KEY          =   "lotus-cluster-key";
+public class NodeSession extends IoHandler{
+    private static final String DEF_ENCRYPTION_KEY  =   "lotus-cluster-key";
+    private static final int    SESSION_READ_CACHE  =   1024 * 1024;
     
-    private String      host            =   "0.0.0.0";
-    private int         port            =   5000;
-    private SocketClient      client          =   null;
-    private String      nodeid          =   null;
-    private String      user_en_key     =   DEF_ENCRYPTION_KEY;//用户设置的密码
-    private String      encryptionKey   =   user_en_key;
-    private Charset     charset         =   Charset.forName("utf-8");
-    private boolean     isinit          =   false;
-    private boolean     enableEncryption=   false;
-    private ArrayList<String> subs      =   null;
-    private String      tmp_now         =   null;
-    private MessageFactory msgfactory   =   null;
-    private MessageHandler handler      =   null;
+    private String              host                =   "0.0.0.0";
+    private int                 port                =   5000;
+    private NioTcpClient        client              =   null;
+    private String              nodeid              =   null;
+    private String              user_en_key         =   DEF_ENCRYPTION_KEY;//用户设置的密码
+    private String              use_en_key          =   user_en_key;//当前使用的密码
+    private Charset             charset             =   Charset.forName("utf-8");
+    private boolean             isinit              =   false;
+    private boolean             enableEncryption    =   false;
+    private ArrayList<String>   subs                =   null;//当前订阅的消息类型
+    private String              tmp_now             =   null;
+    private MessageHandler      handler             =   null;
     
     /**
      * @param host service's address
      * @param port service's port
+     * @throws IOException 
      */
-    public NodeSession(String host, int port){
+    public NodeSession(String host, int port) throws IOException{
         this(host, port, Util.getUUID());
     }
     
-    public NodeSession(String host, int port, String nodeid){
+    public NodeSession(String host, int port, String nodeid) throws IOException{
         this.nodeid = nodeid;
         this.host = host;
         this.port = port;
         this.subs = new ArrayList<String>();
-        this.msgfactory = MessageFactory.getInstance();
         this.handler = new MessageHandler() {};
+        this.client = new NioTcpClient(new LengthProtocolCode());
+        this.client.setHandler(this);
+        this.client.setSessionReadBufferSize(SESSION_READ_CACHE);
+        
     }
     
     public synchronized boolean init(int timeout){
         isinit = false;
         try {
         	
-            client = new SocketClient(this);
-            if(client.connection(host, port, timeout)){
-                sendPack(new NetPack(NetPack.CMD_INIT, nodeid.getBytes(charset)));
-                _wait(timeout);
-                return isinit;
-            }
+            
         } catch (Exception e) {}
         return false;
     }
@@ -86,13 +89,13 @@ public class NodeSession extends ClientCallback{
         if(Util.CheckNull(key)){
             this.user_en_key = DEF_ENCRYPTION_KEY;
         }
-        this.encryptionKey = this.user_en_key;
+        this.use_en_key = this.user_en_key;
     }
     
     public synchronized void close(){
         
         subs.clear();
-        encryptionKey = user_en_key;
+        use_en_key = user_en_key;
         isinit = false;
     }
     
@@ -149,18 +152,11 @@ public class NodeSession extends ClientCallback{
         }
         byte[] data = pack.Encode();
         if(enableEncryption){
-            data = Util.Encoded(data, encryptionKey);
+            data = Util.Encoded(data, use_en_key);
         }
-        client.send(data);
+        
     }
-    
-    @Override
-    public void onClose(SocketClient sc) {
-        this.encryptionKey = this.user_en_key;
-        close();
-        handler.onClose(NodeSession.this);
-    }
-    
+
     @Override
     public void onMessageRecv(SocketClient sc, byte[] msg) {
         if(enableEncryption){

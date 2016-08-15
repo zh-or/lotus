@@ -50,6 +50,7 @@ public class Test_nio {
         
         
         NioTcpClient client = new NioTcpClient(new LengthProtocolCode());
+        client.init();
         client.setSessionReadBufferSize(5);
         client.setHandler(new IoHandler() {
             @Override
