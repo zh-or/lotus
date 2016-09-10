@@ -20,7 +20,7 @@ public class Test_cluster_service extends MessageListenner{
             
     
     public static void main(String[] args) throws IOException {
-        sercice = new ClusterService("0.0.0.0", 5000);
+        sercice = new ClusterService();
         sercice.setMessageListenner(new Test_cluster_service());
         sercice.start();
         log = Log.getInstance();

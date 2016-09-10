@@ -21,7 +21,9 @@ public class HttpServer {
     
     public HttpServer(int eventThreadTotal, int readBufferSize){
         this.handler = new HttpHandler() {};
-        server = new NioTcpServer(eventThreadTotal, 1024);
+        server = new NioTcpServer();
+        server.setEventThreadPoolSize(eventThreadTotal);
+        server.setSessionReadBufferSize(readBufferSize);
         server.setSessionReadBufferSize(readBufferSize);
         server.setHandler(new EventHandler());
         

@@ -4,7 +4,7 @@ import java.util.Arrays;
 
 public class NetPack {
     /* type data*/
-    public static final byte CMD_INIT           =       0x01;//初始化
+    public static final byte CMD_INIT           =       0x01;//上线
     public static final byte CMD_MSG            =       0x02;//消息
     public static final byte CMD_RES            =       0x03;//回执
     public static final byte CMD_KEEP           =       0x04;//心跳

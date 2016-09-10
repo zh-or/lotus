@@ -13,7 +13,11 @@ import lotus.socket.common.ClientCallback;
 import lotus.socket.common.EventRunnable;
 import lotus.util.Util;
 
-public class SocketClient {
+/**
+ * 异步socket
+ * @author OR
+ */
+public class AsyncSocketClient {
 	private Socket              socket                   = null;
     private ClientCallback      callback                 = null;
     private ExecutorService     sendpool                 = null;
@@ -23,9 +27,10 @@ public class SocketClient {
     private byte[]              keepcontent              = {0x00};
     private Object              attr                     = null;//辅助参数
     private int                 RECV_BUFF_SIZE           = 1024 * 2;
+    private int                 read_time_out            = 10 * 1000;
     private volatile boolean    closed                   = false;
 
-    public SocketClient(ClientCallback callback){
+    public AsyncSocketClient(ClientCallback callback){
         this.callback = callback;
         sendpool = Executors.newSingleThreadExecutor();
         eventpool = Executors.newSingleThreadExecutor();
@@ -33,6 +38,10 @@ public class SocketClient {
     
     public Object getAttr() {
         return attr;
+    }
+    
+    public void setReadTimeOut(int read_time_out){
+        this.read_time_out = read_time_out;
     }
 
     public void setAttr(Object attr) {
@@ -75,6 +84,7 @@ public class SocketClient {
             socket = new Socket();
             socket.setReceiveBufferSize(RECV_BUFF_SIZE);
             lasthtime = System.currentTimeMillis();
+            socket.setSoTimeout(read_time_out);
             socket.connect(new InetSocketAddress(hostname, port), timeout);
             Thread thread_recv = new Thread(new RecvThread());
             thread_recv.setName("socket recv thread");
@@ -150,7 +160,7 @@ public class SocketClient {
                                         break;
                                     }
                                     if(in.read() == 0x03){
-                                        eventpool.execute(new EventRunnable(ClientCallback.EventType.ONMESSAGERECV, callback, SocketClient.this, content));
+                                        eventpool.execute(new EventRunnable(ClientCallback.EventType.ONMESSAGERECV, callback, AsyncSocketClient.this, content));
                                         lasthtime = System.currentTimeMillis();
                                         continue;
                                     }
@@ -171,11 +181,9 @@ public class SocketClient {
             }catch(Exception e){
                 e.printStackTrace();
             }
-            eventpool.execute(new EventRunnable(ClientCallback.EventType.ONCLOSE, callback, SocketClient.this, null));
+            eventpool.execute(new EventRunnable(ClientCallback.EventType.ONCLOSE, callback, AsyncSocketClient.this, null));
             close();
         }
 	}
-	
-	
 	
 }

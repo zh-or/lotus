@@ -14,6 +14,7 @@ public abstract class Session {
     protected volatile boolean                  runingevent     =   false;
     protected ProtocolDecoderOutput             deout           =   null;
     protected long                              id              =   0l;
+    protected final Object                      recvPackwait    =   new Object();
     
     public Session (NioContext context, long id){
         this.context = context;
@@ -94,6 +95,27 @@ public abstract class Session {
         context.putByteBufferToCache(readcache);/*回收*/
     }
 
+    public void _wait(int timeout){
+        synchronized (recvPackwait) {
+            try {
+                recvPackwait.wait(timeout);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    
+    public void _notify(){
+        synchronized (recvPackwait) {
+            recvPackwait.notify();
+        }
+    }
+    
+    public void _notifyAll(){
+        synchronized (recvPackwait) {
+            recvPackwait.notifyAll();
+        }
+    }
     
     public abstract SocketAddress getRemoteAddress();
     public abstract void write(Object data);

@@ -24,7 +24,7 @@ public class NioTcpClient extends NioContext{
         ioprocess  = new NioTcpIoProcess[selector_thread_total];
         for(int i = 0; i < selector_thread_total; i++){
             ioprocess[i] = new NioTcpIoProcess(this);
-            new Thread(ioprocess[i], "lotus nio selector thread-" + i).start();
+            new Thread(ioprocess[i], "lotus nio client selector thread-" + i).start();
         }
     }
     

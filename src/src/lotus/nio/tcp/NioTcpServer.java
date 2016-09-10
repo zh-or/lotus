@@ -14,7 +14,6 @@ import lotus.util.Util;
 
 public class NioTcpServer extends NioContext{
 	private ServerSocketChannel ssc			=	null;
-	private volatile boolean    isrun       =   false;
 	private NioTcpIoProcess     ioprocess[] =   null;
     private int                 iipBound    =   0;
     private final ReentrantLock rliplock    =   new ReentrantLock();
@@ -29,7 +28,6 @@ public class NioTcpServer extends NioContext{
 		ssc = ServerSocketChannel.open();
 		ssc.socket().bind(addr);
 		ssc.configureBlocking(false);
-		isrun = true;
 		/*一个线程 accept */
 		acceptrhread = new AcceptThread();
 		new Thread(acceptrhread, "lotus nio accept thread").start();
@@ -37,12 +35,11 @@ public class NioTcpServer extends NioContext{
 		
 		for(int i = 0; i < selector_thread_total; i++){
 		    ioprocess[i] = new NioTcpIoProcess(this);
-		    new Thread(ioprocess[i], "lotus nio selector thread-" + i).start();
+		    new Thread(ioprocess[i], "lotus nio server selector thread-" + i).start();
 		}
 	}
 	
 	public void unbind() {
-		isrun = false;
 		try {
 		    for(int i = 0; i < selector_thread_total; i++){
 		        try {
@@ -53,17 +50,19 @@ public class NioTcpServer extends NioContext{
             bufferlist.clear();
             if(acceptrhread != null) acceptrhread.close();
 		    if(ssc != null) ssc.close();
+		    ssc = null;
         } catch (IOException e) {}
 	}
 	
     private class AcceptThread implements Runnable{
         Selector mslAccept = null;
-        
+        boolean run = true;
         public AcceptThread() throws IOException {
             mslAccept = Selector.open();
         }
         
         public void close(){
+            run = false;
             mslAccept.wakeup();
         }
         
@@ -71,11 +70,11 @@ public class NioTcpServer extends NioContext{
         public void run() {
             try {
                 ssc.register(mslAccept, SelectionKey.OP_ACCEPT);
-                while(mslAccept != null && isrun){
+                while(mslAccept != null && run){
                     try {
                         if(mslAccept.select(SELECT_TIMEOUT) == 0){
                             
-                            if(!isrun) break;
+                            if(!run) break;
                             
                             Util.SLEEP(1);
                             continue;

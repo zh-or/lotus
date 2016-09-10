@@ -1,6 +1,7 @@
 package lotus.cluster.service;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -21,8 +22,6 @@ import lotus.util.Util;
 public class ClusterService {
     
     private SocketServer    server						=	null;
-    private String          host                        =   "0.0.0.0";
-    private int             port                        =   5000;
     private int             exthreadtotal               =   10;
     private int             read_buffer_size            =   2048;
     private int             idletime                    =   60;
@@ -30,11 +29,10 @@ public class ClusterService {
     private int             socket_timeout              =   50000;
     private boolean         enableEncryption            =   false;
     private String          en_key                      =   DEF_ENCRYPTION_KEY;
-    private MessageFactory  msgfactory                  =   null;
     
     private static String   NODE_ID                     =   "node-id";
     private static String   KEEP_TIME                   =   "last-keep-time";
-    private static String   CONN_TIME                   =   "commection-time";
+    private static String   CONN_TIME                   =   "connection-time";
     private static String   ENCRYPTION_KEY              =   "encryption-key";
     private static String   DEF_ENCRYPTION_KEY          =   "lotus-cluster-key";
     private static String   LASAT_ACTIVE                =   "session-last-active";
@@ -48,29 +46,31 @@ public class ClusterService {
     private ConcurrentHashMap<String, ArrayList<String>>  subscribeActions  =   null;/* type -> nodeids */
     private final Object                                  subactions_lock   =   new Object();
     
-    public ClusterService(String host, int port) {
-        this.host = host;
-        this.port = port;
+    public ClusterService() {
+
         this.listenner = new MessageListenner() {};
         this.nodes = new ConcurrentHashMap<String, Node>();
         this.subscribeActions = new ConcurrentHashMap<String, ArrayList<String>>();
-        this.msgfactory = MessageFactory.getInstance();
+        
     }
     
-    public void setMessageCharset(String charsetName){
+    public ClusterService setMessageCharset(String charsetName){
         DEF_CHARSET = Charset.forName(charsetName);
+        return this;
     }
     
-    public void setMessageListenner(MessageListenner listenner){
+    public ClusterService setMessageListenner(MessageListenner listenner){
         this.listenner = listenner;
+        return this;
     }
     
-    public void setEnableEncryption(boolean isenable, String key){
+    public ClusterService setEnableEncryption(boolean isenable, String key){
         this.enableEncryption = isenable;
         this.en_key = key;
         if(Util.CheckNull(key)){
             this.en_key = DEF_ENCRYPTION_KEY;
         }
+        return this;
     }
     
     public boolean IsEnableEncryption(){
@@ -78,7 +78,7 @@ public class ClusterService {
     }
     
     public void pushMessage(Node node, Message msg){
-        sendPack(node.getSession(), new NetPack(NetPack.CMD_MSG, MessageFactory.encode(msg, DEF_CHARSET)).Encode());
+        //sendPack(node.getSession(), new NetPack(NetPack.CMD_MSG, MessageFactory.encode(msg, DEF_CHARSET)).Encode());
     }
     
     public void removeNode(String nodeid){
@@ -86,16 +86,19 @@ public class ClusterService {
     }
     
     
-    public void start() throws IOException{
+    public ClusterService start(InetSocketAddress addr) throws IOException{
         
-        server = new SocketServer(host, port);
-        server.setTcount(exthreadtotal);
+        server = new SocketServer(addr);
+        server.setEventThreadPoolSize(exthreadtotal);
         server.setReadbuffsize(read_buffer_size);
-        server.setBufferlistmaxsize(buffer_list_maxsize);
+        server.setReadBufferCacheListSize(buffer_list_maxsize);
         server.setIdletime(idletime);
         server.setSockettimeout(socket_timeout);
         server.setHandler(new ExIoHandler());
         server.start();
+        
+        
+        return this;
     }
     
     public void stop(){

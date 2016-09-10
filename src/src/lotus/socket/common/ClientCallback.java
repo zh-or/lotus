@@ -1,5 +1,5 @@
 package lotus.socket.common;
-import lotus.socket.client.SocketClient;
+import lotus.socket.client.AsyncSocketClient;
 
 /**
  * 
@@ -10,11 +10,11 @@ public abstract class ClientCallback {
         ONCLOSE, ONMESSAGERECV, ONSENDT
     }
 	/*链接断开时调用*/
-    public void onClose(SocketClient sc){}
+    public void onClose(AsyncSocketClient sc){}
     /*收到消息时调用*/
-    public void onMessageRecv(SocketClient sc, byte[] msg){}
+    public void onMessageRecv(AsyncSocketClient sc, byte[] msg){}
     /*消息发送后调用*/
-    public void onSendt(SocketClient sc, byte[] msg){}
+    public void onSendt(AsyncSocketClient sc, byte[] msg){}
     
 
 }

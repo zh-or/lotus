@@ -24,6 +24,7 @@ public class NioTcpSession extends Session{
 		super(context, id);
 		this.channel = channel;
 		this.qwrite = new LinkedBlockingQueue<Object>();
+		
 		this.ioprocess = ioprocess;
 		try {
             remoteaddr = channel.getRemoteAddress();
@@ -54,6 +55,12 @@ public class NioTcpSession extends Session{
 		write(data);
 		this.sentclose = sentclose;
 	}
+	
+	public void writeAndWaitRecv(Object data, int timeout){
+	    write(data);
+	    _wait(timeout);
+	}
+	
 	
 	public Object poolMessage(){
 	    Object obj = qwrite.poll();

@@ -1,59 +1,77 @@
 package lotus.cluster;
 
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import lotus.nio.Session;
 
+
 public class Node {
-    private Session session;
-    private ArrayList<String> subscribeActions;
-    private String nodeid;
+
+    private Session                 session_cmd     = null;
+    private ArrayList<Session>      session_data    = null;
+    private ArrayList<String>       subs            = null;
+    private String                  nodeid          = "";
+    private AtomicInteger           limit           = null;
+    private AtomicInteger           capacity        = null;
     
-    public Node(Session session, String nodeid) {
-        this.session = session;
-        this.subscribeActions = new ArrayList<String>();
+    public Node(Session session_cmd, String nodeid) {
+        this.session_cmd = session_cmd;
+        this.session_data = new ArrayList<Session>();
+        this.subs = new ArrayList<String>();
         this.nodeid = nodeid;
+        this.limit = new AtomicInteger(0);
+        this.capacity = new AtomicInteger(0);
+        
     }
     
-    public synchronized void addSubscribe(String action){
-        if(subscribeActions.contains(action)){
-           return; 
+    public Session getCmdSession(){
+        return session_cmd;
+    }
+    
+    public Session getOneDataSession(){
+        if(capacity.get() > 0){
+            
         }
-        subscribeActions.add(action);
-    }
-    
-    public synchronized void removeSubscribe(String action){
-        subscribeActions.remove(action);
-    }
-    
-    public synchronized void updateSession(Session session){
-        this.session = session;
-    }
-    
-    public Session getSession(){
-        return this.session;
+        return null;
     }
     
     public String getNodeId(){
-        return this.nodeid;
+        return nodeid;
     }
     
-    public synchronized ArrayList<String> getSubscribeActions(){
-        @SuppressWarnings("unchecked")
-        ArrayList<String> tmp = (ArrayList<String>) subscribeActions.clone();
-        return tmp;
+    public synchronized void addSubs(String type){
+        if(subs.contains(type) == false){
+            subs.add(type);
+        }
     }
-
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("remoteaddress=");
-        builder.append(session.getRemoteAddress());
-        builder.append(", subscribeActions=");
-        builder.append(subscribeActions);
-        builder.append(", nodeid=");
-        builder.append(nodeid);
-        return builder.toString();
+    
+    public synchronized void removeSubs(String type){
+        subs.remove(type);
+    }
+    
+    public int limit(){
+        return limit;
+    }
+    
+    public void limit(int l){
+        this.limit = l;
+    }
+    
+    public int capacity(){
+        return capacity;
+    }
+    
+    public void capacity(int c){
+        this.capacity = c;
+    }
+    
+    public Session getOneConnection(){
+        Session conn = null;
+        if(capacity > 0){
+            
+        }
+        return conn;
     }
     
 }

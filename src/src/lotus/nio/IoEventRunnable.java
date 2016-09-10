@@ -43,6 +43,7 @@ public class IoEventRunnable implements Runnable{
                     break;
                 case SESSION_RECVMSG:
                     handler.onRecvMessage(session, att);
+                    session._notifyAll();
                     break;
                 case SESSION_SENT:
                     handler.onSentMessage(session, att);

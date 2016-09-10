@@ -11,8 +11,7 @@ import lotus.socket.common.LengthProtocolCode;
 public class SocketServer {
 	private NioTcpServer			 server;
 	private IoHandler				 handler;
-    private String                   host;
-    private int                      port;
+	private InetSocketAddress        addr;
     private int                      EventThreadPoolSize = 100;
     private int                      readbuffsize = 1024 * 2;
     private int                      idletime = 0;
@@ -22,16 +21,9 @@ public class SocketServer {
     /**
      * @param host 
      * @param port 
-     * @param tcount 
-     * @param readbuffersize 读缓冲区大小
-     * @param ideatime 单位'秒'
-     * @param buffer_list_maxsize 换型缓冲队列最大长度
-     * @param handler 
-     * @throws Exception
      */
-    public SocketServer(String host, int port){
-        this.host = host;
-        this.port = port;
+    public SocketServer(InetSocketAddress addr){
+        this.addr = addr;
     }
     
     public void setHandler(IoHandler handler) {
@@ -68,7 +60,7 @@ public class SocketServer {
     	server.setSocketTimeOut(sockettimeout);
     	server.setProtocolCodec(new LengthProtocolCode());
     	server.setHandler(handler);
-        server.bind(new InetSocketAddress(host, port));
+        server.bind(addr);
     }
     
     public void stop(){
@@ -77,7 +69,7 @@ public class SocketServer {
     }
     
     public int getPort(){
-        return port;
+        return addr.getPort();
     }
     
 }
