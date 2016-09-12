@@ -12,7 +12,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 import lotus.cluster.Message;
-import lotus.cluster.MessageFactory;
 import lotus.cluster.NetPack;
 import lotus.nio.IoHandler;
 import lotus.nio.Session;
@@ -166,7 +165,7 @@ public class NodeSession extends IoHandler{
     
     public void sendMessage(Message msg) throws Exception{
         msg.from = nodeid;
-        sendPack(new NetPack(NetPack.CMD_MSG, MessageFactory.encode(msg, charset)));
+        sendPack(new NetPack(NetPack.CMD_MSG, Message.encode(msg, charset)));
     }
     
     /**

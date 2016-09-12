@@ -5,7 +5,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import lotus.cluster.Message;
-import lotus.cluster.MessageFactory;
 import lotus.cluster.node.MessageHandler;
 import lotus.cluster.node.NodeSession;
 import lotus.log.Log;
@@ -14,7 +13,6 @@ import lotus.util.Util;
 public class Test_cluster_node extends MessageHandler{
     static NodeSession node;
     static Log log;
-    static MessageFactory msgfactory;
     static int recv = 0;
     static Object lock_recv = new Object();
     
@@ -25,7 +23,6 @@ public class Test_cluster_node extends MessageHandler{
             host = args[0];
         }
         log = Log.getInstance();
-        msgfactory = MessageFactory.getInstance();
         log.setProjectName("node");
         Scanner in = new Scanner(System.in);
         int m = 1, total = 0;
@@ -73,7 +70,7 @@ public class Test_cluster_node extends MessageHandler{
                      
                      for(int i = 0; i < total; i++){
                          node.sendMessage(
-                                 msgfactory.create(
+                                 new Message(
                                          Message.MTYPE_SUBSCRIBE,
                                          "fuck",
                                          Util.getUUID(),

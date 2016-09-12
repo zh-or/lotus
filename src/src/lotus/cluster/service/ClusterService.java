@@ -4,14 +4,9 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
-import lotus.cluster.Message;
-import lotus.cluster.MessageFactory;
 import lotus.cluster.MessageListenner;
-import lotus.cluster.MessageResult;
 import lotus.cluster.NetPack;
 import lotus.cluster.Node;
 import lotus.nio.IoHandler;
@@ -22,13 +17,18 @@ import lotus.util.Util;
 public class ClusterService {
     
     private SocketServer    server						=	null;
-    private int             exthreadtotal               =   10;
+    private int             exthreadtotal               =   0;/*都在io线程里面处理了吧*/
     private int             read_buffer_size            =   2048;
     private int             idletime                    =   60;
-    private int             buffer_list_maxsize         =   1024;
+    private int             buffer_list_size            =   1024;
     private int             socket_timeout              =   50000;
+    
+    private int             conn_max_size               =   100;/*连接数最大数量*/
+    private int             conn_low_size               =   10;/*连接数最小数量*/
+    
     private boolean         enableEncryption            =   false;
-    private String          en_key                      =   DEF_ENCRYPTION_KEY;
+    private String          use_encryption_key          =   DEF_ENCRYPTION_KEY;//当前引用的加密密码
+    
     
     private static String   NODE_ID                     =   "node-id";
     private static String   KEEP_TIME                   =   "last-keep-time";
@@ -64,11 +64,17 @@ public class ClusterService {
         return this;
     }
     
+    /**
+     * 消息加密开关
+     * @param isenable
+     * @param key 如果为空则表示使用默认密码
+     * @return
+     */
     public ClusterService setEnableEncryption(boolean isenable, String key){
         this.enableEncryption = isenable;
-        this.en_key = key;
+        this.use_encryption_key = key;
         if(Util.CheckNull(key)){
-            this.en_key = DEF_ENCRYPTION_KEY;
+            this.use_encryption_key = DEF_ENCRYPTION_KEY;
         }
         return this;
     }
@@ -76,22 +82,13 @@ public class ClusterService {
     public boolean IsEnableEncryption(){
         return enableEncryption;
     }
-    
-    public void pushMessage(Node node, Message msg){
-        //sendPack(node.getSession(), new NetPack(NetPack.CMD_MSG, MessageFactory.encode(msg, DEF_CHARSET)).Encode());
-    }
-    
-    public void removeNode(String nodeid){
-        
-    }
-    
-    
+ 
     public ClusterService start(InetSocketAddress addr) throws IOException{
         
         server = new SocketServer(addr);
         server.setEventThreadPoolSize(exthreadtotal);
         server.setReadbuffsize(read_buffer_size);
-        server.setReadBufferCacheListSize(buffer_list_maxsize);
+        server.setReadBufferCacheListSize(buffer_list_size);
         server.setIdletime(idletime);
         server.setSockettimeout(socket_timeout);
         server.setHandler(new ExIoHandler());
@@ -105,53 +102,7 @@ public class ClusterService {
         server.stop();
     }
     
-    
-    private void sendPack(Session session, byte[] data){
-        
-        if(enableEncryption){
-            data = Util.Encoded(data, session.getAttr(ENCRYPTION_KEY, DEF_ENCRYPTION_KEY) + "");
-        }
-        session.write(data);
-    }
-    
-    private void sessionAddSubscribe(Node node, String action){
-        node.addSubscribe(action);
-        ArrayList<String> nodes = subscribeActions.get(action);
-        if(nodes == null){
-            synchronized (subactions_lock) {
-                nodes = subscribeActions.get(action);
-                if(nodes == null){/*还是null*/
-                    nodes = new ArrayList<String>();
-                    nodes.add(node.getNodeId());
-                    subscribeActions.put(action, nodes);                    
-                }
-            }
-        }else{
-            synchronized (nodes) {
-                nodes.add(node.getNodeId());
-            }
-        }
-    }
-    
-    private void sessionRemoveSubscribe(Node node, String action){
-        node.removeSubscribe(action);
-        ArrayList<String> nodes = subscribeActions.get(action);
-        if(nodes != null){
-            synchronized (nodes) {
-                nodes.remove(action);
-            }
-        }
-    }
-    
-    private Node sessionCheck(Session session){
-        String nodeid = session.getAttr(NODE_ID, "") + "";
-        if(Util.CheckNull(nodeid)){
-            return null;
-        }
-        Node node = nodes.get(nodeid);
-        /*做些检查*/
-        return node;
-    }
+
     
     
     private class ExIoHandler extends IoHandler{
@@ -159,7 +110,7 @@ public class ClusterService {
         @Override
         public void onConnection(Session session) throws Exception {
             long t = System.currentTimeMillis();
-            session.setAttr(ENCRYPTION_KEY, en_key);
+            session.setAttr(ENCRYPTION_KEY, use_encryption_key);
             session.setAttr(CONN_TIME, t);
             session.setAttr(KEEP_TIME, t);
             session.setAttr(LASAT_ACTIVE, t);
@@ -180,120 +131,7 @@ public class ClusterService {
             NetPack pack = new NetPack(data);
             byte packtype = pack.type;
             try {
-                switch (packtype) {
-                    case NetPack.CMD_MSG:/*普通消息消息*/
-                    {
-                        Message tmsg = MessageFactory.decode(pack.body, DEF_CHARSET);
-                        byte mtype = tmsg.type;
-                        switch (mtype) {
-                            case Message.MTYPE_BROADCAT:
-                            {
-                                Node node = sessionCheck(session);
-                                if(node != null && listenner.onRecvBroadcast(ClusterService.this, node, tmsg)){
-                                    Iterator<Entry<String, Node>> it = nodes.entrySet().iterator();
-                                    Entry<String, Node> item;
-                                    while(it.hasNext()){
-                                        item = it.next();
-                                        node = item.getValue();
-                                        sendPack(node.getSession(), data);
-                                    }
-                                }
-                            }
-                                break;
-                            case Message.MTYPE_MESSAGE:
-                            {
-                                Node node = nodes.get(tmsg.to);
-                                if(node != null){
-                                    sendPack(node.getSession(), data);
-                                    listenner.onRecvMessage(ClusterService.this, tmsg);
-                                }else{
-                                    if(tmsg.needReceipt){/*此消息需要回执, 直接返回失败*/
-                                        sendPack(session, new NetPack(NetPack.CMD_RES, new MessageResult(false, tmsg.msgid, tmsg.from).Encode(DEF_CHARSET)).Encode());
-                                    }
-                                }
-                            }
-                                break;
-                            case Message.MTYPE_SUBSCRIBE:
-                            {
-                                listenner.onRecvSubscribe(ClusterService.this, sessionCheck(session), tmsg);
-                                ArrayList<String> nodeids = subscribeActions.get(tmsg.to);
-                                if(nodeids != null){
-                                    Node node;
-                                    for(String nodeid : nodeids){
-                                        node = nodes.get(nodeid);
-                                        if(node != null){
-                                            sendPack(node.getSession(), data);
-                                        }
-                                    }
-                                }
-                            }
-                                break;
-                        }
-                        msgfactory.destory(tmsg);
-                    }
-                        break;
-                    case NetPack.CMD_RES:/*消息回执*/
-                    {
-                        MessageResult mr = new MessageResult(pack.body, DEF_CHARSET);
-                        Node node = nodes.get(mr.to);
-                        if(node != null){
-                            sendPack(node.getSession(), data);
-                        }
-                    }
-                        break;
-                    case NetPack.CMD_INIT:/*初始化*/
-                    {
-                        String nodeid = new String (pack.body, DEF_CHARSET);
-                        Node node = nodes.get(nodeid);/*是不是重复了?*/
-                        if(node != null){
-                            Session oldsession = node.getSession();
-                            if(oldsession != session){
-                                oldsession.closeNow();
-                            }
-                            node.updateSession(session);
-                        }else{
-                            node = new Node(session, nodeid);
-                        }
-                        nodes.put(nodeid, node);
-                        sendPack(session, data);
-                        session.setAttr(ENCRYPTION_KEY, nodeid);
-                        session.setAttr(NODE_ID, nodeid);
-                        listenner.onNodeInit(ClusterService.this, node);
-                    }
-                        break;
-                    case NetPack.CMD_SUBS_MSG:/*订阅消息*/
-                    {
-                        Node node = sessionCheck(session);
-                        String action = new String(pack.body, DEF_CHARSET);
-                        if(node != null && !Util.CheckNull(action)){
-                            sessionAddSubscribe(node, action);
-                            sendPack(session, data);
-                            listenner.onSubscribeMessage(ClusterService.this, node, action);
-                        }else{
-                            session.closeNow();
-                        }
-                    }
-                        break;
-                    case NetPack.CMD_UNSUBS_MSG:/*取消订阅消息*/
-                    {
-                        Node node = sessionCheck(session);
-                        String action = new String(pack.body, DEF_CHARSET);
-                        if(node != null && !Util.CheckNull(action)){
-                            sessionRemoveSubscribe(node, action);
-                            sendPack(session, data);
-                            listenner.onUnSubscribeMessage(ClusterService.this, node, action);
-                        }else{
-                            session.closeNow();
-                        }
-                    }
-                        break;
-                    case NetPack.CMD_KEEP:/*心跳*/
-                        /*不需要处理*/
-                        break;
-                    default:
-                        session.closeNow();
-                        break;
-                }
+               
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -321,12 +159,7 @@ public class ClusterService {
                 /*取消所有广播*/
                 Node node = nodes.get(nodeid);
                 listenner.onNodeUnInit(ClusterService.this, node);
-                if(node != null && node.getSession() == session){
-                    ArrayList<String> subactions = node.getSubscribeActions();
-                    for(String action : subactions){
-                        sessionRemoveSubscribe(node, action);
-                    }
-                }
+                
             }
         }
         
