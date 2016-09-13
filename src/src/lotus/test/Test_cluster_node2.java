@@ -31,6 +31,8 @@ public class Test_cluster_node2 extends MessageHandler{
             Util.SLEEP(3000);
             System.exit(1);
         }
+        
+        //fuck?	
 
     }
     
