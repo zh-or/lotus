@@ -19,18 +19,20 @@ public class ClusterService {
     private SocketServer    server						=	null;
     private int             exthreadtotal               =   0;/*都在io线程里面处理了吧*/
     private int             read_buffer_size            =   2048;
-    private int             idletime                    =   60;
+    private int             idletime                    =   60 * 1000;
     private int             buffer_list_size            =   1024;
     private int             socket_timeout              =   50000;
     
     private int             conn_max_size               =   100;/*连接数最大数量*/
-    private int             conn_low_size               =   10;/*连接数最小数量*/
     
     private boolean         enableEncryption            =   false;
     private String          use_encryption_key          =   DEF_ENCRYPTION_KEY;//当前引用的加密密码
     
     
     private static String   NODE_ID                     =   "node-id";
+    private static String   SESSION_TYPE                =   "session-type";
+    private static String   SESSION_TYPE_DATA           =   "session-type-data";
+    private static String   SESSION_TYPE_CMD            =   "session-type-cmd";
     private static String   KEEP_TIME                   =   "last-keep-time";
     private static String   CONN_TIME                   =   "connection-time";
     private static String   ENCRYPTION_KEY              =   "encryption-key";
@@ -64,6 +66,11 @@ public class ClusterService {
         return this;
     }
     
+    public ClusterService setMaxDataConnection(int count){
+        this.conn_max_size = count;
+        return this;
+    }
+    
     /**
      * 消息加密开关
      * @param isenable
@@ -91,6 +98,7 @@ public class ClusterService {
         server.setReadBufferCacheListSize(buffer_list_size);
         server.setIdletime(idletime);
         server.setSockettimeout(socket_timeout);
+        
         server.setHandler(new ExIoHandler());
         server.start();
         
@@ -101,9 +109,6 @@ public class ClusterService {
     public void stop(){
         server.stop();
     }
-    
-
-    
     
     private class ExIoHandler extends IoHandler{
         
@@ -127,11 +132,46 @@ public class ClusterService {
             if(enableEncryption){
                 data = Util.Decode(data, session.getAttr(ENCRYPTION_KEY, DEF_ENCRYPTION_KEY) + "");
             }
-            
+            String session_type = (String) session.getAttr(SESSION_TYPE);
             NetPack pack = new NetPack(data);
             byte packtype = pack.type;
             try {
-               
+                switch (packtype) {
+                    case NetPack.CMD_DATA_INIT:
+                    {
+                        String nodeid = new String(pack.body, DEF_CHARSET);
+                        Node node = nodes.get(nodeid);
+                        if(node != null){
+                            session.setAttr(SESSION_TYPE, SESSION_TYPE_DATA);
+                            session.setAttr(NODE_ID, nodeid);
+                            node.AddDataSession(session);
+                            session.write(data);
+                        }else{
+                            System.out.println("没有找到该nodeid的连接, 关闭之");
+                            session.closeNow();
+                        }
+                        break;
+                    }
+                    case NetPack.CMD_INIT:
+                    {
+                        String nodeid = new String(pack.body, DEF_CHARSET);
+                        /*有可能这个链接被断开了*/
+                        Node node = nodes.get(nodeid);
+                        if(node == null){
+                            node = new Node(session, nodeid, conn_max_size);
+                        }else{
+                            node.reSetCmdSession(session);
+                        }
+                        session.setAttr(SESSION_TYPE, SESSION_TYPE_CMD);
+                        session.write(data);
+                        nodes.put(nodeid, node);
+                        break;
+                    }
+                    default:
+                        /*未知的数据包*/
+                        break;
+                }
+                
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -144,12 +184,12 @@ public class ClusterService {
         
         @Override
         public void onIdle(Session session) throws Exception {
-            String nodeid = session.getAttr(NODE_ID, "") + "";
+            /*String nodeid = session.getAttr(NODE_ID, "") + "";
             if(!Util.CheckNull(nodeid)){
                 
             }else{
-                session.closeNow();/*滚蛋去*/
-            }
+                session.closeNow();滚蛋去
+            }*/
         }
         
         @Override

@@ -47,6 +47,7 @@ public class NioTcpSession extends Session{
             context.ExecuteEvent(new IoEventRunnable(new Exception("session is not valid"), IoEventType.SESSION_EXCEPTION, this, context));
             return;
         }
+
         key.interestOps(key.interestOps() | SelectionKey.OP_WRITE);/*注册写事件*/
         key.selector().wakeup();
 	}

@@ -36,13 +36,16 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
         SelectionKey key = null;
         if(event){
             /*call on connection*/
-            session.pushEventRunnable(new IoEventRunnable(null, IoEventType.SESSION_CONNECTION, session, context));
             key = channel.register(selector, SelectionKey.OP_READ, session);
+            
+            session.setKey(key);
+            selector.wakeup();
+            session.pushEventRunnable(new IoEventRunnable(null, IoEventType.SESSION_CONNECTION, session, context));
         }else{
             key = channel.register(selector, SelectionKey.OP_CONNECT, session);
+            session.setKey(key);
+            selector.wakeup();
         }
-        
-        session.setKey(key);
         return session;
     }
     
@@ -96,15 +99,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
                 /*if(!key.isValid()){//没有准备好?
                     
                 }*/
-                
-                if(key.isConnectable()){
-                    synchronized (session) {
-                        session.notifyAll();
-                    }
-                    session.pushEventRunnable(new IoEventRunnable(null, IoEventType.SESSION_CONNECTION, session, context));
-                    key.interestOps(key.interestOps() & (~SelectionKey.OP_CONNECT));//取消连接成功事件
-                    key.interestOps(key.interestOps() | SelectionKey.OP_READ);//注册读事件
-                }
+
                 
                 if(key.isReadable()){/*call decode */
                     ByteBuffer readcache = session.getReadCacheBuffer();
@@ -188,6 +183,24 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
                             session.closeNow();
                         }
                     }
+                }
+                
+                
+                if(key.isConnectable()){
+
+                    synchronized (session) {
+                        session.notifyAll();
+                    }
+                    //Finishes the process of connecting a socket channel. 
+                    //fuck the doc
+                    if(((SocketChannel) key.channel()).finishConnect() == false){
+                        key.cancel();
+                    }
+                    
+                    
+                    key.interestOps(key.interestOps() & (~SelectionKey.OP_CONNECT));//取消连接成功事件
+                    key.interestOps(key.interestOps() | SelectionKey.OP_READ);//注册读事件
+                    session.pushEventRunnable(new IoEventRunnable(null, IoEventType.SESSION_CONNECTION, session, context));
                 }
             } catch (Exception e) {
                 /*call exception*/

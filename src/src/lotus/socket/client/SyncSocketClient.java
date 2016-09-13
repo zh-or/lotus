@@ -45,24 +45,28 @@ public class SyncSocketClient {
      * @param timeout 连接超时时间
      * @return
      */
-	public boolean connection(String hostname, int port, int timeout){
+	public boolean connection(InetSocketAddress serveraddress, int timeout){
 	    close();
 	    try {
             socket = new Socket();
             socket.setReceiveBufferSize(RECV_BUFF_SIZE);
             socket.setSoTimeout(recv_time_out);
-            socket.connect(new InetSocketAddress(hostname, port), timeout);
-            return true;
+            socket.connect(serveraddress, timeout);
+            return socket.isConnected();
         } catch (Exception e) {}
 	    
 	    return false;
 	}
 	
 	public byte[] send(final byte[] data){
+	    
 	    if(socket == null || socket.isOutputShutdown()){
             close();
             return null;
         }
+	    if(socket.isConnected() == false){
+	        return null;
+	    }
         try {
             OutputStream out = socket.getOutputStream();
             int len = data.length + 4;
@@ -72,6 +76,7 @@ public class SyncSocketClient {
             out.write(0x03);
             out.flush();
         } catch (Exception e) {
+            e.printStackTrace();
             close();
         }
         return recv();

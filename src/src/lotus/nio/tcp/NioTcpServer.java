@@ -89,9 +89,10 @@ public class NioTcpServer extends NioContext{
                                 if(client == null) continue;
                                 client.configureBlocking(false);
                                 client.socket().setSoTimeout(socket_time_out);
+                                client.finishConnect();
                                 rliplock.lock();/*排队*/
                                 try {
-                                    iipBound ++;/*不需要什么高端的算法*/
+                                    iipBound ++;/**/
                                     if(iipBound >= ioprocess.length){
                                         iipBound = 0;
                                     }

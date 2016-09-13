@@ -5,12 +5,13 @@ import java.util.Arrays;
 public class NetPack {
     /* type data*/
     public static final byte CMD_INIT           =       0x01;//上线
-    public static final byte CMD_QUIT           =       0x02;//退出
-    public static final byte CMD_MSG            =       0x03;//消息
-    public static final byte CMD_RES            =       0x04;//回执
-    public static final byte CMD_KEEP           =       0x05;//心跳
-    public static final byte CMD_SUBS_MSG       =       0x06;//订阅某类型消息
-    public static final byte CMD_UNSUBS_MSG     =       0x07;//取消订阅
+    public static final byte CMD_DATA_INIT      =       0x02;//数据通道初始化
+    public static final byte CMD_QUIT           =       0x03;//退出
+    public static final byte CMD_MSG            =       0x04;//消息
+    public static final byte CMD_RES            =       0x05;//回执
+    public static final byte CMD_KEEP           =       0x06;//心跳
+    public static final byte CMD_SUBS_MSG       =       0x07;//订阅某类型消息
+    public static final byte CMD_UNSUBS_MSG     =       0x08;//取消订阅
     
     public byte type        =   0x00;
     public byte[] body      =   null;

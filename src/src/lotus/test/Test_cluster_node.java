@@ -1,5 +1,6 @@
 package lotus.test;
 
+import java.net.InetSocketAddress;
 import java.util.Scanner;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -37,18 +38,18 @@ public class Test_cluster_node extends MessageHandler{
         String[] modes = new String[]{"", "发送", "接收"};
         log.info("当前模式:%s, 1 秒发送 %d 条消息", modes[m], total);
         in.close();
-        node = new NodeSession(host, 5000, Util.getUUID());
+        node = new NodeSession(new InetSocketAddress(host, 5000), Util.getUUID());
         node.setHandler(new Test_cluster_node());
         log.info("init..");
-        boolean isinit = node.init(10000);
-        log.info("init:%s", isinit);
-        if(!isinit){
+        int conn = node.init(10000);
+        log.info("init:%d", conn);
+        if(conn <= 0){
             log.info("初始化失败...");
             Util.SLEEP(3000);
             System.exit(1);
         }
         log.info("订阅 fuck -> %s", node.addSubscribe("fuck"));
-        
+        System.exit(0);
         
         Timer t = new Timer();
         t.schedule(new TimerTask() {
@@ -69,13 +70,13 @@ public class Test_cluster_node extends MessageHandler{
                      t1 = System.currentTimeMillis();
                      
                      for(int i = 0; i < total; i++){
-                         node.sendMessage(
+/*                         node.sendMessage(
                                  new Message(
                                          Message.MTYPE_SUBSCRIBE,
                                          "fuck",
                                          Util.getUUID(),
                                          "MTYPE_SUBSCRIBE",
-                                         new byte[]{1, 2, 3}));
+                                         new byte[]{1, 2, 3}));*/
 
                      }
                      t2 = System.currentTimeMillis();
@@ -90,13 +91,6 @@ public class Test_cluster_node extends MessageHandler{
             
         }
 
-    }
-    
-    @Override
-    public void onClose(NodeSession node) {
-        log.error("socket closed");
-        Util.SLEEP(3000);
-        System.exit(1);
     }
     
     @Override

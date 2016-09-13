@@ -48,6 +48,7 @@ public abstract class NioContext {
      * @return
      */
     public NioContext setEventThreadPoolSize(int size){
+        this.executor_e.shutdown();
         this.executor_e = null;
         if(size > 0) this.executor_e = Executors.newFixedThreadPool(size);
         return this;

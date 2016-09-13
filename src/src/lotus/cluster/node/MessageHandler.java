@@ -9,5 +9,5 @@ public abstract class MessageHandler {
     public void onRecvBroadcast(NodeSession node, Message msg){}
     public void onRecvSubscribe(NodeSession node, Message msg){}
     
-    public void onClose(NodeSession node){}
+/*    public void onClose(NodeSession node){}*/
 }

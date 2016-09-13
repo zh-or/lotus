@@ -23,6 +23,14 @@ public class Node {
         this.capacity = connmax;
     }
     
+    public void reSetCmdSession(Session session_cmd){
+        if(this.session_cmd != null){
+            this.session_cmd.closeNow();
+            this.session_cmd = null;
+        }
+        this.session_cmd = session_cmd;
+    }
+    
     public Session getCmdSession(){
         return session_cmd;
     }

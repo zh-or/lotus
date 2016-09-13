@@ -12,11 +12,11 @@ public class SocketServer {
 	private NioTcpServer			 server;
 	private IoHandler				 handler;
 	private InetSocketAddress        addr;
-    private int                      EventThreadPoolSize = 100;
-    private int                      readbuffsize = 1024 * 2;
-    private int                      idletime = 0;
-    private int 					 bufferlistmaxsize = 1024;
-    private int  				     sockettimeout = 1000 * 10;
+    private int                      EventThreadPoolSize    = 100;
+    private int                      readbuffsize           = 1024 * 2;
+    private int                      idletime               = 0;
+    private int 					 bufferlistmaxsize      = 1024;
+    private int  				     sockettimeout          = 1000 * 10;
     
     /**
      * @param host 

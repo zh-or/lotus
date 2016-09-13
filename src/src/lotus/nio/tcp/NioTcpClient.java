@@ -10,6 +10,7 @@ import lotus.nio.ProtocolCodec;
 import lotus.nio.Session;
 
 public class NioTcpClient extends NioContext{
+    public static final int         SELECT_TIMEOUT                  =   200;
     
     private NioTcpIoProcess     ioprocess[]         =   null;
     private long                idcount             =   0l;
@@ -59,6 +60,7 @@ public class NioTcpClient extends NioContext{
                     iipBound = 0;
                 }
                 session = ioprocess[iipBound].putChannel(sc, ++idcount, false);
+                
             } catch (Exception e) {
                 e.printStackTrace();
             }finally{
@@ -67,7 +69,7 @@ public class NioTcpClient extends NioContext{
             if(idcount >= Long.MAX_VALUE){
                 idcount = 0l;
             }
-            if(timeout > 0 && session != null){
+            if(timeout > 0 && session != null && sc.finishConnect() == false){
                 try {
                     synchronized (session) {
                         session.wait(timeout);

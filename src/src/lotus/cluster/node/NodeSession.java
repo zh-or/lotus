@@ -11,6 +11,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.sun.swing.internal.plaf.synth.resources.synth;
+
 import lotus.cluster.Message;
 import lotus.cluster.NetPack;
 import lotus.nio.IoHandler;
@@ -20,22 +22,22 @@ import lotus.socket.client.SyncSocketClient;
 import lotus.socket.common.LengthProtocolCode;
 import lotus.util.Util;
 
-public class NodeSession extends IoHandler{
+public class NodeSession {
     private static final String DEF_ENCRYPTION_KEY  =   "lotus-cluster-key";
     private static final String SESSION_USE_COUNT   =   "session-use-count";/*AtomicBoolean*/
+    private static final String SESSION_IS_INIT     =   "isinit";
     private static final int    SESSION_READ_CACHE  =   1024 * 1024;
     
     private int                 conn_max_size       =   100;/*连接数最大数量*/
     private int                 conn_low_size       =   10;/*连接数最小数量*/
     private int                 init_conn_timeout   =   30000;/*初始化连接超时时间*/
     
-    private ReentrantLock       init_lock           =   new ReentrantLock();
-    
-    private String              host                =   "0.0.0.0";
-    private int                 port                =   5000;
+    private ReentrantLock       conn_lock           =   new ReentrantLock();
+    private Object              init_wait           =   new Object();
+    private InetSocketAddress   serveraddress       =   null;
     private AtomicInteger       nowConnectionCount  =   new AtomicInteger(0);/*当前连接计数*/
-    private NioTcpClient        client              =   null;/*data sockets*/
-    private SyncSocketClient    cmdclient           =   null;
+    private NioTcpClient        client_data         =   null;/*data sockets*/
+    private SyncSocketClient    client_cmd          =   null;
     private String              nodeid              =   null;
     private String              user_en_key         =   DEF_ENCRYPTION_KEY;//用户设置的密码
     private boolean             enableEncryption    =   false;
@@ -43,49 +45,75 @@ public class NodeSession extends IoHandler{
     private ArrayList<String>   subs                =   null;//当前订阅的消息类型
     private MessageHandler      handler             =   null;
 
-    private ConcurrentHashMap<String, Session> sessions = null;
+    private Session[]           sessions            =   null;
+    private int                 session_capacity    =   -1;
+    private int                 session_bound       =   0;
+    
     /**
      * @param host service's address
      * @param port service's port
      * @throws IOException 
      */
-    public NodeSession(String host, int port) throws IOException{
-        this(host, port, Util.getUUID());
+    public NodeSession(InetSocketAddress serveraddress) throws IOException{
+        this(serveraddress, Util.getUUID());
     }
     
-    public NodeSession(String host, int port, String nodeid){
+    public NodeSession(InetSocketAddress serveraddress, String nodeid){
         this.nodeid = nodeid;
-        this.host = host;
-        this.port = port;
+        this.serveraddress = serveraddress;
         this.subs = new ArrayList<String>();
-        this.sessions = new ConcurrentHashMap<String, Session>();
+        this.sessions = new Session[conn_max_size];
         this.handler = new MessageHandler() {};
-        this.client = new NioTcpClient(new LengthProtocolCode());
-        this.client.setEventThreadPoolSize(0);
-        this.client.setHandler(this);
-        this.client.setSessionReadBufferSize(SESSION_READ_CACHE);
+        this.client_data = new NioTcpClient(new LengthProtocolCode());
+        this.client_data.setEventThreadPoolSize(conn_max_size);
+        this.client_data.setHandler(new DataHandler());
+        this.client_data.setSessionReadBufferSize(SESSION_READ_CACHE);
     }
     
-    public synchronized boolean init(int timeout){
+    /**
+     * 初始化
+     * @param timeout 0 为不等待, 等待的毫秒数
+     * @return 返回初始化的连接数 -1 表示连接服务器失败
+     */
+    public synchronized int init(long timeout){
+
         try {
-            client.init();
-        } catch (IOException e) {
-            return false;
-        }
-        cmdclient = new SyncSocketClient();
-        cmdclient.setRecvTimeOut(30 * 1000);
-        byte[] initdata = cmdclient.send(new NetPack(NetPack.CMD_INIT, nodeid.getBytes()).Encode());
-        NetPack recv = new NetPack(initdata);
-        
-        if(getSomeConnection(conn_low_size) > 0){
-            
-            return true;
-        }
-        return false; 
+            client_cmd = new SyncSocketClient();
+            client_cmd.setRecvTimeOut(30 * 1000);
+            if(client_cmd.connection(serveraddress, (int)timeout) == false){
+                
+                return -1;
+            }
+            byte[] initdata = client_cmd.send(new NetPack(NetPack.CMD_INIT, nodeid.getBytes()).Encode());
+            if(initdata == null) {
+                return -1;
+            }
+            NetPack recv = new NetPack(initdata);
+            if(recv.type == NetPack.CMD_INIT){
+                this.nodeid = new String(recv.body);
+                if(Util.CheckNull(this.nodeid)) return 0;
+                client_data.init();
+                getSomeConnection(conn_low_size);
+                if(timeout > 0){
+                    synchronized (init_wait) {
+                        try {
+                            init_wait.wait(timeout);
+                        } catch (Exception e) {}
+                    }
+                }
+                return nowConnectionCount.get();
+            }
+        } catch (IOException e) {}
+        return 0; 
     }
     
+    /**
+     * 此方法不要在初始化后调用
+     * @param size
+     */
     public void setConnectionMaxSize(int size){
         this.conn_max_size = size;
+        this.sessions = new Session[size];
     }
     
     public void setInitConnectionTimeout(int timeout){
@@ -99,9 +127,9 @@ public class NodeSession extends IoHandler{
     /**
      * 获取一些连接
      * @param size
-     * @return
+     * @return 此处返回的连接数不代表最终连接数
      */
-    private int getSomeConnection(int size){
+    private synchronized int getSomeConnection(int size){
         int nowGettingconns = 0;
         int nowmax = conn_max_size - nowConnectionCount.get();
         if(size <= 0){
@@ -109,12 +137,13 @@ public class NodeSession extends IoHandler{
         }else if(size > nowmax){
             size = nowmax;
         }
+        
         for(int i = 0; i < size; i++){
-            Session t_session = client.connection(new InetSocketAddress(host, port), init_conn_timeout);
+            Session t_session = client_data.connection(serveraddress, 0);
             if(t_session != null){
-                nowConnectionCount.getAndIncrement();
-                t_session.setAttr(SESSION_USE_COUNT, new AtomicBoolean(false));
-                sessions.put(t_session.getId() + "", t_session);
+                //nowConnectionCount.getAndIncrement();
+                //t_session.setAttr(SESSION_USE_COUNT, new AtomicBoolean(false));
+               
                 nowGettingconns++;
             }
         }
@@ -148,68 +177,102 @@ public class NodeSession extends IoHandler{
     
     public synchronized void close(){
         subs.clear();
-        Iterator<Entry<String, Session>> it = sessions.entrySet().iterator();
-        Session t_session = null;
-        while(it.hasNext()){
-            Entry<String, Session> item = it.next();
-            t_session = item.getValue();
-            if(t_session != null){
-                t_session.closeNow();
+        for(int i = 0; i < session_capacity; i++){
+            if(sessions[i] != null){
+                sessions[i].closeNow();
+                sessions[i] = null;
             }
         }
         nowConnectionCount.set(0);;
-        sessions.clear();
-        client.stop();
+        session_capacity = -1;
+        session_bound = 0;
+        client_data.stop();
     }
 
-    
-    public void sendMessage(Message msg) throws Exception{
-        msg.from = nodeid;
-        sendPack(new NetPack(NetPack.CMD_MSG, Message.encode(msg, charset)));
-    }
-    
     /**
-     * 同步方法
      * @param action
      */
     public synchronized boolean addSubscribe(String action) throws Exception{
         
-        sendPack(new NetPack(NetPack.CMD_SUBS_MSG, action.getBytes(charset)));
-        
-        if(!subs.contains(action)){
-            return false;
-        }
         return true;
     }
     
     /**
-     * 同步方法
      * @param action
      */
     public synchronized boolean removeSubscribe(String action) throws Exception{
-        sendPack(new NetPack(NetPack.CMD_UNSUBS_MSG, action.getBytes(charset)));
-        if(subs.contains(action)){
-            return false;
-        }
+        
         return true;
     }
     
-    private void sendPack(NetPack pack) throws Exception{
-        byte[] data = pack.Encode();
-        if(enableEncryption){
-            data = Util.Encoded(data, user_en_key);
+    
+    private class DataHandler extends IoHandler{
+        
+        @Override
+        public void onConnection(Session session) throws Exception {
+            session.write(new NetPack(NetPack.CMD_DATA_INIT, nodeid.getBytes(charset)).Encode());
+        }
+        
+        @Override
+        public void onClose(Session session) throws Exception {
+            Object obj = session.getAttr(SESSION_IS_INIT);
+            if(obj != null){
+                conn_lock.lock();
+                try {
+                    for(int i = 0; i < session_capacity; i++){
+                        if(sessions[i] == session){
+                            System.arraycopy(sessions, i + 1, sessions, i, session_capacity - i);
+                            session_capacity--;
+                        }
+                    }
+                } catch (Exception e) {
+                    
+                }finally{
+                    conn_lock.unlock();
+                }
+                nowConnectionCount.getAndDecrement();
+            }
+           
+        }
+        
+        @Override
+        public void onRecvMessage(Session session, Object msg) throws Exception {
+            if(msg instanceof byte[]){
+                NetPack pack = new NetPack((byte[]) msg);
+                byte packtype = pack.type;
+                
+                switch (packtype) {
+                    case NetPack.CMD_DATA_INIT:
+                    {
+                        session.setAttr(SESSION_IS_INIT, "1");
+                        conn_lock.lock();
+                        try {
+                            sessions[++session_capacity] = session;
+                        } catch (Exception e) {
+                            
+                        }finally{
+                            conn_lock.unlock();
+                        }
+                        nowConnectionCount.getAndIncrement();
+                        if(nowConnectionCount.get() >= conn_low_size){
+                            synchronized (init_wait) {
+                                init_wait.notifyAll();
+                            }
+                        }
+                        break;
+                    }
+                    default:
+                        /*未知的数据包*/
+                        break;
+                }
+                
+            }else{
+                session.closeNow();
+            }
+            
         }
     }
-    
-    @Override
-    public void onClose(Session session) throws Exception {
-        nowConnectionCount.getAndDecrement();
-    }
-    
-    @Override
-    public void onRecvMessage(Session session, Object msg) throws Exception {
-        
-    }
+
     
 /*
     @Override
