@@ -110,8 +110,8 @@ public class Test_cluster_node extends MessageHandler{
     }
     
     @Override
-    public void onRecvSubscribe(NodeSession node, Message msg) {
-       // log.info("recv subscribe message from:%s msg:%s", msg.from, msg.toString());
+    public void onRecvSubscribe(NodeSession node, String action, Message msg) {
+     // log.info("recv subscribe message from:%s msg:%s", msg.from, msg.toString());
         synchronized (lock_recv) {
             recv++;   
         }

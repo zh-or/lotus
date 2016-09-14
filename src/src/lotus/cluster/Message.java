@@ -35,28 +35,15 @@ public class Message {
 		this.head = head;
 		this.body = body;
 	}
-
-	public Message IsNeedReceipt(boolean needReceipt){
-	    this.needReceipt = needReceipt;
-	    return this;
-	}
-	
-	
-	@Override
-	public String toString() {
-		return "Message [needReceipt=" + needReceipt + ", type=" + type + ", to=" + to + ", from=" + from + ", msgid=" + msgid
-				+ ", head=" + head + ", body=" + Arrays.toString(body) + "]";
-	}
-	
     /**
      * 从byte创建Message
      * @param data
      * @param charset
      * @return
      */
-    public static Message decode(byte[] data, Charset charset){
+    public Message(byte[] data, Charset charset){
         if(data == null || data.length < 5){
-            return null;/*不能识别的数据包*/
+            return ;/*不能识别的数据包*/
         }
         int bound = 0;
         byte type = data[bound];
@@ -72,17 +59,28 @@ public class Message {
         int len_body = data.length - bound;
         byte[] body = new byte[len_body];
         System.arraycopy(data, bound, body, 0, len_body);
-        Message msg = new Message(
-                                    (byte) (type & 127),
-                                    new String(to, charset),
-                                    new String(msgid, charset),
-                                    new String(head, charset),
-                                    body
-                                    );
-        msg.IsNeedReceipt((type & -128)  == -128);
-        msg.from = new String(from, charset);
-        return msg;
+        this.type = (byte) (type & 127);
+        this.to = new String(to, charset);
+        this.msgid = new String(msgid, charset);
+        this.from = new String(from, charset);
+        this.head = new String(head, charset);
+        this.body = body;
+        this.needReceipt = (type & -128)  == -128;
+
     }
+	public Message IsNeedReceipt(boolean needReceipt){
+	    this.needReceipt = needReceipt;
+	    return this;
+	}
+	
+	
+	@Override
+	public String toString() {
+		return "Message [needReceipt=" + needReceipt + ", type=" + type + ", to=" + to + ", from=" + from + ", msgid=" + msgid
+				+ ", head=" + head + ", body=" + Arrays.toString(body) + "]";
+	}
+	
+
     
     private static byte[] destr(byte[] data, int offset){
         int len = data[offset];
@@ -100,14 +98,14 @@ public class Message {
      * @param charset
      * @return 如果返回空则表示此条消息长度过大
      */
-    public static byte[] encode(Message msg, Charset charset){
+    public byte[] encode(Charset charset){
         int count = 1;
         int bound =  0;
         int len_to, len_from, len_msgid, len_head;
-        byte[] to = msg.to.getBytes(charset);
-        byte[] from = msg.from.getBytes(charset);
-        byte[] msgid = msg.msgid.getBytes(charset);
-        byte[] head = msg.head.getBytes(charset);
+        byte[] to = this.to.getBytes(charset);
+        byte[] from = this.from.getBytes(charset);
+        byte[] msgid = this.msgid.getBytes(charset);
+        byte[] head = this.head.getBytes(charset);
         
         len_to = (to.length > 255 ? 255 : to.length);
         len_from = (from.length > 255 ? 255 : from.length);
@@ -117,14 +115,14 @@ public class Message {
         count += len_from + 1;
         count += len_msgid + 1;
         count += len_head + 1;
-        count += msg.body == null ? 0 : msg.body.length;
+        count += this.body == null ? 0 : this.body.length;
         
         if(count > 65535){
             return null;
         }
         byte[] msgdata = new byte[count];
         
-        msgdata[bound] = (byte)(msg.needReceipt ? msg.type | -128 : msg.type);/*type 最高位 为1 表示此消息需要回执*/
+        msgdata[bound] = (byte)(this.needReceipt ? this.type | -128 : this.type);/*type 最高位 为1 表示此消息需要回执*/
         bound++;
         
         msgdata[bound] = (byte) len_to;
@@ -147,8 +145,8 @@ public class Message {
         System.arraycopy(head, 0, msgdata, bound, len_head);
         bound += len_head;
         
-        if(msg.body != null){
-            System.arraycopy(msg.body, 0, msgdata, bound, msg.body.length);
+        if(this.body != null){
+            System.arraycopy(this.body, 0, msgdata, bound, this.body.length);
         }
         
         return msgdata;

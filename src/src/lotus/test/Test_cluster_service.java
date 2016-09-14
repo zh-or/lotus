@@ -12,6 +12,7 @@ public class Test_cluster_service extends MessageListenner{
     
     public static void main(String[] args) throws IOException {
         ClusterService service = new ClusterService();
+        service.setDataConnReadBufferSize(1024);
         service.setMessageListenner(new MessageListenner() {
             @Override
             public void onNodeInit(ClusterService service, Node node) {
@@ -19,8 +20,22 @@ public class Test_cluster_service extends MessageListenner{
             }
             
             @Override
+            public void onNodeUnInit(ClusterService service, Node node) {
+                System.out.println("节点取消初始化:" + node.getNodeId());
+            }
+            
+            @Override
             public void onNodeConnectionsChanged(ClusterService service, Node node) {
-                System.out.println("节点连接数改变:" + node.size());
+                
+            }
+            
+            @Override
+            public void onRegSubscribeMessage(ClusterService service, Node node, String action) {
+                System.out.println("节点订阅消息:" + node.getNodeId() + "," + action);
+            }
+            @Override
+            public void onUnRegSubscribeMessage(ClusterService service, Node node, String action) {
+                System.out.println("节点取消订阅消息:" + node.getNodeId() + "," + action);
             }
         });
         service.start(new InetSocketAddress(5000));

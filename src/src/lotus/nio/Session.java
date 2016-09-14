@@ -15,11 +15,13 @@ public abstract class Session {
     protected ProtocolDecoderOutput             deout           =   null;
     protected long                              id              =   0l;
     protected final Object                      recvPackwait    =   new Object();
+    protected long                              createtime      =   0l;
     
     public Session (NioContext context, long id){
         this.context = context;
         this.attrs = new ConcurrentHashMap<Object, Object>();
         this.id = id;
+        this.createtime = System.currentTimeMillis();
         setLastActive(System.currentTimeMillis());
         readcache = context.getByteBufferFormCache();
         eventlist = new LinkedBlockingQueue<Runnable>();
@@ -28,6 +30,10 @@ public abstract class Session {
     
     public long getId(){
         return id;
+    }
+    
+    public long getCreateTime(){
+        return createtime;
     }
     
     public Object getAttr(Object key){

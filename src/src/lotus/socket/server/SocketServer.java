@@ -38,8 +38,12 @@ public class SocketServer {
         this.readbuffsize = size;
     }
     
+    /**
+     * 设置连接空闲检测
+     * @param idletime 单位 秒
+     */
     public void setIdletime(int idletime) {
-        this.idletime = idletime;
+        this.idletime = idletime * 1000;
     }
 
     public void setReadBufferCacheListSize(int size) {

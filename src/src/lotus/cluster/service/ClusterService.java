@@ -4,8 +4,12 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
+import lotus.cluster.Message;
+import lotus.cluster.MessageResult;
 import lotus.cluster.NetPack;
 import lotus.nio.IoHandler;
 import lotus.nio.Session;
@@ -15,9 +19,9 @@ import lotus.util.Util;
 public class ClusterService {
     
     private SocketServer    server						=	null;
-    private int             exthreadtotal               =   0;/*都在io线程里面处理了吧*/
+    private int             exthreadtotal               =   10;/*都在io线程里面处理了吧*/
     private int             read_buffer_size            =   2048;
-    private int             idletime                    =   60 * 1000;
+    private int             idletime                    =   60 * 3;
     private int             buffer_list_size            =   1024;
     private int             socket_timeout              =   50000;
     
@@ -36,7 +40,7 @@ public class ClusterService {
     private static String   ENCRYPTION_KEY              =   "encryption-key";
     private static String   DEF_ENCRYPTION_KEY          =   "lotus-cluster-key";
     private static String   LASAT_ACTIVE                =   "session-last-active";
-    private static Charset  DEF_CHARSET                 =   Charset.forName("utf-8");
+    private static Charset  charset                     =   Charset.forName("utf-8");
     
     
     private MessageListenner listenner                  =   null;
@@ -55,7 +59,7 @@ public class ClusterService {
     }
     
     public ClusterService setMessageCharset(String charsetName){
-        DEF_CHARSET = Charset.forName(charsetName);
+        charset = Charset.forName(charsetName);
         return this;
     }
     
@@ -87,7 +91,12 @@ public class ClusterService {
     public boolean IsEnableEncryption(){
         return enableEncryption;
     }
- 
+    
+    public ClusterService setDataConnReadBufferSize(int size){
+        this.read_buffer_size = size;
+        return this;
+    }
+    
     public ClusterService start(InetSocketAddress addr) throws IOException{
         
         server = new SocketServer(addr);
@@ -129,14 +138,77 @@ public class ClusterService {
             if(enableEncryption){
                 data = Util.Decode(data, session.getAttr(ENCRYPTION_KEY, DEF_ENCRYPTION_KEY) + "");
             }
-            String session_type = session.getAttr(SESSION_TYPE) + "";
+            // String session_type = session.getAttr(SESSION_TYPE) + "";
             NetPack pack = new NetPack(data);
             byte packtype = pack.type;
             try {
                 switch (packtype) {
+                    case NetPack.CMD_MSG:
+                    {
+                        Message m = new Message(pack.body, charset);
+                        Node node_from = nodes.get(session.getAttr(NODE_ID));
+                        Node node_to = nodes.get(m.to);
+                        switch (m.type) {
+                            case Message.MTYPE_MESSAGE:
+                            {
+                                if(node_to != null){
+                                    listenner.onRecvMessage(ClusterService.this, m);
+                                    Session datasession = node_to.getOneConnection();
+                                    if(datasession != null){
+                                        datasession.write(data);
+                                    } 
+                                }else{
+                                    if(m.needReceipt){
+                                        session.write(new NetPack(NetPack.CMD_RES, new MessageResult(false, m.msgid, m.from).Encode(charset)).Encode());
+                                    }
+                                }
+                                break;
+                            }
+                            case Message.MTYPE_SUBSCRIBE:
+                            {
+                                String action = m.to;
+                                listenner.onRecvSubscribe(ClusterService.this, node_from, m);
+                                ArrayList<String> subsnodes = subscribeActions.get(action);
+                                if(subsnodes != null && subsnodes.size() > 0){
+                                    Node node = null;
+                                    for(String nodeid : subsnodes){
+                                        node = nodes.get(nodeid);
+                                        if(node != null){
+                                            node.getOneConnection().write(data);
+                                        }
+                                    }
+                                }
+                                break;
+                            }
+                            case Message.MTYPE_BROADCAT:
+                            {
+                                
+                                if(listenner.onRecvBroadcast(ClusterService.this, node_from, m) == false){
+                                    Iterator<Entry<String, Node>> tmp = nodes.entrySet().iterator();
+                                    while(tmp.hasNext()){
+                                        Entry<String, Node> item = tmp.next();
+                                        Node node = item.getValue();
+                                        if(node != null){
+                                            Session s = node.getOneConnection();
+                                            if(s != null){
+                                                s.write(data);
+                                            }else{
+                                                System.out.println("没有连接???");
+                                            }
+                                        }else{
+                                            System.out.println("节点为空???");
+                                        }
+                                        
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                        break;
+                    }
                     case NetPack.CMD_DATA_INIT:
                     {
-                        String nodeid = new String(pack.body, DEF_CHARSET);
+                        String nodeid = new String(pack.body, charset);
                         Node node = nodes.get(nodeid);
                         if(node != null){
                             session.setAttr(SESSION_TYPE, SESSION_TYPE_DATA);
@@ -152,7 +224,7 @@ public class ClusterService {
                     }
                     case NetPack.CMD_INIT:
                     {
-                        String nodeid = new String(pack.body, DEF_CHARSET);
+                        String nodeid = new String(pack.body, charset);
                         session.setAttr(NODE_ID, nodeid);
                         /*有可能这个链接被断开了*/
                         Node node = nodes.get(nodeid);
@@ -167,6 +239,55 @@ public class ClusterService {
                         listenner.onNodeInit(ClusterService.this, node);
                         break;
                     }
+                    case NetPack.CMD_SUBS_MSG:
+                    {
+                        String nodeid = session.getAttr(NODE_ID) + "";
+                        Node node = nodes.get(nodeid);
+                        if(node != null){
+                            String action = new String(pack.body, charset);
+                            node.addSubs(action);
+                            ArrayList<String> subs = subscribeActions.get(action);
+                            if(subs == null){
+                                synchronized (subactions_lock) {
+                                    subs = new ArrayList<String>();
+                                    subscribeActions.put(action, subs);
+                                }
+                            }
+                            synchronized (subs) {
+                                if(subs.contains(subs) == false){
+                                    subs.add(nodeid);
+                                }
+                            }
+                            session.write(data);
+                            listenner.onRegSubscribeMessage(ClusterService.this, node, action);
+                        }else{
+                            session.closeNow();
+                        }
+                        
+                        break;
+                    }
+                    case NetPack.CMD_UNSUBS_MSG:
+                    {
+                        String nodeid = session.getAttr(NODE_ID) + "";
+                        Node node = nodes.get(nodeid);
+                        if(node != null){
+                            String action = new String(pack.body, charset);
+                            node.removeSubs(action);
+                            ArrayList<String> subs = subscribeActions.get(action);
+                            if(subs != null){
+                                synchronized (subs) {
+                                    subs.remove(nodeid);
+                                }
+                            }
+                            session.write(data);
+                            listenner.onUnRegSubscribeMessage(ClusterService.this, node, action);
+                        }else{
+                            session.closeNow();
+                        }
+                        break;
+                    }
+                    
+                    
                     default:
                         /*未知的数据包*/
                         break;
@@ -184,12 +305,14 @@ public class ClusterService {
         
         @Override
         public void onIdle(Session session) throws Exception {
-            /*String nodeid = session.getAttr(NODE_ID, "") + "";
-            if(!Util.CheckNull(nodeid)){
+            String nodeid = session.getAttr(NODE_ID, "") + "";
+            String session_type = session.getAttr(SESSION_TYPE) + "";
+            if(Util.CheckNull(nodeid) == false && Util.CheckNull(session_type) == false){
                 
             }else{
-                session.closeNow();滚蛋去
-            }*/
+                System.out.println("空闲了->" + session.toString() + "," + session.getCreateTime() +"/" + System.currentTimeMillis() +", 关闭之");
+                session.closeNow();
+            }
         }
         
         @Override
@@ -198,17 +321,20 @@ public class ClusterService {
             String session_type = session.getAttr(SESSION_TYPE) + "";
             if(!Util.CheckNull(nodeid)){
 
-                /*取消所有广播*/
                 Node node = nodes.get(nodeid);
                 if(SESSION_TYPE_DATA.equals(session_type)){
                     node.removeDataSession(session);
                     listenner.onNodeConnectionsChanged(ClusterService.this, node);
-                    if(node.size() < 0){
-                        
+                    if(node.size() < 0 && node.getCmdSession() == null){
+                        nodes.remove(nodeid);
                         listenner.onNodeUnInit(ClusterService.this, node);
                     }
                 }else if(SESSION_TYPE_CMD.equals(session_type)){
-                    
+                    node.reSetCmdSession(null);
+                    if(node.size() <= 0){
+                        nodes.remove(nodeid);
+                        listenner.onNodeUnInit(ClusterService.this, node);
+                    }
                 }
             }
         }

@@ -42,6 +42,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
             selector.wakeup();
             session.pushEventRunnable(new IoEventRunnable(null, IoEventType.SESSION_CONNECTION, session, context));
         }else{
+            selector.wakeup();
             key = channel.register(selector, SelectionKey.OP_CONNECT, session);
             session.setKey(key);
             selector.wakeup();

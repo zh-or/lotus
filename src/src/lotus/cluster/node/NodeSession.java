@@ -4,16 +4,10 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.sun.swing.internal.plaf.synth.resources.synth;
-
 import lotus.cluster.Message;
+import lotus.cluster.MessageResult;
 import lotus.cluster.NetPack;
 import lotus.nio.IoHandler;
 import lotus.nio.Session;
@@ -24,7 +18,6 @@ import lotus.util.Util;
 
 public class NodeSession {
     private static final String DEF_ENCRYPTION_KEY  =   "lotus-cluster-key";
-    private static final String SESSION_USE_COUNT   =   "session-use-count";/*AtomicBoolean*/
     private static final String SESSION_IS_INIT     =   "isinit";
     private static final int    SESSION_READ_CACHE  =   1024 * 1024;
     
@@ -34,7 +27,6 @@ public class NodeSession {
     private ReentrantLock       conn_lock           =   new ReentrantLock();
     private Object              init_wait           =   new Object();
     private InetSocketAddress   serveraddress       =   null;
-    private AtomicInteger       nowConnectionCount  =   new AtomicInteger(0);/*当前连接计数*/
     private NioTcpClient        client_data         =   null;/*data sockets*/
     private SyncSocketClient    client_cmd          =   null;
     private String              nodeid              =   null;
@@ -69,6 +61,11 @@ public class NodeSession {
         this.client_data.setSessionReadBufferSize(SESSION_READ_CACHE);
     }
     
+    public NodeSession setDataConnReadBufferSize(int size){
+        this.client_data.setSessionReadBufferSize(size);
+        return this;
+    }
+    
     /**
      * 初始化
      * @param timeout 0 为不等待, 等待的毫秒数
@@ -94,14 +91,14 @@ public class NodeSession {
                 if(Util.CheckNull(this.nodeid)) return 0;
                 client_data.init();
                 getSomeConnection(conn_min_size);
-                if(timeout > 0){
+                if(timeout > 0 && session_capacity + 1 < conn_min_size){
                     synchronized (init_wait) {
                         try {
                             init_wait.wait(timeout);
                         } catch (Exception e) {}
                     }
                 }
-                return nowConnectionCount.get();
+                return session_capacity + 1;
             }
         } catch (IOException e) {}
         return 0; 
@@ -114,9 +111,9 @@ public class NodeSession {
      */
     private synchronized int getSomeConnection(int size){
         int nowGettingconns = 0;
-        int nowmax = conn_max_size - nowConnectionCount.get();
+        int nowmax = conn_max_size - session_capacity;
         if(size <= 0){
-            size = nowmax < conn_min_size ? conn_min_size : nowmax; 
+            size = nowmax < conn_min_size ? conn_min_size : nowmax;
         }else if(size > nowmax){
             size = nowmax;
         }
@@ -133,6 +130,28 @@ public class NodeSession {
         return nowGettingconns;
     }
     
+    public void sendMessage(Message msg){
+        sendMessage(msg, 0);
+    }
+    
+    public Message sendMessage(Message msg, long waitrestimeout){
+        msg.from = nodeid;
+        msg.msgid = Util.getUUID();
+        Session session = null;
+        synchronized (this) {
+            if(session_capacity > 0){
+                if(session_bound > session_capacity) session_bound = 0;
+                session = sessions[session_bound];
+                session_bound++;
+            }
+        }
+        if(session != null){
+            session.write(new NetPack(NetPack.CMD_MSG, msg.encode(charset)).Encode());
+        }
+        
+        return null;
+    }
+    
     private void send_data(Session session, byte[] data){
         if(enableEncryption){
             data = Util.Encoded(data, user_en_key);
@@ -141,7 +160,7 @@ public class NodeSession {
     }
     
     
-    private byte[] send_cmd(byte[] data){
+    private synchronized byte[] send_cmd(byte[] data){
         if(enableEncryption){
             data = Util.Encoded(data, user_en_key);
         }
@@ -153,7 +172,7 @@ public class NodeSession {
      * @param size
      */
     public void setConnectionMaxSize(int size){
-        if(nowConnectionCount.get() > 0) return;
+        if(session_capacity > 0) return;
         this.conn_max_size = size;
         this.sessions = new Session[size];
     }
@@ -173,7 +192,7 @@ public class NodeSession {
     }
     
     public boolean isInit(){
-        return nowConnectionCount.get() > 0;
+        return session_capacity > 0;
     }
     
     public void setMessageCharset(String charsetName){
@@ -200,7 +219,6 @@ public class NodeSession {
                 sessions[i] = null;
             }
         }
-        nowConnectionCount.set(0);;
         session_capacity = -1;
         session_bound = 0;
         client_data.stop();
@@ -209,17 +227,29 @@ public class NodeSession {
     /**
      * @param action
      */
-    public synchronized boolean addSubscribe(String action) throws Exception{
-        
-        return true;
+    public synchronized boolean addSubscribe(String action) {
+        if(Util.CheckNull(action)) return false;
+        byte[] res = send_cmd(new NetPack(NetPack.CMD_SUBS_MSG, action.getBytes(charset)).Encode());
+        if(res == null || res.length < 2) return false; 
+        NetPack pack = new NetPack(res);
+        if(pack.type == NetPack.CMD_SUBS_MSG && subs.contains(action) == false){
+            subs.add(action);
+        }
+        return pack.type == NetPack.CMD_SUBS_MSG;
     }
     
     /**
      * @param action
      */
-    public synchronized boolean removeSubscribe(String action) throws Exception{
-        
-        return true;
+    public synchronized boolean removeSubscribe(String action) {
+        if(Util.CheckNull(action)) return false;
+        byte[] res = send_cmd(new NetPack(NetPack.CMD_UNSUBS_MSG, action.getBytes(charset)).Encode());
+        if(res == null || res.length < 2) return false; 
+        NetPack pack = new NetPack(res);
+        if(pack.type == NetPack.CMD_UNSUBS_MSG && subs.contains(action)){
+            subs.remove(action);
+        }
+        return pack.type == NetPack.CMD_UNSUBS_MSG ;
     }
     
     
@@ -228,7 +258,6 @@ public class NodeSession {
         @Override
         public void onConnection(Session session) throws Exception {
             send_data(session, new NetPack(NetPack.CMD_DATA_INIT, nodeid.getBytes(charset)).Encode());
-            
         }
         
         @Override
@@ -248,7 +277,6 @@ public class NodeSession {
                 }finally{
                     conn_lock.unlock();
                 }
-                nowConnectionCount.getAndDecrement();
             }
            
         }
@@ -266,17 +294,42 @@ public class NodeSession {
                         conn_lock.lock();
                         try {
                             sessions[++session_capacity] = session;
+                            if(session_capacity >= conn_min_size - 1){
+                                synchronized (init_wait) {
+                                    init_wait.notifyAll();
+                                }
+                            }
                         } catch (Exception e) {
                             
                         }finally{
                             conn_lock.unlock();
                         }
-                        nowConnectionCount.getAndIncrement();
-                        if(nowConnectionCount.get() >= conn_min_size){
-                            synchronized (init_wait) {
-                                init_wait.notifyAll();
+                        break;
+                    }
+                    case NetPack.CMD_MSG:
+                    {
+                        Message m = new Message(pack.body, charset);
+                        switch (m.type) {
+                            case Message.MTYPE_MESSAGE:
+                            {
+                                if(m.needReceipt){
+                                    session.write(new NetPack(NetPack.CMD_RES, new MessageResult(true, m.msgid, m.to).Encode(charset)).Encode());
+                                }
+                                handler.onRecvMessage(NodeSession.this, m);
+                                break;
                             }
+                            case Message.MTYPE_BROADCAT:
+                                handler.onRecvBroadcast(NodeSession.this, m);
+                                break;
+                            case Message.MTYPE_SUBSCRIBE:
+                                handler.onRecvSubscribe(NodeSession.this, m.to, m);
+                                break;
                         }
+                        break;
+                    }
+                    case NetPack.CMD_RES:
+                    {
+                        handler.onRecvMessageResponse(NodeSession.this, new MessageResult(pack.body, charset));
                         break;
                     }
                     default:
@@ -291,83 +344,4 @@ public class NodeSession {
         }
     }
 
-    
-/*
-    @Override
-    public void onMessageRecv(SocketClient sc, byte[] msg) {
-        if(enableEncryption){
-            msg = Util.Decode(msg, encryptionKey);
-        }
-        NetPack pack = new NetPack(msg);
-        byte type = pack.type;
-        try {
-            switch (type) {
-                case NetPack.CMD_MSG:收到消息
-                {
-                        Message tmsg = MessageFactory.decode(pack.body, charset);
-                        byte mtype = tmsg.type;
-                        switch (mtype) {
-                            case Message.MTYPE_BROADCAT:
-                                handler.onRecvBroadcast(NodeSession.this, tmsg);
-                                break;
-                            case Message.MTYPE_MESSAGE:
-                                handler.onRecvMessage(NodeSession.this, tmsg);
-                                break;
-                            case Message.MTYPE_SUBSCRIBE:
-                                handler.onRecvSubscribe(NodeSession.this, tmsg);
-                                break;
-                        }
-                        msgfactory.destory(tmsg);
-                }
-                    break;
-                case NetPack.CMD_RES:收到消息回执
-                    handler.onRecvMessageResponse(NodeSession.this, new MessageResult(pack.body, charset));
-                    break;
-                case NetPack.CMD_KEEP:心跳
-                    
-                    break;
-                case NetPack.CMD_INIT:初始化反馈
-                {
-                    String rnodeid = new String(pack.body);
-                    if(!Util.CheckNull(rnodeid) && rnodeid.equals(rnodeid)){
-                        encryptionKey = rnodeid;
-                        isinit = true;
-                    }
-                }
-                    break;
-                case NetPack.CMD_SUBS_MSG:订阅消息反馈
-                {
-                    String raction = new String(pack.body);
-                    if(!Util.CheckNull(raction) && raction.equals(tmp_now)){
-                        if(!subs.contains(raction)){
-                            subs.add(raction);
-                        }
-                    }
-                }
-                    break;
-                case NetPack.CMD_UNSUBS_MSG:取消订阅消息反馈
-                {
-                    String raction = new String(pack.body);
-                    if(!Util.CheckNull(raction) && raction.equals(tmp_now)){
-                        if(subs.contains(raction)){
-                            subs.remove(raction);
-                        }
-                    }
-                }
-                    break;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }finally{
-            switch (type) {
-                case NetPack.CMD_INIT:
-                case NetPack.CMD_SUBS_MSG:
-                case NetPack.CMD_UNSUBS_MSG:
-                    _notifyAll();
-                    break;
-            }
-        }
-        
-    }*/
-    
 }

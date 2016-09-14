@@ -23,7 +23,7 @@ public class Node {
         this.capacity = connmax;
     }
     
-    public void reSetCmdSession(Session session_cmd){
+    public synchronized void reSetCmdSession(Session session_cmd){
         if(this.session_cmd != null){
             this.session_cmd.closeNow();
             this.session_cmd = null;
@@ -31,7 +31,7 @@ public class Node {
         this.session_cmd = session_cmd;
     }
     
-    public Session getCmdSession(){
+    public synchronized Session getCmdSession(){
         return session_cmd;
     }
     
@@ -89,9 +89,9 @@ public class Node {
     public synchronized Session getOneConnection(){
         Session conn = null;
         if(limit > 0){
+            if(usebound >= limit) usebound = 0;
             conn = session_data[usebound];
             usebound++;
-            if(usebound > limit) usebound = 0;
         }
         return conn;
     }

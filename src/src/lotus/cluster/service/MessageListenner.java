@@ -2,6 +2,10 @@ package lotus.cluster.service;
 
 import lotus.cluster.Message;
 
+/**
+ * 此监听器的消息并不保证按顺序触发
+ * @author O_R
+ */
 public abstract class MessageListenner {
     public void onNodeInit(ClusterService service, Node node){}
     public void onNodeUnInit(ClusterService service, Node node){}
@@ -16,6 +20,6 @@ public abstract class MessageListenner {
     
     public void onRecvMessage(ClusterService service, Message msg){}
     public void onMessageSent(ClusterService service, Object obj){}
-    public void onSubscribeMessage(ClusterService service, Node node, String action){}
-    public void onUnSubscribeMessage(ClusterService service, Node node, String action){}
+    public void onRegSubscribeMessage(ClusterService service, Node node, String action){}
+    public void onUnRegSubscribeMessage(ClusterService service, Node node, String action){}
 }
