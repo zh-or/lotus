@@ -1,4 +1,4 @@
-package lotus.cluster;
+package lotus.cluster.service;
 
 import java.util.ArrayList;
 
@@ -53,10 +53,14 @@ public class Node {
      * 当前已有连接数
      * @return 返回 -1 则表示无连接, 否则返回连接数量
      */
-    public int limit(){
+    public int size(){
         return limit == -1 ? -1 : limit + 1;
     }
     
+    /**
+     * 当前能容纳的数据链路总数
+     * @return
+     */
     public int capacity(){
         return capacity;
     }

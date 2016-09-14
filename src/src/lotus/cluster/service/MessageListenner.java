@@ -1,10 +1,11 @@
-package lotus.cluster;
+package lotus.cluster.service;
 
-import lotus.cluster.service.ClusterService;
+import lotus.cluster.Message;
 
 public abstract class MessageListenner {
     public void onNodeInit(ClusterService service, Node node){}
     public void onNodeUnInit(ClusterService service, Node node){}
+    public void onNodeConnectionsChanged(ClusterService service, Node node){}
     /**
      * @param node
      * @param msg

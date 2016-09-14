@@ -93,7 +93,6 @@ public abstract class Session {
      */
     public void closeNow(){
         context.putByteBufferToCache(readcache);/*回收*/
-        System.out.println("主动关闭的");
     }
 
     public void _wait(int timeout){

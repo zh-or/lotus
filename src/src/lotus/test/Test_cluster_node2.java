@@ -23,6 +23,7 @@ public class Test_cluster_node2 extends MessageHandler{
 
         node = new NodeSession(new InetSocketAddress(5000), Util.getUUID());
         node.setHandler(new Test_cluster_node2());
+        node.setConnectionMinSize(30);
         log.info("init..");
         int conn = node.init(10000);
         log.info("init:%d", conn);

@@ -29,8 +29,7 @@ public class NodeSession {
     private static final int    SESSION_READ_CACHE  =   1024 * 1024;
     
     private int                 conn_max_size       =   100;/*连接数最大数量*/
-    private int                 conn_low_size       =   10;/*连接数最小数量*/
-    private int                 init_conn_timeout   =   30000;/*初始化连接超时时间*/
+    private int                 conn_min_size       =   10;/*连接数最小数量*/
     
     private ReentrantLock       conn_lock           =   new ReentrantLock();
     private Object              init_wait           =   new Object();
@@ -84,7 +83,8 @@ public class NodeSession {
                 
                 return -1;
             }
-            byte[] initdata = client_cmd.send(new NetPack(NetPack.CMD_INIT, nodeid.getBytes()).Encode());
+            
+            byte[] initdata = send_cmd(new NetPack(NetPack.CMD_INIT, nodeid.getBytes()).Encode());
             if(initdata == null) {
                 return -1;
             }
@@ -93,7 +93,7 @@ public class NodeSession {
                 this.nodeid = new String(recv.body);
                 if(Util.CheckNull(this.nodeid)) return 0;
                 client_data.init();
-                getSomeConnection(conn_low_size);
+                getSomeConnection(conn_min_size);
                 if(timeout > 0){
                     synchronized (init_wait) {
                         try {
@@ -108,23 +108,6 @@ public class NodeSession {
     }
     
     /**
-     * 此方法不要在初始化后调用
-     * @param size
-     */
-    public void setConnectionMaxSize(int size){
-        this.conn_max_size = size;
-        this.sessions = new Session[size];
-    }
-    
-    public void setInitConnectionTimeout(int timeout){
-        this.init_conn_timeout = timeout;
-    }
-    
-    public String getNodeId(){
-        return nodeid;
-    }
-    
-    /**
      * 获取一些连接
      * @param size
      * @return 此处返回的连接数不代表最终连接数
@@ -133,7 +116,7 @@ public class NodeSession {
         int nowGettingconns = 0;
         int nowmax = conn_max_size - nowConnectionCount.get();
         if(size <= 0){
-            size = nowmax < conn_low_size ? conn_low_size : nowmax; 
+            size = nowmax < conn_min_size ? conn_min_size : nowmax; 
         }else if(size > nowmax){
             size = nowmax;
         }
@@ -149,6 +132,40 @@ public class NodeSession {
         }
         return nowGettingconns;
     }
+    
+    private void send_data(Session session, byte[] data){
+        if(enableEncryption){
+            data = Util.Encoded(data, user_en_key);
+        }
+        session.write(data);
+    }
+    
+    
+    private byte[] send_cmd(byte[] data){
+        if(enableEncryption){
+            data = Util.Encoded(data, user_en_key);
+        }
+        return client_cmd.send(data);
+    }
+    
+    /**
+     * 此方法不要在初始化后调用 无效
+     * @param size
+     */
+    public void setConnectionMaxSize(int size){
+        if(nowConnectionCount.get() > 0) return;
+        this.conn_max_size = size;
+        this.sessions = new Session[size];
+    }
+        
+    public void setConnectionMinSize(int size){
+        this.conn_min_size = size;
+    }
+    
+    public String getNodeId(){
+        return nodeid;
+    }
+
     
     @SuppressWarnings("unchecked")
     public synchronized ArrayList<String> getSubscribeActions(){
@@ -210,7 +227,8 @@ public class NodeSession {
         
         @Override
         public void onConnection(Session session) throws Exception {
-            session.write(new NetPack(NetPack.CMD_DATA_INIT, nodeid.getBytes(charset)).Encode());
+            send_data(session, new NetPack(NetPack.CMD_DATA_INIT, nodeid.getBytes(charset)).Encode());
+            
         }
         
         @Override
@@ -254,7 +272,7 @@ public class NodeSession {
                             conn_lock.unlock();
                         }
                         nowConnectionCount.getAndIncrement();
-                        if(nowConnectionCount.get() >= conn_low_size){
+                        if(nowConnectionCount.get() >= conn_min_size){
                             synchronized (init_wait) {
                                 init_wait.notifyAll();
                             }

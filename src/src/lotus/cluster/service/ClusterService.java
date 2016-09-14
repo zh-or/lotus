@@ -6,9 +6,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
-import lotus.cluster.MessageListenner;
 import lotus.cluster.NetPack;
-import lotus.cluster.Node;
 import lotus.nio.IoHandler;
 import lotus.nio.Session;
 import lotus.socket.server.SocketServer;
@@ -102,7 +100,6 @@ public class ClusterService {
         server.setHandler(new ExIoHandler());
         server.start();
         
-        
         return this;
     }
     
@@ -132,7 +129,7 @@ public class ClusterService {
             if(enableEncryption){
                 data = Util.Decode(data, session.getAttr(ENCRYPTION_KEY, DEF_ENCRYPTION_KEY) + "");
             }
-            String session_type = (String) session.getAttr(SESSION_TYPE);
+            String session_type = session.getAttr(SESSION_TYPE) + "";
             NetPack pack = new NetPack(data);
             byte packtype = pack.type;
             try {
@@ -144,8 +141,9 @@ public class ClusterService {
                         if(node != null){
                             session.setAttr(SESSION_TYPE, SESSION_TYPE_DATA);
                             session.setAttr(NODE_ID, nodeid);
-                            node.AddDataSession(session);
                             session.write(data);
+                            node.AddDataSession(session);
+                            listenner.onNodeConnectionsChanged(ClusterService.this, node);
                         }else{
                             System.out.println("没有找到该nodeid的连接, 关闭之");
                             session.closeNow();
@@ -155,6 +153,7 @@ public class ClusterService {
                     case NetPack.CMD_INIT:
                     {
                         String nodeid = new String(pack.body, DEF_CHARSET);
+                        session.setAttr(NODE_ID, nodeid);
                         /*有可能这个链接被断开了*/
                         Node node = nodes.get(nodeid);
                         if(node == null){
@@ -165,6 +164,7 @@ public class ClusterService {
                         session.setAttr(SESSION_TYPE, SESSION_TYPE_CMD);
                         session.write(data);
                         nodes.put(nodeid, node);
+                        listenner.onNodeInit(ClusterService.this, node);
                         break;
                     }
                     default:
@@ -195,11 +195,21 @@ public class ClusterService {
         @Override
         public void onClose(Session session) throws Exception {
             String nodeid = session.getAttr(NODE_ID, "") + "";
+            String session_type = session.getAttr(SESSION_TYPE) + "";
             if(!Util.CheckNull(nodeid)){
+
                 /*取消所有广播*/
                 Node node = nodes.get(nodeid);
-                listenner.onNodeUnInit(ClusterService.this, node);
-                
+                if(SESSION_TYPE_DATA.equals(session_type)){
+                    node.removeDataSession(session);
+                    listenner.onNodeConnectionsChanged(ClusterService.this, node);
+                    if(node.size() < 0){
+                        
+                        listenner.onNodeUnInit(ClusterService.this, node);
+                    }
+                }else if(SESSION_TYPE_CMD.equals(session_type)){
+                    
+                }
             }
         }
         
