@@ -188,17 +188,10 @@ public class ClusterService {
                                     while(tmp.hasNext()){
                                         Entry<String, Node> item = tmp.next();
                                         Node node = item.getValue();
-                                        if(node != null){
-                                            Session s = node.getOneConnection();
-                                            if(s != null){
-                                                s.write(data);
-                                            }else{
-                                                System.out.println("没有连接???");
-                                            }
-                                        }else{
-                                            System.out.println("节点为空???");
+                                        Session s = node.getOneConnection();
+                                        if(s != null){
+                                            s.write(data);
                                         }
-                                        
                                     }
                                 }
                                 break;
