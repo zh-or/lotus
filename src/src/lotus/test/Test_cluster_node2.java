@@ -1,9 +1,6 @@
 package lotus.test;
 
 import java.net.InetSocketAddress;
-import java.util.Scanner;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import lotus.cluster.Message;
 import lotus.cluster.MessageResult;

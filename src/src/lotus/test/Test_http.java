@@ -22,8 +22,8 @@ public class Test_http extends HttpHandler{
     @Override
     public void service(HttpMethod mothed, HttpRequest request, HttpResponse response) {
 //    	response.sendRedirect("/?a=b");
-        System.out.println(request.getQueryString());
-//        
+//        System.out.println(request.toString());
+//        System.out.println(request.getRemoteAddress());
       //  response.setStatus(ResponseStatus.CLIENT_ERROR_NOT_FOUND);
         response.write("hello world");
         
