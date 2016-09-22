@@ -16,18 +16,15 @@ public class NioTcpSession extends Session{
 	private SelectionKey                   key;
 	private LinkedBlockingQueue<Object>    qwrite;
 	private volatile boolean               sentclose  = false;
-	private SocketAddress                  remoteaddr;
 	private NioTcpIoProcess                ioprocess;
+	private Object                         msglock;
 	
 	public NioTcpSession(NioContext context, SocketChannel channel, NioTcpIoProcess ioprocess, long id) {
 		super(context, id);
 		this.channel = channel;
 		this.qwrite = new LinkedBlockingQueue<Object>();
-		
+		this.msglock = new Object();
 		this.ioprocess = ioprocess;
-		try {
-            remoteaddr = channel.getRemoteAddress();
-        } catch (IOException e) {}
 	}
 	
 	public void setKey(SelectionKey key){
@@ -36,19 +33,44 @@ public class NioTcpSession extends Session{
 	
 	@Override
 	public SocketAddress getRemoteAddress() {
-		return remoteaddr;
+		try {
+            return channel.getRemoteAddress();
+        } catch (IOException e) {
+        }
+		return null;
 	}
 
 	@Override
+	public SocketAddress getLocaAddress() {
+	    try {
+            return channel.getLocalAddress();
+        } catch (IOException e) {}
+	    return null;
+	}
+	
+	@Override
 	public void write(Object data) {
-        qwrite.add(data);
-        if(key == null || !key.isValid()){/*没有准备好?*/
-            context.ExecuteEvent(new IoEventRunnable(new Exception("session is not valid"), IoEventType.SESSION_EXCEPTION, this, context));
-            return;
-        }
+	    synchronized(msglock){
+	        qwrite.add(data);
+	        if(key == null || !key.isValid()){/*没有准备好?*/
+	            context.ExecuteEvent(new IoEventRunnable(new Exception("session is not valid"), IoEventType.SESSION_EXCEPTION, this, context));
+	            return;
+	        }
+	        addInterestOps(SelectionKey.OP_WRITE);/*注册写事件*/
+	        key.selector().wakeup();
+	    }
+	}
+	
+	public void addInterestOps(int value){
+	    key.interestOps(key.interestOps() | value);
+	}
 
-        key.interestOps(key.interestOps() | SelectionKey.OP_WRITE);/*注册写事件*/
-        key.selector().wakeup();
+	public void removeInterestOps(int value){
+	    key.interestOps(key.interestOps() & (~value));
+	}
+	
+	public Object getMessageLock(){
+	    return msglock;
 	}
 	
 	public void write(Object data, boolean sentclose){
@@ -66,6 +88,11 @@ public class NioTcpSession extends Session{
 	    Object obj = qwrite.poll();
 	    
 	    return obj;
+	}
+	
+	@Override
+	public int getWriteMessageSize(){
+	    return qwrite.size();
 	}
 	
 	public SocketChannel getChannel(){

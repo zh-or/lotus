@@ -47,5 +47,17 @@ public class UdpSession extends Session{
         // TODO Auto-generated method stub
         
     }
+
+    @Override
+    public int getWriteMessageSize() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public SocketAddress getLocaAddress() {
+        // TODO Auto-generated method stub
+        return null;
+    }
 	
 }

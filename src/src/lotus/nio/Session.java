@@ -43,6 +43,8 @@ public abstract class Session {
     	return getAttr(key, null);
     }
     
+    public abstract int getWriteMessageSize();
+    
     public Object getAttr(Object key, Object defval){
     	Object val = attrs.get(key);
     	if(val == null) return defval;
@@ -133,7 +135,7 @@ public abstract class Session {
             recvPackwait.notifyAll();
         }
     }
-    
+    public abstract SocketAddress getLocaAddress();
     public abstract SocketAddress getRemoteAddress();
     public abstract void write(Object data);
     /**
@@ -143,6 +145,6 @@ public abstract class Session {
     
     @Override
     public String toString() {
-        return "[SESSIONID:" + id + "]";
+        return "[SESSIONID:" + id + ", LocaAddress:" + getLocaAddress() + ", RemoteAddress:" + getRemoteAddress() + "]";
     }
 }
