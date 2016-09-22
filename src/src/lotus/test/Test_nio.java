@@ -8,6 +8,7 @@ import java.net.Socket;
 
 import lotus.log.Log;
 import lotus.nio.IoHandler;
+import lotus.nio.LineProtocolCodec;
 import lotus.nio.Session;
 import lotus.nio.tcp.NioTcpClient;
 import lotus.nio.tcp.NioTcpServer;
@@ -21,8 +22,8 @@ public class Test_nio {
         log = Log.getInstance();
         log.setProjectName("test");
         NioTcpServer server = new NioTcpServer();
-        server.setProtocolCodec(new LengthProtocolCode());
-        
+   //     server.setProtocolCodec(new LengthProtocolCode());
+        server.setProtocolCodec(new LineProtocolCodec('}'));
         server.setHandler(new IoHandler() {
             @Override
             public void onConnection(Session session) {
@@ -49,31 +50,35 @@ public class Test_nio {
         server.bind(new InetSocketAddress(4000));
         
         
-        NioTcpClient client = new NioTcpClient(new LengthProtocolCode());
+//        NioTcpClient client = new NioTcpClient(new LengthProtocolCode());
+        NioTcpClient client = new NioTcpClient(new LineProtocolCodec('}'));
         client.init();
         client.setSessionReadBufferSize(5);
         client.setHandler(new IoHandler() {
             @Override
             public void onConnection(Session session) throws Exception {
-                log.info("client event connectioned...");
+                log.info("client event connectioned..." + session.getRemoteAddress());
                 Util.SLEEP(2000);
 
-                session.write(("fuck -> " + session.getId() + "\n").getBytes());
+           //     session.write(("fuck -> " + session.getId() + "\n").getBytes());
+          //      session.write(("fuck -> " + session.getId() + "}").getBytes());
             }
             @Override
             public void onRecvMessage(Session session, Object msg) throws Exception {
                 log.info("client recv:%s", new String((byte[])msg));
 
-                session.write(("fuck -> " + session.getId() + "\n").getBytes());
+            //    session.write(("fuck -> " + session.getId() + "\n").getBytes());
+            //    session.write(("fuck -> " + session.getId() + "}").getBytes());
             }
         });
         
-        for(int i = 0; i < 100; i++){
-            Session isconn = client.connection(new InetSocketAddress("127.0.0.1", 4000), 3000);
-            log.info("wait:" + isconn);
-            
+        for(int i = 0; i < 1; i++){
+            Session isconn = client.connection(new InetSocketAddress("127.0.0.1", 4000), 10000);
+            log.info("wait:" + isconn + isconn.getRemoteAddress());
+          //  isconn.write(("fuck -> " + isconn.getId() + "\n").getBytes());
+            isconn.write(("fuck -> " + isconn.getId() + "}").getBytes());
         }
-        
+        /*
         new Thread(new Runnable() {
             
             @Override
@@ -110,6 +115,6 @@ public class Test_nio {
                     e.printStackTrace();
                 }
             }
-        });
+        });*/
     }
 }

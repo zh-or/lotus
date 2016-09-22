@@ -43,7 +43,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
             session.pushEventRunnable(new IoEventRunnable(null, IoEventType.SESSION_CONNECTION, session, context));
         }else{
             selector.wakeup();
-            key = channel.register(selector, SelectionKey.OP_CONNECT, session);
+            key = channel.register(selector, SelectionKey.OP_CONNECT | SelectionKey.OP_READ, session);
             session.setKey(key);
             selector.wakeup();
         }
@@ -101,7 +101,6 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
                     
                 }*/
 
-                
                 if(key.isReadable()){/*call decode */
                     ByteBuffer readcache = session.getReadCacheBuffer();
                     int len = session.getChannel().read(readcache);

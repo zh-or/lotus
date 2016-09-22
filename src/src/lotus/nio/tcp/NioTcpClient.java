@@ -46,12 +46,12 @@ public class NioTcpClient extends NioContext{
      * @return 如果设置了timeout则连接成功返回session, 否则直接返回null
      */
     public Session connection(InetSocketAddress address, int timeout){
-        SocketChannel sc;
+        SocketChannel sc = null;
         NioTcpSession session = null;
         try {
             sc = SocketChannel.open();
             sc.configureBlocking(false);
-            sc.connect(address);
+            boolean isconnect = sc.connect(address);
             //sc.finishConnect();/*检测是否已连接完成*/
             rliplock.lock();
             try {
@@ -59,8 +59,7 @@ public class NioTcpClient extends NioContext{
                 if(iipBound >= ioprocess.length){
                     iipBound = 0;
                 }
-                session = ioprocess[iipBound].putChannel(sc, ++idcount, false);
-                
+                session = ioprocess[iipBound].putChannel(sc, ++idcount, isconnect);
             } catch (Exception e) {
                 e.printStackTrace();
             }finally{
@@ -69,16 +68,15 @@ public class NioTcpClient extends NioContext{
             if(idcount >= Long.MAX_VALUE){
                 idcount = 0l;
             }
-            if(timeout > 0 && session != null && sc.finishConnect() == false){
+            // && sc.finishConnect() == false //调用了这个方法就不会触发 SelectionKey.OP_CONNECT
+            if(timeout > 0 && session != null){
                 try {
                     synchronized (session) {
                         session.wait(timeout);
                     }
                 } catch (InterruptedException e) {}
-                if(sc.finishConnect()){
-                    return session;
-                }
             }
+            return session;
         } catch (IOException e) {
             e.printStackTrace();
         }
