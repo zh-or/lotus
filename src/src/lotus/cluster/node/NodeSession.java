@@ -221,7 +221,8 @@ public class NodeSession {
         }
         session_capacity = -1;
         session_bound = 0;
-        client_data.stop();
+        client_data.close();
+        client_cmd.close();
     }
 
     /**
@@ -263,6 +264,7 @@ public class NodeSession {
         @Override
         public void onClose(Session session) throws Exception {
             Object obj = session.getAttr(SESSION_IS_INIT);
+            System.out.println("client session close " + session);
             if(obj != null){
                 conn_lock.lock();
                 try {

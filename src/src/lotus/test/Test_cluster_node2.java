@@ -55,9 +55,10 @@ public class Test_cluster_node2 extends MessageHandler{
         node.sendMessage(new Message(Message.MTYPE_MESSAGE, node.getNodeId(), null, "head", null));
         node.sendMessage(new Message(Message.MTYPE_SUBSCRIBE, action, null, "head", null));
         
-        Util.SLEEP(20000);
+        Util.SLEEP(5000);
         System.out.println("remove:" + node.removeSubscribe("helloworld"));;
-        //fuck?	
+        node.close();
+        Util.SLEEP(20000);
         System.exit(0);
     }
     

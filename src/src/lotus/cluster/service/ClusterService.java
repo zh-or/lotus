@@ -310,6 +310,7 @@ public class ClusterService {
         
         @Override
         public void onClose(Session session) throws Exception {
+            System.out.println("server session close:" + session);
             String nodeid = session.getAttr(NODE_ID, "") + "";
             String session_type = session.getAttr(SESSION_TYPE) + "";
             if(!Util.CheckNull(nodeid)){

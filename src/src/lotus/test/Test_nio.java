@@ -70,6 +70,11 @@ public class Test_nio {
             //    session.write(("fuck -> " + session.getId() + "\n").getBytes());
             //    session.write(("fuck -> " + session.getId() + "}").getBytes());
             }
+            
+            @Override
+            public void onClose(Session session) throws Exception {
+                log.info("client event close");
+            }
         });
         
         for(int i = 0; i < 1; i++){
@@ -78,6 +83,9 @@ public class Test_nio {
           //  isconn.write(("fuck -> " + isconn.getId() + "\n").getBytes());
             isconn.write(("fuck -> " + isconn.getId() + "}").getBytes());
         }
+        
+        Util.SLEEP(5000);
+        client.close();
         /*
         new Thread(new Runnable() {
             

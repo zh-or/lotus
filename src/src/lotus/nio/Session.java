@@ -5,6 +5,8 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import lotus.nio.IoEventRunnable.IoEventType;
+
 public abstract class Session {
     protected ConcurrentHashMap<Object, Object> attrs           =   null;
     protected NioContext                        context     	=   null;
@@ -16,6 +18,7 @@ public abstract class Session {
     protected long                              id              =   0l;
     protected final Object                      recvPackwait    =   new Object();
     protected long                              createtime      =   0l;
+    protected volatile boolean                    closed          = false;
     
     public Session (NioContext context, long id){
         this.context = context;
@@ -98,7 +101,15 @@ public abstract class Session {
      * 立即关闭该链接
      */
     public void closeNow(){
+        if(closed) return ;
+        closed = true;
         context.putByteBufferToCache(readcache);/*回收*/
+        pushEventRunnable(new IoEventRunnable(null, IoEventType.SESSION_CLOSE, this, context));
+        readcache = null;
+    }
+    
+    public boolean isClosed(){
+        return closed;
     }
 
     public void _wait(int timeout){

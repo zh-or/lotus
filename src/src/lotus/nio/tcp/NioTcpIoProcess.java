@@ -14,6 +14,7 @@ import lotus.nio.IoEventRunnable.IoEventType;
 import lotus.nio.IoProcess;
 import lotus.nio.NioContext;
 import lotus.nio.ProtocolDecoderOutput;
+import lotus.nio.Session;
 import lotus.util.Util;
 
 
@@ -206,7 +207,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
                 /*call exception*/
                 //session.pushEventRunnable(new IoEventRunnable(e, IoEventType.SESSION_EXCEPTION, session, context));
                 session.closeNow();
-                cancelKey(key);/*对方关闭了?*/
+                //cancelKey(key);/*对方关闭了?*/
             } 
         }
     }    
@@ -235,13 +236,10 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
         }
     }
     
-    public void cancelSession(NioTcpSession session){
-        /*call close*/
-        session.pushEventRunnable(new IoEventRunnable(null, IoEventType.SESSION_CLOSE, session, context));
-    }
-    
-    private void cancelKey(SelectionKey key){
+    public void cancelKey(SelectionKey key){
         try {
+            Session session = (Session) key.attachment();
+            session.closeNow();
             key.channel().close();
             key.cancel();
         } catch (Exception e) {}
@@ -250,6 +248,11 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
     public void close(){
         isrun = false;
         try {
+            Iterator<SelectionKey> it = selector.keys().iterator();
+            while(it.hasNext()){
+                cancelKey(it.next());
+            }
+            selector.close();
             selector.wakeup();
             if(selector != null) selector.close();
         } catch (IOException e) {}

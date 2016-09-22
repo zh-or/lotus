@@ -16,7 +16,6 @@ public class NioTcpSession extends Session{
 	private SelectionKey                   key;
 	private LinkedBlockingQueue<Object>    qwrite;
 	private volatile boolean               sentclose  = false;
-	private volatile boolean               closed     = false;
 	private SocketAddress                  remoteaddr;
 	private NioTcpIoProcess                ioprocess;
 	
@@ -78,15 +77,11 @@ public class NioTcpSession extends Session{
 	}
 	
 	@Override
-	public void closeNow() {
+	public synchronized void closeNow() {
 	    if(closed) return;
-	    closed = true;
         super.closeNow();
-		try {
-            channel.close();
-            key.cancel();
-            ioprocess.cancelSession(this);
-        } catch (IOException e) {}
+        ioprocess.cancelKey(key);
+
 	}
 
 	@Override

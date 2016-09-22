@@ -29,7 +29,7 @@ public class NioTcpClient extends NioContext{
         }
     }
     
-    public void stop(){
+    public void close(){
         for(int i = 0; i < selector_thread_total; i++){
             ioprocess[i].close();
         }
