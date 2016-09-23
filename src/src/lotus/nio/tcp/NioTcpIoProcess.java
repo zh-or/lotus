@@ -24,7 +24,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
     public NioTcpIoProcess(NioContext context) throws IOException {
     	super(context);
 		selector = Selector.open();
-		tmp_buffer = new byte[context.getSessionReadBufferSize()];
+		tmp_buffer = new byte[context.getSessionCacheBufferSize()];
 	}
     
     public NioTcpSession putChannel(SocketChannel channel, long id) throws Exception{
@@ -173,6 +173,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
                             while(out.hasRemaining()) {/*这里最好不要写入超过8k的数据*/
                                 session.getChannel().write(out);
                             }
+                            out.clear();
                             session.setLastActive(System.currentTimeMillis());
                             /*call message sent*/
                             session.pushEventRunnable(new IoEventRunnable(msg, IoEventType.SESSION_SENT, session, context));

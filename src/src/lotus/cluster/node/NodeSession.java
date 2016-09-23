@@ -58,11 +58,11 @@ public class NodeSession {
         this.client_data = new NioTcpClient(new LengthProtocolCode());
         this.client_data.setEventThreadPoolSize(conn_max_size);
         this.client_data.setHandler(new DataHandler());
-        this.client_data.setSessionReadBufferSize(SESSION_READ_CACHE);
+        this.client_data.setSessionCacheBufferSize(SESSION_READ_CACHE);
     }
     
     public NodeSession setDataConnReadBufferSize(int size){
-        this.client_data.setSessionReadBufferSize(size);
+        this.client_data.setSessionCacheBufferSize(size);
         return this;
     }
     

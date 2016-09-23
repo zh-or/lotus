@@ -69,12 +69,12 @@ public abstract class NioContext {
         return this;
     }
     
-    public NioContext setSessionReadBufferSize(int size){
+    public NioContext setSessionCacheBufferSize(int size){
         this.buff_read_cache = size;
         return this;
     }
     
-    public int getSessionReadBufferSize(){
+    public int getSessionCacheBufferSize(){
         return this.buff_read_cache;
     }
     
@@ -122,7 +122,8 @@ public abstract class NioContext {
     public ByteBuffer getByteBufferFormCache(){
         ByteBuffer buffer = bufferlist.poll();
         if(buffer == null){
-            buffer = ByteBuffer.allocate(buff_read_cache);
+            buffer = ByteBuffer.allocateDirect(buff_read_cache);
+            buffer.clear();
         }
         return buffer;
     }

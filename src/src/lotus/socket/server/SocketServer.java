@@ -58,8 +58,8 @@ public class SocketServer {
     	server = new NioTcpServer();
     	server.setReadBufferCacheListSize(bufferlistmaxsize);
     	server.setEventThreadPoolSize(EventThreadPoolSize);
-    	server.setSessionReadBufferSize(readbuffsize);
-    	server.setSessionReadBufferSize(readbuffsize);
+    	server.setSessionCacheBufferSize(readbuffsize);
+    	server.setSessionCacheBufferSize(readbuffsize);
     	server.setSessionIdleTime(idletime);
     	server.setSocketTimeOut(sockettimeout);
     	server.setProtocolCodec(new LengthProtocolCode());

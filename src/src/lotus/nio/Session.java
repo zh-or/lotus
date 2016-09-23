@@ -12,13 +12,14 @@ public abstract class Session {
     protected NioContext                        context     	=   null;
     protected long					            lastactive		=	0l;
     protected volatile ByteBuffer               readcache       =   null;
+    protected volatile ByteBuffer               writecache      =   null;
     protected LinkedBlockingQueue<Runnable>     eventlist       =   null;
     protected volatile boolean                  runingevent     =   false;
     protected ProtocolDecoderOutput             deout           =   null;
     protected long                              id              =   0l;
     protected final Object                      recvPackwait    =   new Object();
     protected long                              createtime      =   0l;
-    protected volatile boolean                    closed          = false;
+    protected volatile boolean                  closed          = false;
     
     public Session (NioContext context, long id){
         this.context = context;
@@ -27,6 +28,7 @@ public abstract class Session {
         this.createtime = System.currentTimeMillis();
         setLastActive(System.currentTimeMillis());
         readcache = context.getByteBufferFormCache();
+        writecache = context.getByteBufferFormCache();
         eventlist = new LinkedBlockingQueue<Runnable>();
         deout = new ProtocolDecoderOutput();
     }
@@ -75,8 +77,21 @@ public abstract class Session {
     	return readcache;
     }
     
+    public ByteBuffer getWriteCacheBuffer(int size){
+        if(writecache.capacity() < size){
+            context.putByteBufferToCache(writecache);
+            this.writecache = null;
+            writecache = ByteBuffer.allocate(size);
+        }
+        return writecache;
+    }
+
     public void updateReadCacheBuffer(ByteBuffer buffer){
         this.readcache = buffer;
+    }
+    
+    public void updateWriteCacheBuffer(ByteBuffer buffer){
+        this.writecache = buffer;
     }
     
     public boolean IsRuningEvent(){
@@ -106,6 +121,7 @@ public abstract class Session {
         if(closed) return ;
         closed = true;
         context.putByteBufferToCache(readcache);/*回收*/
+        context.putByteBufferToCache(writecache);
         pushEventRunnable(new IoEventRunnable(null, IoEventType.SESSION_CLOSE, this, context));
         readcache = null;
     }

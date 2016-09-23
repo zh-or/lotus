@@ -19,9 +19,14 @@ public class LineProtocolCodec implements ProtocolCodec{
 	
 	@Override
 	public boolean decode(Session session, ByteBuffer in, ProtocolDecoderOutput out) throws Exception {
-		in.mark();
-		byte[] arr = in.array();
+	    /*
+	     * 这里不能用 in.array() 来读取数据, 因为这个ByteBuffer 是使用 ByteBuffer.allocateDirect 分配的.
+	     * in.array() 将会抛出异常
+	     * */
+	    in.mark();
         int size = in.limit();
+        byte[] arr = new byte[size];
+        in.get(arr);
 		for(int i = 0; i < size; i++){
 			if(arr[i] == line){
 				in.reset();
@@ -39,8 +44,10 @@ public class LineProtocolCodec implements ProtocolCodec{
 	@Override
 	public ByteBuffer encode(Session session, Object msg)  throws Exception{
 		byte[] data = (byte[]) msg;
-	    ByteBuffer out = ByteBuffer.wrap(data);
-		return out;
+	    ByteBuffer out = session.getWriteCacheBuffer(data.length);
+	    out.put(data);
+	    out.flip();
+	    return out;
 	}
 
 }

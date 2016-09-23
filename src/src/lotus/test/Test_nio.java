@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import lotus.log.Log;
@@ -18,6 +19,7 @@ import lotus.util.Util;
 public class Test_nio {
     static Log log;
     static AtomicInteger i = new AtomicInteger(0);
+    static ConcurrentHashMap<String, Session> c = new ConcurrentHashMap<String, Session>();
     
     public static void main(String[] args) throws IOException {
         log = Log.getInstance();
@@ -37,8 +39,8 @@ public class Test_nio {
             }
             @Override
             public void onIdle(Session session) {
-                
-                log.info("server event idle:" + session.getRemoteAddress() + ", count:" + session.getAttr("count") + ", msg size:" + session.getWriteMessageSize());
+                c.put(session.toString(), session);
+                log.error("server event idle:" + session.getRemoteAddress() + ", count:" + session.getAttr("count") + ", msg size:" + session.getWriteMessageSize());
             }
             @Override
             public void onRecvMessage(Session session, Object obj) {
@@ -53,13 +55,13 @@ public class Test_nio {
             }
         });
         server.setSessionIdleTime(60 * 1000);
-        server.setSessionReadBufferSize(1024);
+        server.setSessionCacheBufferSize(1024);
         server.bind(new InetSocketAddress(4000));
         
         
 //        NioTcpClient client = new NioTcpClient(new LengthProtocolCode());
         NioTcpClient client = new NioTcpClient(new LineProtocolCodec('}'));
-        client.setSessionReadBufferSize(1024);
+        client.setSessionCacheBufferSize(1024);
         client.setSessionIdleTime(60 * 1000);
         client.init();
         client.setHandler(new IoHandler() {
@@ -104,7 +106,7 @@ public class Test_nio {
             
             @Override
             public void run() {
-                log.info("count:" + i.get());
+                log.info("count:" + i.get() + ", idle:" + c.size());
             }
         }, 1000, 20000);
         
