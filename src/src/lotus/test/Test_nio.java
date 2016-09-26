@@ -40,7 +40,7 @@ public class Test_nio {
             @Override
             public void onIdle(Session session) {
                 c.put(session.toString(), session);
-                log.error("server event idle:" + session.getRemoteAddress() + ", count:" + session.getAttr("count") + ", msg size:" + session.getWriteMessageSize());
+                log.error("server event idle:" + session.getRemoteAddress() + ", count:" + session.getAttr("count") + ", msg size:" + session.getWriteMessageSize() + ", lastmsg:" + session.getAttr("lastmsg"));
             }
             @Override
             public void onRecvMessage(Session session, Object obj) {
@@ -49,6 +49,7 @@ public class Test_nio {
                 String msg = new String((byte[])obj);
                 count++;
                 session.setAttr("count", count);
+                session.setAttr("lastmsg", msg);
                 //log.info("server event recv msg->" + session.getRemoteAddress() + "  msg:" + msg);
                 i.incrementAndGet();
                 session.write(obj);
@@ -60,7 +61,7 @@ public class Test_nio {
         
         
 //        NioTcpClient client = new NioTcpClient(new LengthProtocolCode());
-        NioTcpClient client = new NioTcpClient(new LineProtocolCodec('}'));
+    /*    NioTcpClient client = new NioTcpClient(new LineProtocolCodec('}'));
         client.setSessionCacheBufferSize(1024);
         client.setSessionIdleTime(60 * 1000);
         client.init();
@@ -69,21 +70,26 @@ public class Test_nio {
             public void onConnection(Session session) throws Exception {
          //       log.info("client event connectioned..." + session.getRemoteAddress());
                 Util.SLEEP(2000);
-
+                session.setAttr("msgcount", 1);
            //     session.write(("fuck -> " + session.getId() + "\n").getBytes());
-                session.write(("fuck -> " + session.getId() + "}").getBytes());
+                session.write(("1}").getBytes());
             }
             @Override
             public void onRecvMessage(Session session, Object msg) throws Exception {
              //   log.info("client recv:%s", new String((byte[])msg));
 
             //    session.write(("fuck -> " + session.getId() + "\n").getBytes());
-                session.write(("fuck -> " + session.getId() + "}").getBytes());
+                int msgcount = (Integer) session.getAttr("msgcount");
+                msgcount ++;
+                session.setAttr("msgcount", msgcount);
+                String lastmsg = "fuck -> " + msgcount + "}";
+                session.setAttr("lastmsg", lastmsg);
+                session.write(lastmsg.getBytes());
             }
             @Override
             public void onIdle(Session session) throws Exception {
                 // TODO Auto-generated method stub
-                log.error("client event idle session:" + session.getLocaAddress() + ", msg size:" + session.getWriteMessageSize());
+                log.error("client event idle session:" + session.getLocaAddress() + ", msg size:" + session.getWriteMessageSize() + ", lastmsg:" + session.getAttr("lastmsg"));
                 super.onIdle(session);
             }
             @Override
@@ -101,7 +107,7 @@ public class Test_nio {
         System.out.println("连接完毕");
       //  Util.SLEEP(5000);
        // client.close();
-        
+        */
         new Timer().schedule(new TimerTask() {
             
             @Override
