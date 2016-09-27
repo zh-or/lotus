@@ -116,6 +116,20 @@ public class ClusterService {
         server.stop();
     }
     
+    public void sendMessage(Message msg){
+        
+    }
+    
+    public void sendBrodcast(String head, byte[] body){
+        Message msg = new Message(Message.MTYPE_BROADCAST, null, Util.getUUID(), head, body);
+        sendMessage(msg);
+    }
+    
+    public void sendSubMessage(String action, String head, byte[] body){
+        Message msg = new Message(Message.MTYPE_SUBSCRIBE, action, Util.getUUID(), head, body);
+        sendMessage(msg);
+    }
+    
     private class ExIoHandler extends IoHandler{
         
         @Override
@@ -180,7 +194,7 @@ public class ClusterService {
                                 }
                                 break;
                             }
-                            case Message.MTYPE_BROADCAT:
+                            case Message.MTYPE_BROADCAST:
                             {
                                 
                                 if(listenner.onRecvBroadcast(ClusterService.this, node_from, m) == false){

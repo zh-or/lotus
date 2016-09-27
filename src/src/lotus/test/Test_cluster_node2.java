@@ -51,7 +51,7 @@ public class Test_cluster_node2 extends MessageHandler{
         }
         String action = "helloworld";
         System.out.println("add:" + node.addSubscribe("helloworld"));;
-        node.sendMessage(new Message(Message.MTYPE_BROADCAT, action, null, "head", null));
+        node.sendMessage(new Message(Message.MTYPE_BROADCAST, action, null, "head", null));
         node.sendMessage(new Message(Message.MTYPE_MESSAGE, node.getNodeId(), null, "head", null));
         node.sendMessage(new Message(Message.MTYPE_SUBSCRIBE, action, null, "head", null));
         

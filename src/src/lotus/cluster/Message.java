@@ -11,7 +11,7 @@ public class Message {
     /**
      * 广播消息, 发送给所有节点
      */
-    public static final byte MTYPE_BROADCAT          =   0x02;
+    public static final byte MTYPE_BROADCAST         =   0x02;
     /**
      * 订阅消息, 发送给所有订阅此消息的节点
      */

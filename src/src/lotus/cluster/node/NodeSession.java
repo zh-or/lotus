@@ -374,7 +374,7 @@ public class NodeSession {
                                 handler.onRecvMessage(NodeSession.this, m);
                                 break;
                             }
-                            case Message.MTYPE_BROADCAT:
+                            case Message.MTYPE_BROADCAST:
                                 handler.onRecvBroadcast(NodeSession.this, m);
                                 break;
                             case Message.MTYPE_SUBSCRIBE:
