@@ -23,8 +23,12 @@ public class NodeSession {
     
     private int                 conn_max_size       =   100;/*连接数最大数量*/
     private int                 conn_min_size       =   10;/*连接数最小数量*/
-    
+    private boolean             run                 =   false;
     private ReentrantLock       conn_lock           =   new ReentrantLock();
+    private Object              cmd_write_wait      =   new Object();
+    private Object              cmd_recv_wait       =   new Object();
+    private byte[]              cmd_recv            =   null;
+    private byte[]              cmd_send            =   null;
     private Object              init_wait           =   new Object();
     private InetSocketAddress   serveraddress       =   null;
     private NioTcpClient        client_data         =   null;/*data sockets*/
@@ -61,6 +65,11 @@ public class NodeSession {
         this.client_data.setSessionCacheBufferSize(SESSION_READ_CACHE);
     }
     
+    /**
+     * 设置数据传送socket 读缓冲区大小
+     * @param size
+     * @return
+     */
     public NodeSession setDataConnReadBufferSize(int size){
         this.client_data.setSessionCacheBufferSize(size);
         return this;
@@ -72,17 +81,18 @@ public class NodeSession {
      * @return 返回初始化的连接数 -1 表示连接服务器失败
      */
     public synchronized int init(long timeout){
-
         try {
+            run = true;
             client_cmd = new SyncSocketClient();
             client_cmd.setRecvTimeOut(30 * 1000);
             if(client_cmd.connection(serveraddress, (int)timeout) == false){
-                
+                run = false;
                 return -1;
             }
-            
+            new Thread(CmdConnection).start();
             byte[] initdata = send_cmd(new NetPack(NetPack.CMD_INIT, nodeid.getBytes()).Encode());
             if(initdata == null) {
+                run = false;
                 return -1;
             }
             NetPack recv = new NetPack(initdata);
@@ -90,7 +100,7 @@ public class NodeSession {
                 this.nodeid = new String(recv.body);
                 if(Util.CheckNull(this.nodeid)) return 0;
                 client_data.init();
-                getSomeConnection(conn_min_size);
+                getSomeConnection(conn_min_size + 5);
                 if(timeout > 0 && session_capacity + 1 < conn_min_size){
                     synchronized (init_wait) {
                         try {
@@ -164,7 +174,21 @@ public class NodeSession {
         if(enableEncryption){
             data = Util.Encoded(data, user_en_key);
         }
-        return client_cmd.send(data);
+        cmd_send = data;
+        cmd_recv = null;
+        synchronized (cmd_write_wait) {
+            cmd_write_wait.notifyAll();
+        }
+        synchronized (cmd_recv_wait) {
+            try {
+                if(cmd_recv == null){
+                    cmd_recv_wait.wait(20000);
+                }
+            } catch (InterruptedException e) {
+                cmd_recv = null;
+            }
+        }
+        return cmd_recv;
     }
     
     /**
@@ -212,6 +236,13 @@ public class NodeSession {
     }
     
     public synchronized void close(){
+        run = false;
+        synchronized (cmd_write_wait) {
+            cmd_write_wait.notifyAll();   
+        }
+        synchronized (cmd_recv_wait) {
+            cmd_recv_wait.notifyAll();
+        }
         subs.clear();
         for(int i = 0; i < session_capacity; i++){
             if(sessions[i] != null){
@@ -253,6 +284,29 @@ public class NodeSession {
         return pack.type == NetPack.CMD_UNSUBS_MSG ;
     }
     
+    private Runnable CmdConnection  = new Runnable() {
+        
+        @Override
+        public void run() {
+            while(run){
+                try {
+                    synchronized (cmd_write_wait) {
+                        cmd_write_wait.wait(1000 * 60 * 3);//3分钟
+                    }
+                    if(cmd_send != null){
+                        cmd_recv = client_cmd.send(cmd_send);
+                        cmd_send = null;
+                        synchronized (cmd_recv_wait) {
+                            cmd_recv_wait.notifyAll();
+                        }
+                    }
+                } catch (InterruptedException e) {
+                    /*超时则发送心跳*/
+                    send_cmd(new NetPack(NetPack.CMD_KEEP, null).Encode());
+                }
+            }
+        }
+    };
     
     private class DataHandler extends IoHandler{
         

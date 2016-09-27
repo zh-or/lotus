@@ -16,7 +16,7 @@ import lotus.nio.tcp.NioTcpServer;
 import lotus.util.Util;
 
 
-public class Test_nio {
+public class Test_nio_server {
     static Log log;
     static AtomicInteger i = new AtomicInteger(0);
     static ConcurrentHashMap<String, Session> c = new ConcurrentHashMap<String, Session>();

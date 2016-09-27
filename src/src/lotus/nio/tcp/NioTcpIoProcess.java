@@ -251,6 +251,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
     }
     
     public void cancelKey(SelectionKey key){
+        if(key == null) return;
         try {
             Session session = (Session) key.attachment();
             session.closeNow();
@@ -261,6 +262,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
 
     public void close(){
         isrun = false;
+        selector.wakeup();
         try {
             Iterator<SelectionKey> it = selector.keys().iterator();
             while(it.hasNext()){
