@@ -11,9 +11,7 @@ import lotus.log.Log;
 import lotus.nio.IoHandler;
 import lotus.nio.LineProtocolCodec;
 import lotus.nio.Session;
-import lotus.nio.tcp.NioTcpClient;
 import lotus.nio.tcp.NioTcpServer;
-import lotus.util.Util;
 
 
 public class Test_nio_server {

@@ -19,7 +19,7 @@ import lotus.util.Util;
 public class ClusterService {
     
     private SocketServer    server						=	null;
-    private int             exthreadtotal               =   10;/*都在io线程里面处理了吧*/
+    private int             exthreadtotal               =   0;/*都在io线程里面处理了吧*/
     private int             read_buffer_size            =   2048;
     private int             idletime                    =   60 * 3;
     private int             buffer_list_size            =   1024;

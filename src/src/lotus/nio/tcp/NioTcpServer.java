@@ -26,29 +26,30 @@ public class NioTcpServer extends NioContext{
 
 	public void bind(InetSocketAddress addr) throws IOException {
 		ssc = ServerSocketChannel.open();
-		ssc.socket().bind(addr);
-		ssc.configureBlocking(false);
-		/*一个线程 accept */
-		acceptrhread = new AcceptThread();
-		new Thread(acceptrhread, "lotus nio accept thread").start();
+        ssc.socket().setReceiveBufferSize(buff_read_cache);
+        ssc.configureBlocking(false);
+		ssc.bind(addr);
 		ioprocess = new NioTcpIoProcess[selector_thread_total];
 		
 		for(int i = 0; i < selector_thread_total; i++){
 		    ioprocess[i] = new NioTcpIoProcess(this);
-		    new Thread(ioprocess[i], "lotus nio server selector thread-" + i).start();
+		    new Thread(ioprocess[i], "lotus nio tcp server selector thread - " + i).start();
 		}
+        /*一个线程 accept */
+        acceptrhread = new AcceptThread();
+        new Thread(acceptrhread, "lotus nio tcp accept thread").start();
 	}
 	
 	public void unbind() {
 		try {
+            acceptrhread.close();
+            executor_e.shutdownNow();
 		    for(int i = 0; i < selector_thread_total; i++){
 		        try {
 		            ioprocess[i].close();
                 } catch (Exception e) { }
 		    }
-            executor_e.shutdownNow();
             bufferlist.clear();
-            if(acceptrhread != null) acceptrhread.close();
 		    if(ssc != null) ssc.close();
 		    ssc = null;
         } catch (IOException e) {}
@@ -89,6 +90,8 @@ public class NioTcpServer extends NioContext{
                                 if(client == null) continue;
                                 client.configureBlocking(false);
                                 client.socket().setSoTimeout(socket_time_out);
+                                client.socket().setReceiveBufferSize(buff_read_cache);
+                                client.socket().setSendBufferSize(buff_read_cache);
                                 client.finishConnect();
                                 rliplock.lock();/*排队*/
                                 try {

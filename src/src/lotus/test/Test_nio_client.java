@@ -53,11 +53,13 @@ public class Test_nio_client {
             }
         });
         System.out.print("请输入连接数:");
+        @SuppressWarnings("resource")
         Scanner in = new Scanner(System.in);
         int num = in.nextInt();
         System.out.println("连接数:" + num);
         for(int i = 0; i < num; i++){
             Session isconn = client.connection(new InetSocketAddress("192.168.0.140", 4000), 0);
+            isconn.getId();
           //  log.info("wait:" + isconn + isconn.getRemoteAddress());
           //  isconn.write(("fuck -> " + isconn.getId() + "\n").getBytes());
           //  isconn.write(("fuck -> " + isconn.getId() + "}").getBytes());

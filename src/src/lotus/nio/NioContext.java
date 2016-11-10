@@ -13,7 +13,7 @@ public abstract class NioContext {
 	protected int                   selector_thread_total           =   0;
     protected int                   session_idle_time               =   0;
     protected int                   socket_time_out                 =   1000 * 10;
-    protected int                   buff_read_cache                 =   1024;/*读缓冲区*/
+    protected int                   buff_read_cache                 =   1024;/*读缓冲区大小*/
     protected int                   buffer_list_max_size            =   0;
     protected IoHandler             handler                         =   null;
     protected ProtocolCodec			procodec						=   null;

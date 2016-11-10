@@ -4,10 +4,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
@@ -19,6 +21,61 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 public class HTTPS {
+    
+    public static boolean downloadFile(String url, String savepath, String cookie){
+        InputStream is = null;
+        FileOutputStream fout = null;
+        try {
+            File out = new File(savepath);
+            if(out.exists()) out.delete();
+            out.createNewFile();
+            fout = new FileOutputStream(out);
+        } catch (Exception e) {
+            return false;
+        }
+        
+        try {
+     
+            URL console = new URL(url);
+            URLConnection connection = console.openConnection();
+            if(connection instanceof HttpsURLConnection){
+                SSLContext sc = SSLContext.getInstance("SSL");
+                sc.init(null, new TrustManager[] { new TrustAnyTrustManager() },  new java.security.SecureRandom());
+                HttpsURLConnection conn = (HttpsURLConnection) connection;
+                conn.setSSLSocketFactory(sc.getSocketFactory());
+                conn.setHostnameVerifier(new TrustAnyHostnameVerifier());
+                conn.setRequestMethod("GET");
+            }else{
+                ((HttpURLConnection) connection).setRequestMethod("GET");
+            }
+            
+            connection.setDoInput(true);
+            connection.setRequestProperty("Charset", "UTF-8");
+            connection.setRequestProperty("Cookie", cookie);
+            connection.setUseCaches(false);
+            connection.connect();
+          
+            is = connection.getInputStream();
+            if (is != null) {
+                int len = 0;
+                byte[] buffer = new byte[4096];
+                while ((len = is.read(buffer)) != -1) {
+                    fout.write(buffer, 0, len);
+                }
+                fout.flush();
+                fout.close();
+                is.close();
+                return true;
+            }
+        } catch (Exception e) {
+          //  e.printStackTrace();
+        }finally{
+            try {
+                if(is != null) is.close();
+            } catch (Exception e2) {}
+        }
+        return false;
+    }
     
     /**
      * 上传文件
@@ -61,7 +118,7 @@ public class HTTPS {
 
 				FileInputStream fStream = new FileInputStream(file);
 			
-				byte[] buffer = new byte[1024];
+				byte[] buffer = new byte[2048];
 				int length = -1;
 				while ((length = fStream.read(buffer)) != -1) {
 					ds.write(buffer, 0, length);
@@ -74,7 +131,7 @@ public class HTTPS {
 				/* 取得Response内容 */
 				InputStream is = con.getInputStream();
 				ByteArrayOutputStream baos = new ByteArrayOutputStream();
-				byte[] buf = new byte[1024];
+				byte[] buf = new byte[2048];
 				int lengthi = -1;
 				while ((lengthi = is.read(buf)) != -1) {
 					baos.write(buf, 0, lengthi);
@@ -93,34 +150,41 @@ public class HTTPS {
 	/**
 	 * urlencoded
 	 * @param url
-	 * @param content
+	 * @param content application/x-www-form-urlencoded
 	 * @return
 	 */
-	public static String post(String url, String content) {
+	public static String post(String url, String content, String cookie) {
 		OutputStream out = null;
 		InputStream in = null;
 		try {
-			SSLContext sc = SSLContext.getInstance("SSL");
-	        sc.init(null, new TrustManager[] { new TrustAnyTrustManager() },  new java.security.SecureRandom());
 	 
 	        URL console = new URL(url);
-	        HttpsURLConnection conn = (HttpsURLConnection) console.openConnection();
-	        conn.setSSLSocketFactory(sc.getSocketFactory());
-	        conn.setHostnameVerifier(new TrustAnyHostnameVerifier());
-	        conn.setDoInput(true);
-	        conn.setDoOutput(true);
-	        conn.setRequestProperty("Charset", "UTF-8");
-	        conn.setRequestMethod("POST");
-	        conn.setUseCaches(false);
-	        conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-	        conn.connect();
-	        out = conn.getOutputStream();
+	        URLConnection connection = console.openConnection();
+    	    if(connection instanceof HttpsURLConnection){
+    			SSLContext sc = SSLContext.getInstance("SSL");
+    	        sc.init(null, new TrustManager[] { new TrustAnyTrustManager() },  new java.security.SecureRandom());
+	            HttpsURLConnection conn = (HttpsURLConnection) connection;
+	            conn.setSSLSocketFactory(sc.getSocketFactory());
+	            conn.setHostnameVerifier(new TrustAnyHostnameVerifier());
+	            conn.setRequestMethod("POST");
+	        }else{
+	            
+                ((HttpURLConnection) connection).setRequestMethod("POST");
+            }
+	        connection.setRequestProperty("Charset", "UTF-8");
+            connection.setUseCaches(false);
+            connection.setRequestProperty("Cookie", cookie);
+	        connection.setDoInput(true);
+	        connection.setDoOutput(true);
+	        connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+	        connection.connect();
+	        out = connection.getOutputStream();
 	        out.write(content.getBytes("UTF-8"));
 	        // 刷新、关闭
 	        out.flush();
 	        out.close();
 	        out = null;
-	        in = conn.getInputStream();
+	        in = connection.getInputStream();
 	        if (in != null) {
 	            ByteArrayOutputStream outStream = new ByteArrayOutputStream();
 	            byte[] buffer = new byte[1024 * 2];
@@ -144,24 +208,31 @@ public class HTTPS {
 	}
 	
 	
-	public static String get(String url){
+	public static String get(String url, String cookie){
 		InputStream is = null;
 		ByteArrayOutputStream outStream = null;
 		try {
-			SSLContext sc = SSLContext.getInstance("SSL");
-	        sc.init(null, new TrustManager[] { new TrustAnyTrustManager() },  new java.security.SecureRandom());
 	 
 	        URL console = new URL(url);
-	        HttpsURLConnection conn = (HttpsURLConnection) console.openConnection();
-	        conn.setSSLSocketFactory(sc.getSocketFactory());
-	        conn.setHostnameVerifier(new TrustAnyHostnameVerifier());
-	        conn.setDoInput(true);
-	        conn.setRequestProperty("Charset", "UTF-8");
-	        conn.setRequestMethod("GET");
-	        conn.setUseCaches(false);
-	        conn.connect();
+	        URLConnection connection = console.openConnection();
+	        if(connection instanceof HttpsURLConnection){
+    			SSLContext sc = SSLContext.getInstance("SSL");
+    	        sc.init(null, new TrustManager[] { new TrustAnyTrustManager() },  new java.security.SecureRandom());
+	            HttpsURLConnection conn = (HttpsURLConnection) connection;
+	            conn.setSSLSocketFactory(sc.getSocketFactory());
+	            conn.setHostnameVerifier(new TrustAnyHostnameVerifier());
+	            conn.setRequestMethod("GET");
+	        }else{
+                ((HttpURLConnection) connection).setRequestMethod("GET");
+            }
+	        
+	        connection.setDoInput(true);
+	        connection.setRequestProperty("Charset", "UTF-8");
+            connection.setRequestProperty("Cookie", cookie);
+	        connection.setUseCaches(false);
+	        connection.connect();
 	      
-	        is = conn.getInputStream();
+	        is = connection.getInputStream();
 	        if (is != null) {
 	            outStream = new ByteArrayOutputStream();
 	            byte[] buffer = new byte[1024];
@@ -183,43 +254,6 @@ public class HTTPS {
         return "";
 	}
 	
-	/**
-	 * 普通http请求
-	 * @param url
-	 * @return
-	 */
-	public static String _get(String url){
-		InputStream is = null;
-		ByteArrayOutputStream outStream = null;
-		try {
-	        URL console = new URL(url);
-	        HttpURLConnection conn = (HttpURLConnection) console.openConnection();
-	        conn.setDoInput(true);
-	        conn.setRequestProperty("Charset", "UTF-8");
-	        conn.setRequestMethod("GET");
-	        conn.setUseCaches(false);
-	        conn.connect();
-	      
-	        is = conn.getInputStream();
-	        if (is != null) {
-	            outStream = new ByteArrayOutputStream();
-	            byte[] buffer = new byte[2048];
-	            int len = 0;
-	            while ((len = is.read(buffer)) != -1) {
-	                outStream.write(buffer, 0, len);
-	            }
-	            is.close();
-	            return new String(outStream.toByteArray(), "UTF-8");
-	        }
-		} catch (Exception e) {
-		}finally{
-			try {
-				if(is != null) is.close();
-				if(outStream != null) outStream.close();
-			} catch (Exception e2) {}
-		}
-        return "";
-	}
 	
 	private static class TrustAnyTrustManager implements X509TrustManager {
 		 
