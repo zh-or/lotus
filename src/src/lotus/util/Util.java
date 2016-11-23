@@ -3,6 +3,7 @@ package lotus.util;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.MessageDigest;
+import java.util.Arrays;
 import java.util.UUID;
 
 public class Util {
@@ -309,4 +310,28 @@ public class Util {
         if(!CheckNull(str) && "true".equals(str)) return true;
         return false;
     }
+    
+    public static int[] getNumberFromStr(String str){
+        String t = "";
+        int[] ret = new int[1];
+        int bound = 0;
+        boolean ex = false;
+        for(int i = 0; i < str.length(); i ++){
+            if(str.charAt(i) >= 48 && str.charAt(i) <= 57 || str.charAt(i) == 45){
+                if(ex) ret = Arrays.copyOf(ret, ret.length + 1);
+                t+= str.charAt(i);
+                ex = false;
+            }else if(!ex && !"".equals(t)){
+                ex = true;
+                ret[bound] = Integer.valueOf(t);
+                t = "";
+                bound++;
+            }
+        }
+        if(!"".equals(t) && !ex){
+            ret[bound] = Integer.valueOf(t);
+        }
+        return ret;
+    }
+    
 }
