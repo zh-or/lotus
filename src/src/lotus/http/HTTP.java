@@ -10,8 +10,10 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.HashMap;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -146,6 +148,24 @@ public class HTTP {
 				return "";
 			}
 		}
+	
+	public static String post(String url, HashMap<String, String> args, String cookie){
+		StringBuffer content = new StringBuffer();
+		try {
+			content.append("?");
+			for(String key : args.keySet()){
+				content.append(key);
+				content.append("=");
+				content.append(URLEncoder.encode(args.get(key), "utf-8"));
+				content.append("&");
+			}
+			content.deleteCharAt(content.length() - 1);
+			return post(url, content.toString(), cookie);
+		} catch (Exception e) {
+			
+		}
+		return "";
+	}
 	
 	/**
 	 * urlencoded

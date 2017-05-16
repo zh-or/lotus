@@ -268,6 +268,11 @@ public class Util {
         return res;
     }
     
+    public static boolean StrtoBoolean(String str) {
+        if(!CheckNull(str) && "true".equals(str)) return true;
+        return false;
+    }
+    
     public static String getUUID(){
         return UUID.randomUUID().toString().replace("-", "").toUpperCase();
     }
@@ -306,10 +311,6 @@ public class Util {
         return h;
     }
 
-    public static boolean StrtoBoolean(String str) {
-        if(!CheckNull(str) && "true".equals(str)) return true;
-        return false;
-    }
     
     public static int[] getNumberFromStr(String str){
         String t = "";
