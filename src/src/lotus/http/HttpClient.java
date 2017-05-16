@@ -6,7 +6,6 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.HashMap;
 import java.util.List;
 
 import javax.net.ssl.HostnameVerifier;
@@ -17,13 +16,30 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 public class HttpClient {
-    private URL url                         = null;
-    private boolean sync                    = false;
-    private FileProcessCallBack callback    = null;
+    private URL                 url         = null;
+    private boolean             sync        = false;
+    private HTTPCallBack        callback    = null;
+    private FileStreamHook      streamhook  = null;
     private URLConnection       connection  = null;
     
-    public HttpClient(String url) throws Exception {
-        this.url = new URL(url);
+    private static HttpClient client = null;
+    private static Object     slock  = new Object();
+    
+    public static HttpClient getInstance(){
+        if(client == null){
+            synchronized (slock) {
+                client = new HttpClient();
+            }
+        }
+        return client;
+    }
+    
+    private HttpClient() {
+        
+    }
+    
+    public HttpClient init() throws Exception{
+        this.url = new URL("");
         connection = this.url.openConnection();
         if(connection instanceof HttpsURLConnection){
             SSLContext sc = SSLContext.getInstance("SSL");
@@ -31,76 +47,63 @@ public class HttpClient {
             HttpsURLConnection conn = (HttpsURLConnection) connection;
             conn.setSSLSocketFactory(sc.getSocketFactory());
             conn.setHostnameVerifier(new TrustAnyHostnameVerifier());
-        }else{
-            
         }
         connection.setDoInput(true);
         connection.setUseCaches(false);
-        
-    }
-    
-    public HttpClient init() throws IOException{
         connection.connect();
         return this;
     }
     
     public HttpClient configureBlocking(boolean sync){
         this.sync = sync;
+        if(!sync){
+            callback = new HTTPCallBack() {
+                
+            };
+        }
         return this;
     }
     
     public HttpClient setHeader(String key, String value){
-        /*connection.setRequestProperty("Charset", "UTF-8");
-        connection.setRequestProperty("Cookie", cookie);*/
         connection.setRequestProperty(key, value);
         return this;
+    }
+    
+    public String getHeader(String key){
+        return connection.getRequestProperty(key);
     }
     
     public List<String> getResponseHeader(String key){
         return connection.getRequestProperties().get(key);
     }
     
-    public HttpClient setProcessCallBack(FileProcessCallBack callback){
-        this.callback = callback;
+    /**
+     * 如果当前不为异步模式则设置回调无效
+     * @param callback 
+     * @return
+     */
+    public HttpClient setCallBack(HTTPCallBack callback){
+        if(sync){
+            this.callback = callback;
+        }
         return this;
     }
     
-    public String getHeader(String key){
+    public HttpClient setFileStreamHook(FileStreamHook streamhook){
+        this.streamhook = streamhook;
+        return this;
+    }
+    
+    public abstract class HTTPCallBack{
+        public void onError(HttpClient client, Exception e){}
+        public void onSuccess(HttpClient client, byte[] data){}
+        public void onProcess(HttpClient client, long count, long total){}
+    }
+    
+    public abstract class FileStreamHook{
         
-        return "";
-    }
-    
-    public boolean post(HashMap<String, String> pars){
-        
-        return false;
-    }
-    
-    public boolean get(){
-        
-        return false;
-    }
-    
-    public boolean download(File saveto){
-        return download(saveto, true);
-    }
-    
-    public boolean download(File saveto, boolean delete){
-        
-        return false;
-    }
-    
-    
-    public boolean upload(String name, File file){
-        return upload(new String[]{name}, new File[]{file});
-    }
-    
-    public boolean upload(String[] names,File[] files){
-        
-        return false;
-    }
-
-    public abstract class FileProcessCallBack{
-        public void onProcess(File f, long count, long total){}
+        public byte[] read(File file, int offset, byte[] buf){return null;}
+        public int write(File file, int offset, byte[] buf){return 0;}
     }
     
     private static class TrustAnyTrustManager implements X509TrustManager {

@@ -20,7 +20,11 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
-public class HTTPS {
+public class HTTP {
+    
+    
+    
+    
     
     public static boolean downloadFile(String url, String savepath, String cookie){
         InputStream is = null;
@@ -229,6 +233,7 @@ public class HTTPS {
 	        connection.setDoInput(true);
 	        connection.setRequestProperty("Charset", "UTF-8");
             connection.setRequestProperty("Cookie", cookie);
+            connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36");
 	        connection.setUseCaches(false);
 	        connection.connect();
 	      

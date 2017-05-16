@@ -11,12 +11,21 @@ import lotus.http.server.HttpServer;
 
 public class Test_http extends HttpHandler{
     static HttpServer httpserver;
-    
+    enum Test{
+        A(1),
+        B(2),
+        C(3);
+        int type;
+        Test(int num){this.type = num;}
+    }
     public static void main(String[] args) throws IOException {
-        httpserver = new HttpServer(0, 1024);
+        
+        Test t = Test.valueOf("0");
+        System.out.println(t);
+/*        httpserver = new HttpServer(0, 1024);
         httpserver.setHandler(new Test_http());
         httpserver.start(new InetSocketAddress(8090));
-        System.out.println("启动完成...");
+        System.out.println("启动完成...");*/
     }
     
     @Override
