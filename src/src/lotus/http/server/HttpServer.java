@@ -59,7 +59,7 @@ public class HttpServer {
     public synchronized void removeHandler(String path){
         if(Util.CheckNull(path)) return ;
         Filter filter;
-        for(int i = filters.size(); i >= 0; i --){
+        for(int i = filters.size() - 1; i >= 0; i --){
             filter = filters.get(i);
             if(path.equals(filter.path)){
                 filters.remove(i);
@@ -90,31 +90,33 @@ public class HttpServer {
             HttpRequest request = (HttpRequest) msg;
             HttpResponse response = HttpResponse.defaultResponse(session, request);
             String url_end = request.getPath();
+            boolean dohandler = false;
             int len = url_end.length();
             if(len > 0){
                 int p = url_end.lastIndexOf(".");
-                url_end = url_end.substring(p, len - 1);
+                url_end = url_end.substring(p, len);
             }else{
                 url_end = "";
             }
-            Filter filter = null, tmpFilter;
-            for(int i = filters.size(); i >= 0; i --){
-                tmpFilter = filters.get(i);
-                if("*".equals(tmpFilter.path) || (tmpFilter.path.startsWith("*") && tmpFilter.path.endsWith(url_end)) || url_end.equals(tmpFilter.path)){
-                    filter = tmpFilter;
+            Filter filter = null;
+            for(int i = filters.size() - 1; i >= 0; i --){
+                filter = filters.get(i);
+                if("*".equals(filter.path) || (filter.path.startsWith("*") && filter.path.endsWith(url_end)) || url_end.equals(filter.path)){
+                    if(filter != null){
+                        filter.handler.service(request.getMothed(), request, response);
+                        response.flush();
+                        if("close".equals(request.getHeader("connection"))){/*简单判断*/
+                            session.closeOnFlush();
+                        }
+                        dohandler = true;
+                    }
                 }
             }
-            if(filter != null){
-                filter.handler.service(request.getMothed(), request, response);
-                response.flush();
-                if("close".equals(request.getHeader("connection"))){/*简单判断*/
-                    session.closeOnFlush();
-                }
-            }else{
-                response.setStatus(ResponseStatus.CLIENT_ERROR_NOT_FOUND);
-                response.flush();
-                session.closeOnFlush();
-            }
+            if(dohandler) return;
+            response.setStatus(ResponseStatus.CLIENT_ERROR_NOT_FOUND);
+            response.flush();
+            session.closeOnFlush();
+            
         }
         
         @Override
