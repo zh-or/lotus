@@ -23,13 +23,17 @@ public class Config {
 		this.file = f;
 	}
 	
+	public void read(){
+	    read("UTF-8");
+	}
+	
 	/**
 	 * 读取配置文件
 	 */
-	public void read(){//
+	public void read(String charset){//
 		BufferedReader bis = null;
 		try {
-			bis = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
+			bis = new BufferedReader(new InputStreamReader(new FileInputStream(file), charset));
 			HashMap<String, String> child = null;
 			String line = null;
 			while (null != (line = bis.readLine())){

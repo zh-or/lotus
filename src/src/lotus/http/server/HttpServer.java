@@ -3,32 +3,32 @@ package lotus.http.server;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 
-import lotus.log.Log;
 import lotus.nio.Session;
 import lotus.nio.tcp.NioTcpServer;
+import lotus.util.Util;
 
 /*
  * 一个简单的http服务器
  * */
 public class HttpServer {
 
-    private HttpHandler handler;
+//  private Log         log;
+    private ArrayList<Filter> filters;
     private NioTcpServer  server;
-    private Log         log;
     private Charset     charset;
     private int         maxheadbuffersize = 20480;
     
     public HttpServer(int eventThreadTotal, int readBufferSize){
-        this.handler = new HttpHandler() {};
+        filters = new ArrayList<Filter>();
         server = new NioTcpServer();
         server.setEventThreadPoolSize(eventThreadTotal);
         server.setSessionCacheBufferSize(readBufferSize);
-        server.setSessionCacheBufferSize(readBufferSize);
         server.setHandler(new EventHandler());
-        
+        /*
         log = Log.getInstance();
-        log.setProjectName("simpli http server");
+        log.setProjectName("simpli http server");*/
         this.charset = Charset.forName("utf-8");
         server.setProtocolCodec(new HttpProtocolCodec(this));
         
@@ -43,10 +43,29 @@ public class HttpServer {
         server.setSessionIdleTime(t);/*keep-alive*/
     }
     
-    public void setHandler(HttpHandler handler){
-        this.handler = handler;
+    /**
+     * 
+     * @param path <br>
+     *   三种类型  :<br>
+     *      1. * 表示所有请求都监听<br>
+     *      2. *.xxx xxx表示后缀<br>
+     *      3. path 完全的路径<br>
+     * @param handler
+     */
+    public synchronized void addHandler(String path, HttpHandler handler){
+        filters.add(new Filter(path, handler));
     }
     
+    public synchronized void removeHandler(String path){
+        if(Util.CheckNull(path)) return ;
+        Filter filter;
+        for(int i = filters.size(); i >= 0; i --){
+            filter = filters.get(i);
+            if(path.equals(filter.path)){
+                filters.remove(i);
+            }
+        }
+    }
     
     public int getMaxheadbuffersize() {
         return maxheadbuffersize;
@@ -70,10 +89,31 @@ public class HttpServer {
         public void onRecvMessage(Session session, Object msg)throws Exception {
             HttpRequest request = (HttpRequest) msg;
             HttpResponse response = HttpResponse.defaultResponse(session, request);
-            handler.service(request.getMothed(), request, response);
-            response.flush();
-            if("close".equals(request.getHeader("connection"))){/*简单判断*/
-            	session.closeOnFlush();
+            String url_end = request.getPath();
+            int len = url_end.length();
+            if(len > 0){
+                int p = url_end.lastIndexOf(".");
+                url_end = url_end.substring(p, len - 1);
+            }else{
+                url_end = "";
+            }
+            Filter filter = null, tmpFilter;
+            for(int i = filters.size(); i >= 0; i --){
+                tmpFilter = filters.get(i);
+                if("*".equals(tmpFilter.path) || (tmpFilter.path.startsWith("*") && tmpFilter.path.endsWith(url_end)) || url_end.equals(tmpFilter.path)){
+                    filter = tmpFilter;
+                }
+            }
+            if(filter != null){
+                filter.handler.service(request.getMothed(), request, response);
+                response.flush();
+                if("close".equals(request.getHeader("connection"))){/*简单判断*/
+                    session.closeOnFlush();
+                }
+            }else{
+                response.setStatus(ResponseStatus.CLIENT_ERROR_NOT_FOUND);
+                response.flush();
+                session.closeOnFlush();
             }
         }
         
@@ -85,17 +125,17 @@ public class HttpServer {
         
         @Override
         public void onConnection(Session session) {
-            log.info("connection:" + session.getRemoteAddress());
+//            log.info("connection:" + session.getRemoteAddress());
         }
         
         @Override
         public void onClose(Session session) {
-            log.info("close:" + session.getRemoteAddress());
+//            log.info("close:" + session.getRemoteAddress());
         }
         
         @Override
         public void onIdle(Session session) throws Exception {
-           // session.closeNow();
+            session.closeNow();
         }
     }
 
