@@ -85,14 +85,14 @@ public class HttpRequest {
      * @return
      */
     public String getHeader(String key){
-        return headers.get(key);
+        return headers.get(key.toLowerCase());
     }
     
     public String getParameter(String name){
         Matcher m = Pattern.compile("[&]" + name + "=([^&]*)").matcher("&" + queryString);
         if(m.find()){
             return m.group(1);
-        }else if("application/x-www-form-urlencoded".equals(headers.get("Content-Type"))){
+        }else if("application/x-www-form-urlencoded".equals(getHeader("Content-Type"))){
             m = Pattern.compile("[&]" + name + "=([^&]*)").matcher("&" + new String(body, charset));
             if(m.find()){
                 try {
