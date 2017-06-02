@@ -68,32 +68,36 @@ public class HttpResponse {
         return headers.containsKey(name);
     }
     
-    public void openSync(){
+    public HttpResponse openSync(){
     	headers.put("Content-Encoding", "gzip");
     	headers.put("Transfer-Encoding", "chunked");
     	headers.remove("Content-Length");
     	sendHeader();
+    	return this;
     }
     
-    public void setHeader(String key, String value){
+    public HttpResponse setHeader(String key, String value){
     	headers.put(key, value);
+    	return this;
     }
     
-    public void write(String str){
+    public HttpResponse write(String str){
     	byte[] data = str.getBytes();
     	write(data);
+    	return this;
     }
     
-    public void write(byte[] b){
+    public HttpResponse write(byte[] b){
     	if(buff.capacity() - buff.limit() < b.length){/*需要扩容*/
     		byte[] data = Arrays.copyOf(buff.array(), buff.capacity() * 2);
     		buff = ByteBuffer.wrap(data);
     	}
     	buff.put(b);
+    	return this;
     }
     
-    private void sendHeader(){
-    	if(issendheader) return;
+    private HttpResponse sendHeader(){
+    	if(issendheader) return this;
     	StringBuilder sb = new StringBuilder();
     	sb.append(status.line());
     	Iterator<Entry<String, String>> it = headers.entrySet().iterator();
@@ -111,9 +115,10 @@ public class HttpResponse {
     	buffer.flip();
     	session.write(buffer);
     	issendheader = true;
+    	return this;
     }
     
-    public void flush(){
+    public HttpResponse flush(){
     	if(!issendheader){
     		setHeader("Content-Length", buff.position() + "");
     		sendHeader();
@@ -122,6 +127,7 @@ public class HttpResponse {
     	    buff.flip();
     		session.write(buff);
     	}
+    	return this;
     }
     
     public void close(){

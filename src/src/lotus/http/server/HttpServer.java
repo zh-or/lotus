@@ -20,11 +20,11 @@ public class HttpServer {
     private Charset     charset;
     private int         maxheadbuffersize = 20480;
     
-    public HttpServer(int eventThreadTotal, int readBufferSize){
+    public HttpServer(int EventThreadTotal, int ReadBufferCacheSize){
         filters = new ArrayList<Filter>();
         server = new NioTcpServer();
-        server.setEventThreadPoolSize(eventThreadTotal);
-        server.setSessionCacheBufferSize(readBufferSize);
+        server.setEventThreadPoolSize(EventThreadTotal);
+        server.setSessionCacheBufferSize(ReadBufferCacheSize);
         server.setHandler(new EventHandler());
         /*
         log = Log.getInstance();
@@ -45,11 +45,11 @@ public class HttpServer {
     
     /**
      * 
-     * @param path <br>
+     * @param path  <br> 
      *   三种类型  :<br>
      *      1. * 表示所有请求都监听<br>
      *      2. *.xxx xxx表示后缀<br>
-     *      3. path 完全的路径<br>
+     *      3. path 完全的路径, 此方式则需要在最前面添加 '/'<br>
      * @param handler
      */
     public synchronized void addHandler(String path, HttpHandler handler){
@@ -89,19 +89,20 @@ public class HttpServer {
         public void onRecvMessage(Session session, Object msg)throws Exception {
             HttpRequest request = (HttpRequest) msg;
             HttpResponse response = HttpResponse.defaultResponse(session, request);
-            String url_end = request.getPath();
+            String url = request.getPath(), url_end;
             boolean dohandler = false;
-            int len = url_end.length();
+            int len = url.length();
             if(len > 0){
-                int p = url_end.lastIndexOf(".");
-                url_end = url_end.substring(p, len);
+                int p = url.lastIndexOf(".");
+                url_end = p != -1 ? url.substring(p, len) : url;
             }else{
                 url_end = "";
             }
             Filter filter = null;
             for(int i = filters.size() - 1; i >= 0; i --){
                 filter = filters.get(i);
-                if("*".equals(filter.path) || (filter.path.startsWith("*") && filter.path.endsWith(url_end)) || url_end.equals(filter.path)){
+                //System.out.println(String.format("filter:%s, url_end:%s", filter.path, url_end));
+                if("*".equals(filter.path) || (filter.path.startsWith("*") && filter.path.endsWith(url_end)) || url.equals(filter.path)){
                     if(filter != null){
                         filter.handler.service(request.getMothed(), request, response);
                         response.flush();

@@ -37,12 +37,15 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
         SelectionKey key = null;
         if(event){
             /*call on connection*/
+            /*register 时会等待 selector.select() 所以此处先唤醒selector以免锁冲突 */
+            selector.wakeup();
             key = channel.register(selector, SelectionKey.OP_READ, session);
             
             session.setKey(key);
             selector.wakeup();
             session.pushEventRunnable(new IoEventRunnable(null, IoEventType.SESSION_CONNECTION, session, context));
         }else{
+            /*register 时会等待 selector.select() 所以此处先唤醒selector以免锁冲突 */
             selector.wakeup();
             key = channel.register(selector, SelectionKey.OP_CONNECT, session);
             session.setKey(key);
@@ -59,9 +62,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
                 if(isessiontimeout != 0){
                     try {
                         handleTimeOut();
-                    } catch (Exception e) {
-                        // TODO: handle exception
-                    }
+                    } catch (Exception e) {}
                 }
                 handleIoEvent();
             } catch (Exception e) {
@@ -103,6 +104,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
                     
                 }*/
                 if(key.isReadable()){/*call decode */
+//                    long s = System.currentTimeMillis();
                     ByteBuffer readcache = session.getReadCacheBuffer();
                     int len = session.getChannel().read(readcache);
                     if(len < 0){/*EOF*/
@@ -128,9 +130,11 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
                             remaining = readcache.remaining();
                             limit = tmp_buffer.length;
                             if(limit >= remaining){
-                                readcache.get(tmp_buffer, 0, remaining);/*把剩余的数据弄出来?*/
-                                readcache.clear();
-                                readcache.put(tmp_buffer, 0, remaining);
+                                if(remaining > 0){
+                                    readcache.get(tmp_buffer, 0, remaining);/*把剩余的数据弄出来?*/
+                                    readcache.clear();
+                                    readcache.put(tmp_buffer, 0, remaining);
+                                }
                             }else{/*此buff是经过扩容的*//*判断一下 如果扩过容的话, tmp_buff 可能不够存*/
                             	byte[] tmp_exbuff = new byte[remaining];
                             	readcache.get(tmp_exbuff, 0, remaining);
@@ -158,6 +162,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
                             }
                         }
                     }
+//                    System.out.println("读包用时->" + (System.currentTimeMillis() - s) + " time:" + System.currentTimeMillis());
                 }
                 
                 if(key.isWritable()){/*call encode*/

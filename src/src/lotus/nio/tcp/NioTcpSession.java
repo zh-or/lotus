@@ -52,10 +52,12 @@ public class NioTcpSession extends Session{
 	public void write(Object data) {
 	    synchronized(msglock){
 	        qwrite.add(data);
-	        if(key == null || !key.isValid()){/*没有准备好?*/
-	            context.ExecuteEvent(new IoEventRunnable(new Exception("session is not valid"), IoEventType.SESSION_EXCEPTION, this, context));
+	        if(key == null || !key.isValid()){//没有准备好? 可能被关闭了
+	            //context.ExecuteEvent(new IoEventRunnable(new Exception("session is not valid"), IoEventType.SESSION_EXCEPTION, this, context));
+	            context.ExecuteEvent(new IoEventRunnable(null, IoEventType.SESSION_CLOSE, this, context));
 	            return;
 	        }
+	        
 	        addInterestOps(SelectionKey.OP_WRITE);/*注册写事件*/
 	        key.selector().wakeup();
 	    }

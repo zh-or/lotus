@@ -26,7 +26,7 @@ public class NioTcpServer extends NioContext{
 
 	public void bind(InetSocketAddress addr) throws IOException {
 		ssc = ServerSocketChannel.open();
-        ssc.socket().setReceiveBufferSize(buff_read_cache);
+        ssc.socket().setReceiveBufferSize(buff_read_cache_size);
         ssc.configureBlocking(false);
 		ssc.bind(addr);
 		ioprocess = new NioTcpIoProcess[selector_thread_total];
@@ -86,12 +86,13 @@ public class NioTcpServer extends NioContext{
                             SelectionKey key = keys.next();
                             keys.remove();
                             if(key.isAcceptable()){
+//                                long s = System.currentTimeMillis();
                                 SocketChannel client = ssc.accept();
                                 if(client == null) continue;
                                 client.configureBlocking(false);
                                 client.socket().setSoTimeout(socket_time_out);
-                                client.socket().setReceiveBufferSize(buff_read_cache);
-                                client.socket().setSendBufferSize(buff_read_cache);
+                                client.socket().setReceiveBufferSize(buff_read_cache_size);
+                                client.socket().setSendBufferSize(buff_read_cache_size);
                                 client.finishConnect();
                                 rliplock.lock();/*排队*/
                                 try {
@@ -108,6 +109,8 @@ public class NioTcpServer extends NioContext{
                                 if(idcount >= Long.MAX_VALUE){
                                     idcount = 0l;
                                 }
+
+//                                System.out.println("连接开始:" + s + " 处理连接用时:" + (System.currentTimeMillis() - s));
                             }
                         }
                     } catch (IOException e) {

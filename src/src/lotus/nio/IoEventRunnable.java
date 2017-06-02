@@ -30,6 +30,7 @@ public class IoEventRunnable implements Runnable{
 
     @Override
     public void run() {
+//        long s = System.currentTimeMillis();
         session.RuningEvent(true);
         Exception _e = null;
         try {
@@ -67,5 +68,6 @@ public class IoEventRunnable implements Runnable{
         if(_e != null){
             session.pushEventRunnable(new IoEventRunnable(_e, IoEventType.SESSION_EXCEPTION, session, context));
         }
+//        System.out.println("事件处理用时->" + (System.currentTimeMillis() - s) + " time:" + System.currentTimeMillis());
     }
 }
