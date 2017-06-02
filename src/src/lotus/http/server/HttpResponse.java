@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
+import lotus.json.JSONObject;
 import lotus.nio.Session;
 
 
@@ -79,6 +80,17 @@ public class HttpResponse {
     public HttpResponse setHeader(String key, String value){
     	headers.put(key, value);
     	return this;
+    }
+    
+    public HttpResponse removeHeader(String key){
+        headers.remove(key);
+        return this;
+    }
+    
+    public HttpResponse write(JSONObject json){
+        setHeader("Content-Type", "application/json");
+        write(json.toString());
+        return this;
     }
     
     public HttpResponse write(String str){
