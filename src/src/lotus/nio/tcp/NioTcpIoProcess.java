@@ -130,11 +130,9 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
                             remaining = readcache.remaining();
                             limit = tmp_buffer.length;
                             if(limit >= remaining){
-                                if(remaining > 0){
-                                    readcache.get(tmp_buffer, 0, remaining);/*把剩余的数据弄出来?*/
-                                    readcache.clear();
-                                    readcache.put(tmp_buffer, 0, remaining);
-                                }
+                                readcache.get(tmp_buffer, 0, remaining);/*把剩余的数据弄出来?*/
+                                readcache.clear();
+                                readcache.put(tmp_buffer, 0, remaining);
                             }else{/*此buff是经过扩容的*//*判断一下 如果扩过容的话, tmp_buff 可能不够存*/
                             	byte[] tmp_exbuff = new byte[remaining];
                             	readcache.get(tmp_exbuff, 0, remaining);
