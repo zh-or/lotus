@@ -1,6 +1,7 @@
 package lotus.http.server;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
@@ -19,7 +20,8 @@ public class HttpResponse {
     private Session                     session;
     private ResponseStatus              status;
     private HashMap<String, String>     headers;
-    private boolean						issendheader;
+    private boolean				     issendheader;
+    private Charset                     charset;
     
     public static HttpResponse defaultResponse(Session session, HttpRequest request){
     	HttpResponse response = new HttpResponse(session, ResponseStatus.SUCCESS_OK);
@@ -32,6 +34,7 @@ public class HttpResponse {
     	if(connection != null){
     		response.setHeader("Connection", connection);
     	}
+        response.setCharacterEncoding(request.getCharacterEncoding());
     	return response;
     }
     
@@ -48,6 +51,10 @@ public class HttpResponse {
         this.issendheader = false;
         this.buff = ByteBuffer.allocate(write_buffer_size);
         this.headers.put("Content-Type", "text/html");
+    }
+    
+    public void setCharacterEncoding(Charset charset){
+        this.charset = charset;
     }
     
     public void setStatus(ResponseStatus status){
@@ -94,7 +101,7 @@ public class HttpResponse {
     }
     
     public HttpResponse write(String str){
-    	byte[] data = str.getBytes();
+    	byte[] data = str.getBytes(charset);
     	write(data);
     	return this;
     }

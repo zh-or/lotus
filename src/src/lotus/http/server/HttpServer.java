@@ -89,6 +89,8 @@ public class HttpServer {
         public void onRecvMessage(Session session, Object msg)throws Exception {
             HttpRequest request = (HttpRequest) msg;
             HttpResponse response = HttpResponse.defaultResponse(session, request);
+            response.setCharacterEncoding(request.getCharacterEncoding());
+            response.setHeader("Content-Type", "text/html; charset=" + charset.displayName());
             String url = request.getPath(), url_end;
             boolean dohandler = false;
             int len = url.length();

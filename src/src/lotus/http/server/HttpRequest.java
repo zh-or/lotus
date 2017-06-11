@@ -37,6 +37,14 @@ public class HttpRequest {
         return path;
     }
     
+    public void setCharacterEncoding(String charset){
+        this.charset = Charset.forName(charset);
+    }
+    
+    public Charset getCharacterEncoding(){
+        return this.charset;
+    }
+    
     public void parseHeader(String sheaders){
         final String[] headerFields = sheaders.split("\r\n");
         if(headerFields != null && headerFields.length > 1){
