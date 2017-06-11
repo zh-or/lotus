@@ -50,7 +50,7 @@ public class HttpServer {
      *      1. * 表示所有请求都监听<br>
      *      2. *.xxx xxx表示后缀<br>
      *      3. path 完全的路径, 此方式则需要在最前面添加 '/'<br>
-     * @param handler 此类定义一定要为public private会调用失败
+     * @param handler
      */
     public synchronized void addHandler(String path, HttpHandler handler){
         filters.add(new Filter(path, handler));

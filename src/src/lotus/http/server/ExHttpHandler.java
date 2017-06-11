@@ -2,19 +2,18 @@ package lotus.http.server;
 
 import java.lang.reflect.Method;
 
-import lotus.util.Util;
-
 /**
  * 此handler为模仿web用的 加个m参数则调用子类的m方法, (m为方法名称)
  * 如 url: http://127.0.0.1/?m=test&name=1&password=123
  * 则为调用过滤器过滤后的类的test方法
+ * 此类定义一定要为public private会调用失败
  * @author or
  *
  */
 public abstract class ExHttpHandler extends HttpHandler{
     
     @Override
-    public void service(HttpMethod mothed, HttpRequest request, HttpResponse response) throws Exception {
+    public void service(HttpMethod mothed, HttpRequest request, HttpResponse response) {
         String m = request.getParameter("m");
         try{
             if(m == null || m.trim() == ""){
@@ -61,44 +60,8 @@ public abstract class ExHttpHandler extends HttpHandler{
         return true;
     }
     
-    /**
-     * 检查参数是否为空
-     * @param pars 参数key数组
-     * @param request
-     * @return 如果有为空的则返回 false
-     */
-    public boolean _checkparameter(String[] pars, HttpRequest request){
-        if(pars == null || pars.length <= 0) return true;
-        for(int i = 0; i < pars.length; i++){
-            if(Util.CheckNull(request.getParameter(pars[i]))){
-                return false;
-            }
-        }
-        return true;
-    }
     
-    /**
-     * @param pars
-     * @param val
-     * @return 如果包含则返回true
-     */
-    public boolean _filterStrings(String[] pars, String val){
-        if(pars == null || pars.length <= 0) return false;
-        for(int i = 0; i < pars.length; i++){
-            if(pars[i].equals(val)) return true;
-        }
-        return false;
-    }
-    
-    /**
-     * 如果反射发生了错误 则会调用子类实现的此方法
-     * @param e
-     * @param request
-     * @param response
-     */
-    public void _exception(Exception e, HttpRequest request, HttpResponse response){
-        e.printStackTrace();
-    }
+
     
     public void tmp(HttpRequest request, HttpResponse response) throws Exception{}
 }
