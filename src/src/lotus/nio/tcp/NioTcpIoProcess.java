@@ -97,9 +97,6 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
             }
             
             try {
-                /*if(!key.isValid()){//没有准备好?
-                    
-                }*/
                 if(key.isReadable()){/*call decode */
 //                    long s = System.currentTimeMillis();
                     ByteBuffer readcache = session.getReadCacheBuffer();
