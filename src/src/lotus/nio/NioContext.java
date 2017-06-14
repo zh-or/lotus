@@ -8,13 +8,13 @@ import java.util.concurrent.LinkedBlockingQueue;
 public abstract class NioContext {
     private static final int        DEF_BUFFER_LIST_MAX_SIZE        =   2048;
     private static final int        DEF_EVENT_THREAD_POOL_SIZE      =   100;
-    public static final int         SELECT_TIMEOUT                  =   1000;
+    public static final int         SELECT_TIMEOUT                  =   10000;
     
 	protected int                   selector_thread_total           =   0;
     protected int                   session_idle_time               =   0;
     protected int                   socket_time_out                 =   1000 * 10;
-    protected int                   buff_read_cache                 =   1024;/*读缓冲区大小*/
-    protected int                   buffer_list_max_size            =   0;
+    protected int                   buff_read_cache_size            =   1024;/*读缓冲区大小*/
+    protected int                   buffer_list_length              =   0;
     protected IoHandler             handler                         =   null;
     protected ProtocolCodec			procodec						=   null;
     protected ExecutorService       executor_e                      =   null;
@@ -23,9 +23,10 @@ public abstract class NioContext {
     
     public NioContext(){
         selector_thread_total = Runtime.getRuntime().availableProcessors() + 1;/* cpu + 1 */
-        this.buffer_list_max_size = DEF_BUFFER_LIST_MAX_SIZE;
+        selector_thread_total = 1;
+        this.buffer_list_length = DEF_BUFFER_LIST_MAX_SIZE;
         this.executor_e = Executors.newFixedThreadPool(DEF_EVENT_THREAD_POOL_SIZE);
-        this.bufferlist = new LinkedBlockingQueue<ByteBuffer>(buffer_list_max_size);
+        this.bufferlist = new LinkedBlockingQueue<ByteBuffer>(buffer_list_length);
         this.handler = new IoHandler() { };
     }
     
@@ -36,9 +37,9 @@ public abstract class NioContext {
     }
     
     public NioContext setReadBufferCacheListSize(int size){
-        this.buffer_list_max_size = size;
+        this.buffer_list_length = size;
         this.bufferlist = null;
-        this.bufferlist = new LinkedBlockingQueue<ByteBuffer>(buffer_list_max_size);
+        this.bufferlist = new LinkedBlockingQueue<ByteBuffer>(buffer_list_length);
         return this;
     }
     
@@ -70,12 +71,12 @@ public abstract class NioContext {
     }
     
     public NioContext setSessionCacheBufferSize(int size){
-        this.buff_read_cache = size;
+        this.buff_read_cache_size = size;
         return this;
     }
     
     public int getSessionCacheBufferSize(){
-        return this.buff_read_cache;
+        return this.buff_read_cache_size;
     }
     
     public NioContext setHandler(IoHandler handler){
@@ -122,14 +123,14 @@ public abstract class NioContext {
     public ByteBuffer getByteBufferFormCache(){
         ByteBuffer buffer = bufferlist.poll();
         if(buffer == null){
-            buffer = ByteBuffer.allocateDirect(buff_read_cache);
-            buffer.clear();
+            buffer = ByteBuffer.allocateDirect(buff_read_cache_size);
         }
+        buffer.clear();
         return buffer;
     }
     
     public void putByteBufferToCache(ByteBuffer buffer){
-        if(buffer != null && (buffer.capacity() <= buff_read_cache) && (bufferlist.size() < buffer_list_max_size)){
+        if(buffer != null && (buffer.capacity() <= buff_read_cache_size) && (bufferlist.size() < buffer_list_length)){
             buffer.clear();
             bufferlist.add(buffer);
         }else{/*丢弃被扩容过的buffer*/

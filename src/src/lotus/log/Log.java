@@ -52,8 +52,27 @@ public class Log implements ILog{
     }
     
     public void log(int l, String str){
+        StackTraceElement[] ste = new Throwable().getStackTrace();
+        String cname = null;
+        for(StackTraceElement e : ste){
+            cname = e.getClassName();
+            if(!getClass().getName().equals(cname)){
+                break;
+            }
+        }
+        
+        int startp = cname.lastIndexOf(".");
+        if(startp <= 0){
+            cname = "UNKNOW_CLASS";
+        }
+        startp += 1;
+        int endp = cname.lastIndexOf("$");
+        if(endp <= startp){
+            endp = cname.length();
+        }
+        cname = cname.substring(startp, endp);
         String msg_ = format.format(new Date(System.currentTimeMillis()));
-        msg_ = String.format("%s %s %s \t%s", msg_, PROJECT_NAME, lvl[l], str);
+        msg_ = String.format("%s %s [%s] %s \t%s", msg_, PROJECT_NAME, cname, lvl[l], str);
         if(logfilter.log(l, msg_)){
             System.out.println(msg_);
         }

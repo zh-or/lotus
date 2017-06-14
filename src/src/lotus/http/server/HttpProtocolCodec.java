@@ -31,10 +31,11 @@ public class HttpProtocolCodec implements ProtocolCodec{
                 while(in.remaining() > 3){
                     /*\r\n\r\n*/
                     if(in.get() == 13 && in.get() == 10 && in.get() == 13 && in.get() == 10){/*消息头完了*/
+                        
                         final byte[] bheaders = new byte[in.position()];
                         in.reset();
                         in.get(bheaders);
-                        final HttpRequest req = new HttpRequest(session);
+                        final HttpRequest req = new HttpRequest(session, context.getCharset());
                         final String sheaders = new String(bheaders, context.getCharset());
                         req.parseHeader(sheaders);
                         final int contentLength = Util.StrtoInt(req.getHeader("content-length"));
@@ -56,9 +57,6 @@ public class HttpProtocolCodec implements ProtocolCodec{
                             session.setAttr(STATUS, HttpStatus.HEAD);/*没有body*/
                             return true;
                         }
-                    }else if(in.remaining() > context.getMaxheadbuffersize()){/*消息头过大*/
-                        
-                        session.closeNow();
                     }
                 }
                 in.reset();
@@ -66,7 +64,7 @@ public class HttpProtocolCodec implements ProtocolCodec{
                 break;
             case BODY:
             {
-                final int contentLength = (Integer) session.removeAttr(CONTENT_LENGTH);
+                final int contentLength = (Integer) session.getAttr(CONTENT_LENGTH);
                 if(contentLength > 0){
                     if(contentLength <= in.remaining()){
                         HttpRequest req = (HttpRequest) session.removeAttr(REQUEST);
@@ -74,6 +72,7 @@ public class HttpProtocolCodec implements ProtocolCodec{
                         in.get(body);
                         req.setBody(body);
                         out.write(req);
+                        session.removeAttr(CONTENT_LENGTH);
                         return true;
                     }else{
                         return false;

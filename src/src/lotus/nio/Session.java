@@ -117,7 +117,7 @@ public abstract class Session {
     /**
      * 立即关闭该链接
      */
-    public void closeNow(){
+    public synchronized void closeNow(){
         if(closed) return ;
         closed = true;
         context.putByteBufferToCache(readcache);/*回收*/
