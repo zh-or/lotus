@@ -97,6 +97,10 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
             }
             
             try {
+                if(!key.isValid()){
+                    session.closeNow();
+                    continue;
+                }
                 if(key.isReadable()){/*call decode */
 //                    long s = System.currentTimeMillis();
                     ByteBuffer readcache = session.getReadCacheBuffer();
@@ -206,7 +210,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
             } catch (Exception e) {
                 /*call exception*/
                 //session.pushEventRunnable(new IoEventRunnable(e, IoEventType.SESSION_EXCEPTION, session, context));
-                e.printStackTrace();
+                //e.printStackTrace();
                 session.closeNow();
                 //cancelKey(key);/*对方关闭了?*/
             } 
