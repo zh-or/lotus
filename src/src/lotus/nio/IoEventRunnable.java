@@ -1,5 +1,7 @@
 package lotus.nio;
 
+import lotus.nio.tcp.NioTcpSession;
+
 
 /**
  * 保证同一个session的事件的顺序执行
@@ -43,8 +45,12 @@ public class IoEventRunnable implements Runnable{
                     handler.onIdle(session);
                     break;
                 case SESSION_RECVMSG:
-                    handler.onRecvMessage(session, att);
-                    session._notifyAll();
+                    if(session.isWaitForRecvPack() && session instanceof NioTcpSession && ((NioTcpSession) session).callCheckMessageCallback(att)){
+                        session.set(att);
+                        session._notifyAll();
+                    }else{
+                        handler.onRecvMessage(session, att);
+                    }
                     break;
                 case SESSION_SENT:
                     handler.onSentMessage(session, att);

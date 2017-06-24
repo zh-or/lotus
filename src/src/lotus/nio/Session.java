@@ -20,6 +20,8 @@ public abstract class Session {
     protected final Object                      recvPackwait    =   new Object();
     protected long                              createtime      =   0l;
     protected volatile boolean                  closed          = false;
+    protected boolean                           isWaitForRecvPack = false;
+    protected Object                      notifiRecvMsg   = null;
     
     public Session (NioContext context, long id){
         this.context = context;
@@ -129,25 +131,41 @@ public abstract class Session {
     public boolean isClosed(){
         return closed;
     }
+    
+    public boolean isWaitForRecvPack(){
+        return isWaitForRecvPack;
+    }
 
     public void _wait(int timeout){
         synchronized (recvPackwait) {
+            isWaitForRecvPack = true;
             try {
                 recvPackwait.wait(timeout);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+            isWaitForRecvPack = false;
         }
     }
     
     public void _notify(){
         synchronized (recvPackwait) {
+            isWaitForRecvPack = false;
             recvPackwait.notify();
         }
     }
     
+    public Object get(){
+        return notifiRecvMsg;
+    }
+    
+    public void set(Object msg){
+        this.notifiRecvMsg = msg;
+    }
+    
     public void _notifyAll(){
         synchronized (recvPackwait) {
+            isWaitForRecvPack = false;
             recvPackwait.notifyAll();
         }
     }

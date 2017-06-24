@@ -16,6 +16,7 @@ public class NioTcpSession extends Session{
 	private volatile boolean               sentclose  = false;
 	private NioTcpIoProcess                ioprocess;
 	private Object                         msglock;
+	private MessageCheckCallback           msgcheckcallback = null;
 	
 	public NioTcpSession(NioContext context, SocketChannel channel, NioTcpIoProcess ioprocess, long id) {
 		super(context, id);
@@ -27,6 +28,10 @@ public class NioTcpSession extends Session{
 	
 	public void setKey(SelectionKey key){
 	    this.key = key;
+	}
+	
+	public boolean callCheckMessageCallback(Object recvmsg){
+	    return msgcheckcallback.thatsRight(recvmsg);
 	}
 	
 	@Override
@@ -79,9 +84,40 @@ public class NioTcpSession extends Session{
 		this.sentclose = sentclose;
 	}
 	
-	public void writeAndWaitRecv(Object data, int timeout){
+	/**
+     * 发送并等待一条消息
+     * @param data
+     * @param timeout
+     * @return
+     */
+    public Object writeAndWaitForMessage(Object data, int timeout){
+        return writeAndWaitForMessage(data, timeout, new MessageCheckCallback() {});
+    }
+	
+    /**
+     * 发送并等待一条消息
+     * @param data
+     * @param timeout
+     * @param checkcallback 此回调用来判断收到的消息是否是当前需要的返回
+     * @return
+     */
+	public Object writeAndWaitForMessage(Object data, int timeout, MessageCheckCallback checkcallback){
+	    checkcallback.setSendMsg(data);
 	    write(data);
+	    return waitForMessage(timeout, checkcallback);
+	}
+	
+	/**
+	 * 等待一条消息
+	 * @param timeout
+	 * @return
+	 */
+	public Object waitForMessage(int timeout, MessageCheckCallback checkcallback){
+	    this.msgcheckcallback = checkcallback;
 	    _wait(timeout);
+        Object tmsg = get();
+        set(null);
+        return tmsg;
 	}
 	
 	
