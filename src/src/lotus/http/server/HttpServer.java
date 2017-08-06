@@ -20,11 +20,10 @@ public class HttpServer {
     private Charset     charset;
     private int         maxheadbuffersize = 20480;
     
-    public HttpServer(int EventThreadTotal, int ReadBufferCacheSize){
+    public HttpServer(int EventThreadTotal){
         filters = new ArrayList<Filter>();
         server = new NioTcpServer();
         server.setEventThreadPoolSize(EventThreadTotal);
-        server.setSessionCacheBufferSize(ReadBufferCacheSize);
         server.setHandler(new EventHandler());
         /*
         log = Log.getInstance();
@@ -33,6 +32,10 @@ public class HttpServer {
         server.setProtocolCodec(new HttpProtocolCodec(this));
         
         server.setSessionIdleTime(20000);/*keep-alive*/
+    }
+    
+    public void setReadBufferCacheSize(int ReadBufferCacheSize){
+        server.setSessionCacheBufferSize(ReadBufferCacheSize);
     }
     
     /**
