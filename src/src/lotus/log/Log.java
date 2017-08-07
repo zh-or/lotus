@@ -8,7 +8,7 @@ public class Log implements ILog{
         /**
          * @param lvl
          * @param logstr
-         * @return 返回true表示拦截将不输出
+         * @return 返回false表示拦截将不输出
          */
         public boolean log(int lvl, String logstr);
     }
