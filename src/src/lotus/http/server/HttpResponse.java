@@ -108,7 +108,7 @@ public class HttpResponse {
     
     public HttpResponse write(byte[] b){
     	if(buff.capacity() - buff.limit() < b.length){/*需要扩容*/
-    		byte[] data = Arrays.copyOf(buff.array(), buff.capacity() * 2);
+    		byte[] data = Arrays.copyOf(buff.array(), buff.limit() + b.length);
     		buff = ByteBuffer.wrap(data);
     	}
     	buff.put(b);
