@@ -246,10 +246,11 @@ public class HTTP {
 	public static String get(String url, String cookie){
 		InputStream is = null;
 		ByteArrayOutputStream outStream = null;
+		URLConnection connection = null;
 		try {
 	 
 	        URL console = new URL(url);
-	        URLConnection connection = console.openConnection();
+	        connection = console.openConnection();
             connection.setConnectTimeout(60 * 1000);
             connection.setReadTimeout(60 * 1000);
 	        if(connection instanceof HttpsURLConnection){
@@ -287,6 +288,7 @@ public class HTTP {
 			try {
 				if(is != null) is.close();
 				if(outStream != null) outStream.close();
+				//if(connection != null) connection.???
 			} catch (Exception e2) {}
 		}
         return "";
