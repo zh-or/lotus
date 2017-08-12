@@ -182,7 +182,7 @@ public class HTTP {
 	/**
 	 * urlencoded
 	 * @param url
-	 * @param content application/x-www-form-urlencoded
+	 * @param content application/x-www-form-urlencoded  text/plain
 	 * @return
 	 */
 	public static String post(String url, String content, String cookie, String contentType) {
@@ -283,7 +283,7 @@ public class HTTP {
 	            return new String(outStream.toByteArray(), "UTF-8");
 	        }
 		} catch (Exception e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		}finally{
 			try {
 				if(is != null) is.close();
