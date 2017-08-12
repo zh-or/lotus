@@ -128,6 +128,10 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
                             session.setLastActive(System.currentTimeMillis());
                             session.pushEventRunnable(new IoEventRunnable(msgout.read(), IoEventType.SESSION_RECVMSG, session, context));
                             msgout.write(null);
+                            if(readcache.limit() <= 0){
+                                context.putByteBufferToCache(readcache);
+                                session.updateReadCacheBuffer(null);
+                            }
                         }else{
                             
                             position = readcache.position();

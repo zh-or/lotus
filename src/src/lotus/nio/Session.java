@@ -12,7 +12,6 @@ public abstract class Session {
     protected NioContext                        context     	=   null;
     protected long					            lastactive		=	0l;
     protected volatile ByteBuffer               readcache       =   null;
-    protected volatile ByteBuffer               writecache      =   null;
     protected LinkedBlockingQueue<Runnable>     eventlist       =   null;
     protected volatile boolean                  runingevent     =   false;
     protected ProtocolDecoderOutput             deout           =   null;
@@ -29,8 +28,6 @@ public abstract class Session {
         this.id = id;
         this.createtime = System.currentTimeMillis();
         setLastActive(System.currentTimeMillis());
-        readcache = context.getByteBufferFormCache();
-        writecache = context.getByteBufferFormCache();
         eventlist = new LinkedBlockingQueue<Runnable>();
         deout = new ProtocolDecoderOutput();
     }
@@ -76,25 +73,16 @@ public abstract class Session {
     }
 
     public ByteBuffer getReadCacheBuffer(){
-    	return readcache;
-    }
-    
-    public ByteBuffer getWriteCacheBuffer(int size){
-        if(writecache.capacity() < size){
-            context.putByteBufferToCache(writecache);
-            this.writecache = null;
-            writecache = ByteBuffer.allocate(size);
+        if(readcache == null){
+            return context.getByteBufferFormCache();
         }
-        return writecache;
+    	return readcache;
     }
 
     public void updateReadCacheBuffer(ByteBuffer buffer){
         this.readcache = buffer;
     }
     
-    public void updateWriteCacheBuffer(ByteBuffer buffer){
-        this.writecache = buffer;
-    }
     
     public boolean IsRuningEvent(){
         return runingevent;
@@ -123,7 +111,6 @@ public abstract class Session {
         if(closed) return ;
         closed = true;
         context.putByteBufferToCache(readcache);/*回收*/
-        context.putByteBufferToCache(writecache);
         pushEventRunnable(new IoEventRunnable(null, IoEventType.SESSION_CLOSE, this, context));
         readcache = null;
     }

@@ -44,7 +44,7 @@ public class LineProtocolCodec implements ProtocolCodec{
 	@Override
 	public ByteBuffer encode(Session session, Object msg)  throws Exception{
 		byte[] data = (byte[]) msg;
-	    ByteBuffer out = session.getWriteCacheBuffer(data.length);
+	    ByteBuffer out = ByteBuffer.allocate(data.length);
 	    out.put(data);
 	    out.flip();
 	    return out;
