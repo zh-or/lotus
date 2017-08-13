@@ -192,6 +192,21 @@ public class Util {
         return sb.toString();
     }
 
+    public static String byte2hex(byte[] b) {  
+        StringBuilder sb = new StringBuilder();
+        String stmp = "";  
+        for (int n = 0; n < b.length; n++) {  
+            stmp = (Integer.toHexString(b[n] & 0xFF));  
+            if (stmp.length() == 1) {  
+                sb.append("0");
+                sb.append(stmp);
+            } else {  
+                sb.append(stmp);  
+            }  
+        }  
+        return sb.toString().toUpperCase();  
+    } 
+    
     public static void SLEEP(long time) {
         try {
             Thread.sleep(time);
