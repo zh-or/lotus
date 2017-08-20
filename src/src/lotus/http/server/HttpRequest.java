@@ -100,7 +100,7 @@ public class HttpRequest {
         Matcher m = Pattern.compile("[&?]" + name + "=([^&]*)").matcher("&" + queryString);
         if(m.find()){
             return m.group(1);
-        }else if("application/x-www-form-urlencoded".equals(getHeader("Content-Type"))){
+        }else if(getHeader("Content-Type").indexOf("application/x-www-form-urlencoded") != -1){
             m = Pattern.compile("[&]" + name + "=([^&]*)").matcher("&" + new String(body, charset));
             if(m.find()){
                 try {
