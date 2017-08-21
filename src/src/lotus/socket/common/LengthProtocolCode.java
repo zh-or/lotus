@@ -33,6 +33,7 @@ public class LengthProtocolCode implements ProtocolCodec{
 	                return true;
 				}else{
 				    session.closeNow();
+				    return true;
 				}
 			}
 			in.reset();

@@ -78,7 +78,7 @@ public class Util {
         int i = 0;
         while (i < countNumber) {
             char t = (char) (65 + Math.random() * (122 - 65 + 1));
-            if (t < 91 || t > 94) {
+            if (t < 91 || t > 96) {//去掉大小写中间的几个符号
                 c[i] = t;
                 i++;
             }

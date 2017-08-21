@@ -25,7 +25,7 @@ public class HttpResponse {
     
     public static HttpResponse defaultResponse(Session session, HttpRequest request){
     	HttpResponse response = new HttpResponse(session, ResponseStatus.SUCCESS_OK);
-    	response.setHeader("Server", "simpli http server by lotus");
+    	response.setHeader("Server", "simple http server by lotus");
     	Calendar cal = Calendar.getInstance();
     	Date time = cal.getTime();
     	response.setHeader("Expires", time + "");

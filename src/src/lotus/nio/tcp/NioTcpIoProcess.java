@@ -208,6 +208,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
                     session.pushEventRunnable(new IoEventRunnable(null, IoEventType.SESSION_CONNECTION, session, context));
                 }
             } catch (Exception e) {
+                //e.printStackTrace();
                 /*call exception*/
                 //session.pushEventRunnable(new IoEventRunnable(e, IoEventType.SESSION_EXCEPTION, session, context));
                 //e.printStackTrace();

@@ -27,14 +27,6 @@ public class HTTP {
     public static boolean downloadFile(String url, String savepath, String cookie){
         InputStream is = null;
         FileOutputStream fout = null;
-        try {
-            File out = new File(savepath);
-            if(out.exists()) out.delete();
-            out.createNewFile();
-            fout = new FileOutputStream(out);
-        } catch (Exception e) {
-            return false;
-        }
         
         try {
      
@@ -56,7 +48,27 @@ public class HTTP {
             connection.setRequestProperty("Cookie", cookie);
             connection.setUseCaches(false);
             connection.connect();
-          
+            if(connection instanceof HttpsURLConnection){
+                HttpsURLConnection conn = (HttpsURLConnection) connection;
+                if(conn.getResponseCode() != 200){
+                    return false;
+                }
+            }else{
+                HttpURLConnection conn = ((HttpURLConnection) connection);
+                if(conn.getResponseCode() != 200){
+                    return false;
+                }
+            }
+            try {
+                File out = new File(savepath);
+                if(out.exists()) out.delete();
+                
+                out.createNewFile();
+                fout = new FileOutputStream(out);
+            } catch (Exception e) {
+                return false;
+            }
+            
             is = connection.getInputStream();
             if (is != null) {
                 int len = 0;
