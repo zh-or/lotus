@@ -1,7 +1,6 @@
 package lotus.test;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 
 import lotus.http.server.HttpHandler;
 import lotus.http.server.HttpMethod;
