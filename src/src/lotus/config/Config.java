@@ -31,6 +31,12 @@ public class Config {
 	        return this;
 	    }
 	    
+	    public ArrStringValue set(String v){
+	        val.clear();
+	        val.add(v);
+	        return this;
+	    }
+	    
 	    public ArrayList<String> getVal(){
 	        return val;
 	    }
@@ -140,7 +146,7 @@ public class Config {
 	
 	
 	/**
-	 * 设置值 没有则创建
+	 * 设置值 没有则创建 此方法多次put会有多个key value
 	 * @param groupkey
 	 * @param childkey
 	 * @param value
@@ -160,6 +166,28 @@ public class Config {
 		}else{
 		    val.put(value);
 		}
+	}
+	
+	/**
+	 * 此方法不会增加多个key
+	 * @param groupkey
+	 * @param childkey
+	 * @param value
+	 */
+	public void setValue(String groupkey, String childkey, String value){
+	    HashMap<String, ArrStringValue>  child = group.get(groupkey);
+        if(child == null){
+            child = new HashMap<String, ArrStringValue>();
+            child.put(childkey, new ArrStringValue().put(value));
+            group.put(groupkey, child);
+            return ;
+        }
+        ArrStringValue val = child.get(childkey);
+        if(val == null){
+            child.put(childkey, new ArrStringValue().put(value));
+        }else{
+            val.set(value);
+        }
 	}
 	
 	public void save(){
