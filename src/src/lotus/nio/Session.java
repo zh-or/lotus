@@ -78,6 +78,21 @@ public abstract class Session {
         }
     	return readcache;
     }
+    
+    public ByteBuffer getWriteCacheBuffer(int len){
+        ByteBuffer buff = context.getByteBufferFormCache();
+        if(buff.capacity() < len){
+            context.putByteBufferToCache(buff);
+            buff = ByteBuffer.allocateDirect(len);
+        }
+        return buff;
+    }
+    
+    public void putWriteCacheBuffer(ByteBuffer buff){
+        if(buff.capacity() == context.getSessionCacheBufferSize()){
+            context.putByteBufferToCache(buff);
+        }
+    }
 
     public void updateReadCacheBuffer(ByteBuffer buffer){
         this.readcache = buffer;

@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 
 import lotus.nio.IoHandler;
+import lotus.nio.LengthProtocolCode;
 import lotus.nio.tcp.NioTcpServer;
-import lotus.socket.common.LengthProtocolCode;
 
 
 public class SocketServer {

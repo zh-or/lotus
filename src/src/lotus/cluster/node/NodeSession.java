@@ -10,10 +10,10 @@ import lotus.cluster.Message;
 import lotus.cluster.MessageResult;
 import lotus.cluster.NetPack;
 import lotus.nio.IoHandler;
+import lotus.nio.LengthProtocolCode;
 import lotus.nio.Session;
 import lotus.nio.tcp.NioTcpClient;
 import lotus.socket.client.SyncSocketClient;
-import lotus.socket.common.LengthProtocolCode;
 import lotus.util.Util;
 
 public class NodeSession {

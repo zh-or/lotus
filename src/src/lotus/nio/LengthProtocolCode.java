@@ -1,10 +1,7 @@
-package lotus.socket.common;
+package lotus.nio;
 
 import java.nio.ByteBuffer;
 
-import lotus.nio.ProtocolCodec;
-import lotus.nio.ProtocolDecoderOutput;
-import lotus.nio.Session;
 import lotus.util.Util;
 
 /**
@@ -53,20 +50,16 @@ public class LengthProtocolCode implements ProtocolCodec{
 
 	@Override
 	public ByteBuffer encode(Session session, Object msg) throws Exception{
+        byte[] content = (byte[]) msg;
 	    
-	    byte[] content = (byte[]) msg;
-	    
+	    ByteBuffer buff = session.getWriteCacheBuffer(content.length + 2 + 2);
+	    buff.put((byte) 0x02);
+	    buff.put(Util.short2byte(content.length + 2 + 2));
+	    buff.put(content);
+	    buff.put((byte) 0x03);
         byte[] send =  new byte[content.length + 2 + 2];
         send[0] = 0x02;
         send[send.length - 1] = 0x03;
-        byte[] len = Util.short2byte(send.length);
-
-        send[1] = len[0];
-        send[2] = len[1];
-
-        System.arraycopy(content, 0, send, 3, content.length);
-        ByteBuffer buff = ByteBuffer.allocate(send.length);
-        buff.put(send);
         buff.flip();
         return buff;
 	}

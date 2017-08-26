@@ -6,10 +6,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import lotus.log.Log;
 import lotus.nio.IoHandler;
+import lotus.nio.LengthProtocolCode;
 import lotus.nio.Session;
 import lotus.nio.tcp.NioTcpServer;
 import lotus.socket.client.SyncSocketClient;
-import lotus.socket.common.LengthProtocolCode;
 import lotus.util.Util;
 
 
