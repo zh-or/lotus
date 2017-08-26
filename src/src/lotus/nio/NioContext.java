@@ -125,7 +125,6 @@ public abstract class NioContext {
         if(buffer == null){
             buffer = ByteBuffer.allocateDirect(buff_read_cache_size);
         }
-        buffer.clear();
         return buffer;
     }
     

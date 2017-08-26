@@ -20,7 +20,7 @@ public abstract class Session {
     protected long                              createtime      =   0l;
     protected volatile boolean                  closed          = false;
     protected boolean                           isWaitForRecvPack = false;
-    protected Object                      notifiRecvMsg   = null;
+    protected Object                            notifiRecvMsg   = null;
     
     public Session (NioContext context, long id){
         this.context = context;
@@ -110,9 +110,11 @@ public abstract class Session {
     public synchronized void closeNow(){
         if(closed) return ;
         closed = true;
-        context.putByteBufferToCache(readcache);/*回收*/
         pushEventRunnable(new IoEventRunnable(null, IoEventType.SESSION_CLOSE, this, context));
-        readcache = null;
+        if(readcache != null){
+            context.putByteBufferToCache(readcache);/*回收*/
+            readcache = null;
+        }
     }
     
     public boolean isClosed(){

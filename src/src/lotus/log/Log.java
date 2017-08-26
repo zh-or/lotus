@@ -75,6 +75,7 @@ public class Log implements ILog{
         msg_ = String.format("%s %s [%s] %s \t%s", msg_, PROJECT_NAME, cname, lvl[l], str);
         if(logfilter.log(l, msg_)){
             System.out.println(msg_);
+            System.out.flush();
         }
     }
     

@@ -93,6 +93,14 @@ public class Util {
         return (int)(start + Math.random() * (end - start + 1));
     }
     
+    public static byte[] GetRepeatByte(int len, byte b){
+        byte[] res = new byte[len];
+        for(int i = 0; i < len; i ++){
+            res[i] = b;
+        }
+        return res;
+    }
+    
     public static int byte2short(byte[] b) {
         return byte2short(b, 0);
     }
@@ -193,6 +201,7 @@ public class Util {
     }
 
     public static String byte2hex(byte[] b) {  
+        if(b == null || b.length <= 0) return "null";
         StringBuilder sb = new StringBuilder();
         String stmp = "";  
         for (int n = 0; n < b.length; n++) {  
@@ -203,6 +212,7 @@ public class Util {
             } else {  
                 sb.append(stmp);  
             }  
+            sb.append(' ');
         }  
         return sb.toString().toUpperCase();  
     } 

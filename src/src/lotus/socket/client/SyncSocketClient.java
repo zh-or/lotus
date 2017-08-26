@@ -17,11 +17,7 @@ public class SyncSocketClient {
     private int                 RECV_BUFF_SIZE           = 1024 * 2;
     private int                 recv_time_out            = 10 * 1000;
 
-    public SyncSocketClient(){this(0);}
-    
-    public SyncSocketClient(int recv_time_out){
-        this.recv_time_out = recv_time_out;
-    }
+    public SyncSocketClient(){ }
     
     public void setRecvTimeOut(int recv_time_out){
         this.recv_time_out = recv_time_out;
@@ -49,8 +45,10 @@ public class SyncSocketClient {
 	    close();
 	    try {
             socket = new Socket();
-            socket.setReceiveBufferSize(RECV_BUFF_SIZE);
             socket.setSoTimeout(recv_time_out);
+            socket.setReceiveBufferSize(RECV_BUFF_SIZE);
+            socket.setKeepAlive(false);
+            socket.setTcpNoDelay(true);
             socket.connect(serveraddress, timeout);
             return socket.isConnected();
         } catch (Exception e) {}
