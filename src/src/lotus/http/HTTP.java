@@ -209,9 +209,11 @@ public class HTTP {
 	        connection.setDoInput(true);
 	        connection.setDoOutput(true);
 	        connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+	        byte[] datas = content.getBytes("UTF-8");
+	        connection.setRequestProperty("Content-Length", datas.length + "");
 	        connection.connect();
 	        out = connection.getOutputStream();
-	        out.write(content.getBytes("UTF-8"));
+	        out.write(datas);
 	        // 刷新、关闭
 	        out.flush();
 	        out.close();
