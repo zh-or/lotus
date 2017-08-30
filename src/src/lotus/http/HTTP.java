@@ -172,7 +172,7 @@ public class HTTP {
 				content.append("&");
 			}
 			content.deleteCharAt(content.length() - 1);
-			return post(url, content.toString(), cookie);
+			return post(url, content.toString(), cookie, "application/x-www-form-urlencoded");
 		} catch (Exception e) {
 			
 		}
@@ -185,7 +185,7 @@ public class HTTP {
 	 * @param content application/x-www-form-urlencoded
 	 * @return
 	 */
-	public static String post(String url, String content, String cookie) {
+	public static String post(String url, String content, String cookie, String contentType) {
 		OutputStream out = null;
 		InputStream in = null;
 		try {
@@ -208,7 +208,7 @@ public class HTTP {
             connection.setRequestProperty("Cookie", cookie);
 	        connection.setDoInput(true);
 	        connection.setDoOutput(true);
-	        connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+	        connection.setRequestProperty("Content-Type", contentType); //"application/x-www-form-urlencoded");
 	        byte[] datas = content.getBytes("UTF-8");
 	        connection.setRequestProperty("Content-Length", datas.length + "");
 	        connection.connect();
