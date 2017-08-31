@@ -3,7 +3,6 @@ package lotus.http.server;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -26,8 +25,7 @@ public class HttpResponse {
     public static HttpResponse defaultResponse(Session session, HttpRequest request){
     	HttpResponse response = new HttpResponse(session, ResponseStatus.SUCCESS_OK);
     	response.setHeader("Server", "simple http server by lotus");
-    	Calendar cal = Calendar.getInstance();
-    	Date time = cal.getTime();
+    	Date time = new Date();
     	response.setHeader("Expires", time + "");
     	response.setHeader("Date", time + "");
     	String connection = request.getHeader("connection");
