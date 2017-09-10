@@ -26,8 +26,8 @@ public class HttpResponse {
     	HttpResponse response = new HttpResponse(session, ResponseStatus.SUCCESS_OK);
     	response.setHeader("Server", "simple http server by lotus");
     	Date time = new Date();
-    	response.setHeader("Expires", time + "");
-    	response.setHeader("Date", time + "");
+    	response.setHeader("Expires", time.toString());
+    	response.setHeader("Date", time.toString());
     	String connection = request.getHeader("connection");
     	if(connection != null){
     		response.setHeader("Connection", connection);

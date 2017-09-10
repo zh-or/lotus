@@ -1,10 +1,15 @@
 package lotus.util;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.UUID;
+
+import lotus.json.JSONException;
+import lotus.json.JSONObject;
 
 public class Util {
     
@@ -302,10 +307,15 @@ public class Util {
         return UUID.randomUUID().toString().replace("-", "").toUpperCase();
     }
     
-    public static int ip2int(String ip){
+    /**
+     * 这里返回用长整数代替以免出现负号
+     * @param ip
+     * @return
+     */
+    public static long ip2int(String ip){
         try {
             byte[] data = InetAddress.getByName(ip).getAddress();
-            int addr = data[3] & 0xFF;
+            long addr = data[3] & 0xFF;
             addr |= ((data[2] << 8) & 0xFF00);
             addr |= ((data[1] << 16) & 0xFF0000);
             addr |= ((data[0] << 24) & 0xFF000000);
@@ -314,7 +324,7 @@ public class Util {
         return 0;
     }
     
-    public static String int2ip(int ip){
+    public static String int2ip(long ip){
         StringBuilder sb = new StringBuilder();
         sb.append(((ip >> 24) & 0xff));
         sb.append('.');
@@ -385,6 +395,72 @@ public class Util {
             }
         }
         return p;
+    }
+    
+    /**
+     * 
+     * @param c 此类不能为内部类, 必须要有一个空的构造方法
+     * @param json
+     * @return
+     * @throws InstantiationException
+     * @throws IllegalAccessException
+     * @throws IllegalArgumentException
+     * @throws NoSuchFieldException
+     * @throws SecurityException
+     * @throws JSONException
+     * @throws InvocationTargetException
+     * @throws NoSuchMethodException
+     */
+    public static <E> E JsonToObj(Class<E> obj, JSONObject json) throws Exception{
+        E e = obj.newInstance();
+        Field[] fields = obj.getDeclaredFields();
+        for(Field f : fields){
+            f.setAccessible(true);
+            Class<?> type = f.getType();
+            String name = f.getName();
+            if(type == String.class) 
+                f.set(e, json.getString(name));
+            else if(type == boolean.class) 
+                f.setBoolean(e, json.getBoolean(name));
+            else if(type == long.class) 
+                f.setLong(e, json.getLong(name));
+            else if(type == int.class || type == char.class || type == byte.class || type == short.class) 
+                f.set(e, json.getInt(name));
+            else if(type == float.class || type == double.class) 
+                f.set(e, json.getDouble(name));
+            
+        }
+        return e;
+    }
+    
+    public static JSONObject ObjToJson(Object obj) throws Exception{
+        JSONObject json = new JSONObject();
+        Class<?> cla = obj.getClass();
+        Field[] fields = cla.getDeclaredFields();
+        for(Field f : fields){
+            f.setAccessible(true);
+            Class<?> type = f.getType();
+            String name = f.getName();
+            if(type == String.class) 
+                json.put(name, f.get(obj));
+            else if(type == boolean.class) 
+                json.put(name, f.getBoolean(obj));
+            else if(type == long.class) 
+                json.put(name, f.getLong(obj));
+            else if(type == int.class)
+                json.put(name, f.getInt(obj));
+            else if(type == char.class)
+                json.put(name, f.getChar(obj));
+            else if(type == byte.class)
+                json.put(name, f.getByte(obj));
+            else if(type == short.class)
+                json.put(name, f.getShort(obj));
+            else if(type == float.class) 
+                json.put(name, f.getFloat(obj));
+            else if(type == double.class)
+                json.put(name, f.getDouble(obj));
+        }
+        return json;
     }
     
 }

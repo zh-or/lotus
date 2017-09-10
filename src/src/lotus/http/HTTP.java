@@ -192,6 +192,9 @@ public class HTTP {
 	 
 	        URL console = new URL(url);
 	        URLConnection connection = console.openConnection();
+	        connection.setConnectTimeout(60 * 1000);
+	        connection.setReadTimeout(60 * 1000);
+	        
     	    if(connection instanceof HttpsURLConnection){
     			SSLContext sc = SSLContext.getInstance("SSL");
     	        sc.init(null, new TrustManager[] { new TrustAnyTrustManager() },  new java.security.SecureRandom());
@@ -216,8 +219,6 @@ public class HTTP {
 	        out.write(datas);
 	        // 刷新、关闭
 	        out.flush();
-	        out.close();
-	        out = null;
 	        in = connection.getInputStream();
 	        if (in != null) {
 	            ByteArrayOutputStream outStream = new ByteArrayOutputStream();

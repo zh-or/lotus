@@ -1,9 +1,9 @@
 package lotus.test;
 
-import lotus.json.JSONException;
+import lotus.util.Util;
 
 public class Test_Util {
-    public static void main(String[] args) throws JSONException {
+    public static void main(String[] args) throws Exception {
 //        Calendar cal = Calendar.getInstance();
         //2016 11 27 == 391 and wait 129 day is 520
         //cal.add(Calendar.DAY_OF_YEAR, 129);
@@ -27,5 +27,34 @@ public class Test_Util {
 //        byte[] a = new byte[]{1,2,3,4,5,6,6,7,8,9,00,65, 12,12,33,4,1,2,5,6,1,8,9};
 //        byte[] b = new byte[]{1,8,9};
 //        System.out.println(Util.byteArrSearch(a, b));
+        
+        
+//        JSONObject json = new JSONObject();
+//        json.put("a", "3");
+//        json.put("d", 2);
+//        json.put("l", System.currentTimeMillis());
+//        json.put("b", false);
+//        long start = System.currentTimeMillis();
+//        Test t = null;
+//        for(int i = 0; i < 10000; i++){
+//            t = Util.JsonToObj(Test.class, json);
+//        }
+//        System.out.println("一万次 json2obj:" + (System.currentTimeMillis() - start));
+//        System.out.println(t.toString());
+//        JSONObject json2 = null;
+//        start = System.currentTimeMillis();
+//        for(int i = 0; i < 10000; i++){
+//            json2 = Util.ObjToJson(t);
+//        }
+//        System.out.println("一万次 obj2json:" + (System.currentTimeMillis() - start));
+//        System.out.println(json2);
+        
+        
+        String ip = "0.0.1.1";
+        long ipint = Util.ip2int(ip);
+        System.out.println(ipint);
+        System.out.println(Util.int2ip(ipint));
     }
+    
+    
 }

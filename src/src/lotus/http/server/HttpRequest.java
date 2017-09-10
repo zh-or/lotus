@@ -112,6 +112,11 @@ public class HttpRequest {
         return null;
     }
     
+    public String getParameter(String name, String defval){
+        String val = getParameter(name);
+        return val == null ? defval : val;
+    }
+    
     public byte[] getBody(){
         return this.body;
     }

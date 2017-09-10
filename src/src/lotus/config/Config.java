@@ -18,6 +18,7 @@ public class Config {
 	
 	private HashMap<String, HashMap<String, ArrStringValue>> group = null;
 	private File file;
+	private String lastReadCharset;
 	
 	public class ArrStringValue{
 	    private ArrayList<String> val;
@@ -65,9 +66,11 @@ public class Config {
 	 * 读取配置文件
 	 */
 	public void read(String charset){//
+	    lastReadCharset = charset;
 		BufferedReader bis = null;
 		try {
 			bis = new BufferedReader(new InputStreamReader(new FileInputStream(file), charset));
+            group.clear();
 			HashMap<String, ArrStringValue> child = null;
 			String line = null;
 			while (null != (line = bis.readLine())){
@@ -100,6 +103,7 @@ public class Config {
 		}finally{
 			try {
 				if(bis != null) bis.close();
+				bis = null;
 			} catch (Exception e2) {
 			}
 		}
@@ -152,7 +156,8 @@ public class Config {
 	 * @param value
 	 * @return
 	 */
-	public void putValue(String groupkey, String childkey, String value){
+	public synchronized void addValue(String groupkey, String childkey, String value){
+	    read(lastReadCharset);
 		HashMap<String, ArrStringValue>  child = group.get(groupkey);
 		if(child == null){
 			child = new HashMap<String, ArrStringValue>();
@@ -174,7 +179,8 @@ public class Config {
 	 * @param childkey
 	 * @param value
 	 */
-	public void setValue(String groupkey, String childkey, String value){
+	public synchronized void setValue(String groupkey, String childkey, String value){
+        read(lastReadCharset);
 	    HashMap<String, ArrStringValue>  child = group.get(groupkey);
         if(child == null){
             child = new HashMap<String, ArrStringValue>();
