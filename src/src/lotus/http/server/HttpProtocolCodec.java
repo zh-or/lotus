@@ -64,8 +64,9 @@ public class HttpProtocolCodec implements ProtocolCodec{
                 break;
             case BODY:
             {
-                final int contentLength = (Integer) session.getAttr(CONTENT_LENGTH);
+                final int contentLength = (Integer) session.getAttr(CONTENT_LENGTH, 0);
                 if(contentLength > 0){
+                    
                     if(contentLength <= in.remaining()){
                         HttpRequest req = (HttpRequest) session.removeAttr(REQUEST);
                         final byte[] body = new byte[contentLength];

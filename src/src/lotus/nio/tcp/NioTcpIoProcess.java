@@ -75,7 +75,6 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
 	/*缓存buff的状态*/
 	private volatile int remaining = 0;
 	private volatile int capacity = 0;
-	private volatile int position = 0;
 	
 	private byte[] tmp_buffer;
 	
@@ -115,30 +114,25 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
                         //limit 也就是缓冲区可以利用（进行读写）的范围的最大值
                         //position 当前读写位置
                         
-                        position = readcache.position();
                         readcache.flip();
                         ProtocolDecoderOutput msgout = session.getProtocolDecoderOutput();
                         boolean ishavepack = false;
                         
                         try {
                             ishavepack = codec.decode(session, readcache, msgout);
-                            //readcache.compact();//把未读的数据复制到缓冲区起始位置 此时 position 为数据结尾
+                          //把未读的数据复制到缓冲区起始位置 此时 position 为数据结尾
+                            
                         } catch (Exception e) {
                             session.pushEventRunnable(new IoEventRunnable(e, IoEventType.SESSION_EXCEPTION, session, context));
                         }
+
+                        remaining = readcache.remaining();
                         
-                        if(ishavepack){
-                            session.setLastActive(System.currentTimeMillis());
-                            session.pushEventRunnable(new IoEventRunnable(msgout.read(), IoEventType.SESSION_RECVMSG, session, context));
-                            msgout.write(null);
-                            if(readcache.remaining() <= 0){//用完了就回收掉
-                                readcache.clear();
-                                context.putByteBufferToCache(readcache);
-                                session.updateReadCacheBuffer(null);
-                            }
+                        if(remaining <= 0){//用完了回收掉
+                            context.putByteBufferToCache(readcache);
+                            session.updateReadCacheBuffer(null);
                         }else{
-                            
-                            remaining = readcache.remaining();
+                            copyData(readcache);
                             if(remaining >= readcache.capacity()){/*已经读满了, 缓存不够. 就不写环形缓冲队列了 :(*/
                                 readcache.rewind();//重置 position 位置为 0 并忽略 mark
                                 capacity = readcache.capacity();
@@ -154,15 +148,20 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
                                 /*扩容后这便是一个新的obj了, 故手动更新*/
                                 newreadcache.put(tmp_buffer, 0, remaining);
                                 session.updateReadCacheBuffer(newreadcache);/*update*/
-                                selector.wakeup();
                             }else{
-                                if(position > 0){//有数据
-                                    readcache.limit(readcache.capacity());
-                                    readcache.position(position);
-                                    session.updateReadCacheBuffer(readcache);/*update*/
-                                }
+                                /*readcache.position(readcache.limit());
+                                readcache.limit(readcache.capacity());*/
+                                readcache.compact();
+                                session.updateReadCacheBuffer(readcache);/*update*/
                             }
                         }
+                        
+                        if(ishavepack){
+                            session.setLastActive(System.currentTimeMillis());
+                            session.pushEventRunnable(new IoEventRunnable(msgout.read(), IoEventType.SESSION_RECVMSG, session, context));
+                            msgout.write(null);
+                        }
+                        selector.wakeup();
                     }
                 }
                 
@@ -282,4 +281,15 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
         } catch (IOException e) {}
     }
 
+    private void copyData(ByteBuffer buff){
+        if(buff.position() > 0){
+            remaining = buff.remaining();
+            if(remaining > tmp_buffer.length){
+                tmp_buffer = new byte[remaining];
+            }
+            buff.get(tmp_buffer, 0, remaining);
+            buff.clear();
+            buff.put(tmp_buffer, 0, remaining);
+        }
+    }
 }

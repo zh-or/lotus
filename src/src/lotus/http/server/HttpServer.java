@@ -18,7 +18,6 @@ public class HttpServer {
     private ArrayList<Filter> filters;
     private NioTcpServer  server;
     private Charset     charset;
-    private int         maxheadbuffersize = 20480;
     
     public HttpServer(int EventThreadTotal){
         filters = new ArrayList<Filter>();
@@ -70,14 +69,6 @@ public class HttpServer {
         }
     }
     
-    public int getMaxheadbuffersize() {
-        return maxheadbuffersize;
-    }
-
-    public void setMaxheadbuffersize(int maxheadbuffersize) {
-        this.maxheadbuffersize = maxheadbuffersize;
-    }
-
     public void start(InetSocketAddress addr) throws IOException{
         server.bind(addr);
     }
