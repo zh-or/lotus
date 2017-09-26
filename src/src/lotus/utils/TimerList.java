@@ -1,4 +1,4 @@
-package lotus.util;
+package lotus.utils;
 
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
@@ -34,7 +34,7 @@ public class TimerList {
                     }
                 }
                 et = System.currentTimeMillis();
-                Util.SLEEP((int) (1000 - (et - st)));
+                Utils.SLEEP((int) (1000 - (et - st)));
             }
         }
     };

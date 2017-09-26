@@ -14,7 +14,7 @@ import lotus.nio.IoProcess;
 import lotus.nio.NioContext;
 import lotus.nio.ProtocolDecoderOutput;
 import lotus.nio.Session;
-import lotus.util.Util;
+import lotus.utils.Utils;
 
 
 public class NioTcpIoProcess extends IoProcess implements Runnable{
@@ -81,7 +81,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
     private void handleIoEvent() throws IOException {
         if(selector.select(NioContext.SELECT_TIMEOUT) == 0){
             if(!isrun) return;
-            Util.SLEEP(1);
+            Utils.SLEEP(1);
             return;
         }
         Iterator<SelectionKey> keys = selector.selectedKeys().iterator();

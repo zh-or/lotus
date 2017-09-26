@@ -5,7 +5,7 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
-import lotus.util.Util;
+import lotus.utils.Utils;
 
 /**
  * 同步socket
@@ -69,7 +69,7 @@ public class SyncSocketClient {
             OutputStream out = socket.getOutputStream();
             int len = data.length + 4;
             out.write(0x02);
-            out.write(Util.short2byte(len));
+            out.write(Utils.short2byte(len));
             out.write(data);
             out.write(0x03);
             out.flush();
@@ -90,7 +90,7 @@ public class SyncSocketClient {
 	    try {
 	        InputStream in = socket.getInputStream();
 	        if(in.read(head, 0, 3) == 3 && head[0] == 0x02){
-	            int len = Util.byte2short(head, 1);
+	            int len = Utils.byte2short(head, 1);
                 if(len < 65535){
                     len -= 4;
                     byte[] content = new byte[len];

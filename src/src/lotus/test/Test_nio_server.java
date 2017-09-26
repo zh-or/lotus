@@ -10,7 +10,7 @@ import lotus.nio.LengthProtocolCode;
 import lotus.nio.Session;
 import lotus.nio.tcp.NioTcpServer;
 import lotus.socket.client.SyncSocketClient;
-import lotus.util.Util;
+import lotus.utils.Utils;
 
 
 public class Test_nio_server {
@@ -51,13 +51,13 @@ public class Test_nio_server {
             System.exit(1);
         }
         log.info("启动完成...");
-        Util.SLEEP(1000);
+        Utils.SLEEP(1000);
         log.info("发送 1021...");
-        log.info("收到:%s", Util.byte2hex(client.send(Util.GetRepeatByte(1021, (byte)56))));
+        log.info("收到:%s", Utils.byte2hex(client.send(Utils.GetRepeatByte(1021, (byte)56))));
         log.info("发送 255...");
-        log.info("收到1:%s", Util.byte2hex(client.send(Util.GetRepeatByte(255, (byte)56))));
+        log.info("收到1:%s", Utils.byte2hex(client.send(Utils.GetRepeatByte(255, (byte)56))));
         log.info("发送 1024...");
-        log.info("收到1:%s", Util.byte2hex(client.send(Util.GetRepeatByte(1024, (byte)56))));
+        log.info("收到1:%s", Utils.byte2hex(client.send(Utils.GetRepeatByte(1024, (byte)56))));
         
         /*
         Util.SLEEP(1000);

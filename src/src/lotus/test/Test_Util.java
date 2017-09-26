@@ -1,6 +1,6 @@
 package lotus.test;
 
-import lotus.util.Util;
+import lotus.utils.Utils;
 
 public class Test_Util {
     public static void main(String[] args) throws Exception {
@@ -51,9 +51,9 @@ public class Test_Util {
         
         
         String ip = "0.0.1.1";
-        long ipint = Util.ip2int(ip);
+        long ipint = Utils.ip2int(ip);
         System.out.println(ipint);
-        System.out.println(Util.int2ip(ipint));
+        System.out.println(Utils.int2ip(ipint));
     }
     
     

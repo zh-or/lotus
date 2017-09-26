@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 import lotus.nio.ProtocolCodec;
 import lotus.nio.ProtocolDecoderOutput;
 import lotus.nio.Session;
-import lotus.util.Util;
+import lotus.utils.Utils;
 
 public class HttpProtocolCodec implements ProtocolCodec{
     private static final String STATUS          =   "http-status";
@@ -38,7 +38,7 @@ public class HttpProtocolCodec implements ProtocolCodec{
                         final HttpRequest req = new HttpRequest(session, context.getCharset());
                         final String sheaders = new String(bheaders, context.getCharset());
                         req.parseHeader(sheaders);
-                        final int contentLength = Util.StrtoInt(req.getHeader("content-length"));
+                        final int contentLength = Utils.StrtoInt(req.getHeader("content-length"));
                         if(contentLength > 0){
                             if(contentLength <= in.remaining()){/*已经把body也收完了*/
                                 final byte[] body = new byte[contentLength];

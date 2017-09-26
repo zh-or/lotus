@@ -14,7 +14,7 @@ import lotus.nio.LengthProtocolCode;
 import lotus.nio.Session;
 import lotus.nio.tcp.NioTcpClient;
 import lotus.socket.client.SyncSocketClient;
-import lotus.util.Util;
+import lotus.utils.Utils;
 
 public class NodeSession {
     private static final String DEF_ENCRYPTION_KEY  =   "lotus-cluster-key";
@@ -50,7 +50,7 @@ public class NodeSession {
      * @throws IOException 
      */
     public NodeSession(InetSocketAddress serveraddress) throws IOException{
-        this(serveraddress, Util.getUUID());
+        this(serveraddress, Utils.getUUID());
     }
     
     public NodeSession(InetSocketAddress serveraddress, String nodeid){
@@ -98,7 +98,7 @@ public class NodeSession {
             NetPack recv = new NetPack(initdata);
             if(recv.type == NetPack.CMD_INIT){
                 this.nodeid = new String(recv.body);
-                if(Util.CheckNull(this.nodeid)) return 0;
+                if(Utils.CheckNull(this.nodeid)) return 0;
                 client_data.init();
                 getSomeConnection(conn_min_size + 5);
                 if(timeout > 0 && session_capacity + 1 < conn_min_size){
@@ -146,7 +146,7 @@ public class NodeSession {
     
     public Message sendMessage(Message msg, long waitrestimeout){
         msg.from = nodeid;
-        msg.msgid = Util.getUUID();
+        msg.msgid = Utils.getUUID();
         Session session = null;
         synchronized (this) {
             if(session_capacity > 0){
@@ -164,7 +164,7 @@ public class NodeSession {
     
     private void send_data(Session session, byte[] data){
         if(enableEncryption){
-            data = Util.Encoded(data, user_en_key);
+            data = Utils.Encoded(data, user_en_key);
         }
         session.write(data);
     }
@@ -172,7 +172,7 @@ public class NodeSession {
     
     private synchronized byte[] send_cmd(byte[] data){
         if(enableEncryption){
-            data = Util.Encoded(data, user_en_key);
+            data = Utils.Encoded(data, user_en_key);
         }
         cmd_send = data;
         cmd_recv = null;
@@ -230,7 +230,7 @@ public class NodeSession {
     public void setEnableEncryption(boolean isenable, String key){
         this.enableEncryption = isenable;
         this.user_en_key = key;
-        if(Util.CheckNull(key)){
+        if(Utils.CheckNull(key)){
             this.user_en_key = DEF_ENCRYPTION_KEY;
         }
     }
@@ -260,7 +260,7 @@ public class NodeSession {
      * @param action
      */
     public synchronized boolean addSubscribe(String action) {
-        if(Util.CheckNull(action)) return false;
+        if(Utils.CheckNull(action)) return false;
         byte[] res = send_cmd(new NetPack(NetPack.CMD_SUBS_MSG, action.getBytes(charset)).Encode());
         if(res == null || res.length < 2) return false; 
         NetPack pack = new NetPack(res);
@@ -274,7 +274,7 @@ public class NodeSession {
      * @param action
      */
     public synchronized boolean removeSubscribe(String action) {
-        if(Util.CheckNull(action)) return false;
+        if(Utils.CheckNull(action)) return false;
         byte[] res = send_cmd(new NetPack(NetPack.CMD_UNSUBS_MSG, action.getBytes(charset)).Encode());
         if(res == null || res.length < 2) return false; 
         NetPack pack = new NetPack(res);

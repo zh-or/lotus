@@ -7,7 +7,7 @@ import java.util.ArrayList;
 
 import lotus.nio.Session;
 import lotus.nio.tcp.NioTcpServer;
-import lotus.util.Util;
+import lotus.utils.Utils;
 
 /*
  * 一个简单的http服务器
@@ -59,7 +59,7 @@ public class HttpServer {
     }
     
     public synchronized void removeHandler(String path){
-        if(Util.CheckNull(path)) return ;
+        if(Utils.CheckNull(path)) return ;
         Filter filter;
         for(int i = filters.size() - 1; i >= 0; i --){
             filter = filters.get(i);

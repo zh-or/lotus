@@ -9,7 +9,7 @@ import lotus.nio.IoHandler;
 import lotus.nio.LineProtocolCodec;
 import lotus.nio.Session;
 import lotus.nio.tcp.NioTcpClient;
-import lotus.util.Util;
+import lotus.utils.Utils;
 
 public class Test_nio_client {
     static Log log = null;
@@ -24,7 +24,7 @@ public class Test_nio_client {
             @Override
             public void onConnection(Session session) throws Exception {
          //       log.info("client event connectioned..." + session.getRemoteAddress());
-                Util.SLEEP(2000);
+                Utils.SLEEP(2000);
                 session.setAttr("msgcount", 1);
            //     session.write(("fuck -> " + session.getId() + "\n").getBytes());
                 session.write(("1}").getBytes());
@@ -63,7 +63,7 @@ public class Test_nio_client {
           //  log.info("wait:" + isconn + isconn.getRemoteAddress());
           //  isconn.write(("fuck -> " + isconn.getId() + "\n").getBytes());
           //  isconn.write(("fuck -> " + isconn.getId() + "}").getBytes());
-            Util.SLEEP(100);
+            Utils.SLEEP(100);
         }
         System.out.println("连接完毕");
     }

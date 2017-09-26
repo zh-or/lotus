@@ -10,7 +10,7 @@ import java.util.Iterator;
 import java.util.concurrent.locks.ReentrantLock;
 
 import lotus.nio.NioContext;
-import lotus.util.Util;
+import lotus.utils.Utils;
 
 public class NioTcpServer extends NioContext{
 	private ServerSocketChannel ssc			=	null;
@@ -77,7 +77,7 @@ public class NioTcpServer extends NioContext{
                             
                             if(!run) break;
                             
-                            Util.SLEEP(1);
+                            Utils.SLEEP(1);
                             continue;
                         }
                         Iterator<SelectionKey> keys = mslAccept.selectedKeys().iterator();

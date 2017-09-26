@@ -8,7 +8,7 @@ import lotus.nio.IoHandler;
 import lotus.socket.client.AsyncSocketClient;
 import lotus.socket.common.ClientCallback;
 import lotus.socket.server.SocketServer;
-import lotus.util.Util;
+import lotus.utils.Utils;
 
 public class Test_socket {
 	static Log log;
@@ -52,7 +52,7 @@ public class Test_socket {
             client.send(("msg->" + i++).getBytes());
             client.send(("msg->" + i++).getBytes());
           //  client.send(new String(Util.RandomChars(Util.RandomNum(10, 60))).getBytes());
-            Util.SLEEP(5000);
+            Utils.SLEEP(5000);
         }
 		
 	}

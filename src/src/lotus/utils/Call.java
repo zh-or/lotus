@@ -1,4 +1,4 @@
-package lotus.util;
+package lotus.utils;
 
 
 /**

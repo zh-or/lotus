@@ -11,7 +11,7 @@ import java.util.concurrent.Executors;
 
 import lotus.socket.common.ClientCallback;
 import lotus.socket.common.EventRunnable;
-import lotus.util.Util;
+import lotus.utils.Utils;
 
 /**
  * 异步socket
@@ -107,7 +107,7 @@ public class AsyncSocketClient {
                     OutputStream out = socket.getOutputStream();
                     int len = data.length + 4;
                     out.write(0x02);
-                    out.write(Util.short2byte(len));
+                    out.write(Utils.short2byte(len));
                     out.write(data);
                     out.write(0x03);
                     out.flush();
@@ -152,7 +152,7 @@ public class AsyncSocketClient {
                                 break;
                             }
                             if(head[0] == 0x02){
-                                int len = Util.byte2short(head, 1);
+                                int len = Utils.byte2short(head, 1);
                                 if(len < 65535){
                                     len -= 4;
                                     byte[] content = new byte[len];

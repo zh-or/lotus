@@ -7,7 +7,7 @@ import lotus.cluster.MessageResult;
 import lotus.cluster.node.MessageHandler;
 import lotus.cluster.node.NodeSession;
 import lotus.log.Log;
-import lotus.util.Util;
+import lotus.utils.Utils;
 
 public class Test_cluster_node2 extends MessageHandler{
     static NodeSession node;
@@ -19,7 +19,7 @@ public class Test_cluster_node2 extends MessageHandler{
         log = Log.getInstance();
         log.setProjectName("node");
 
-        node = new NodeSession(new InetSocketAddress(5000), Util.getUUID());
+        node = new NodeSession(new InetSocketAddress(5000), Utils.getUUID());
         node.setHandler(new Test_cluster_node2());
         node.setConnectionMinSize(30);
         node.setDataConnReadBufferSize(1024);
@@ -46,7 +46,7 @@ public class Test_cluster_node2 extends MessageHandler{
         log.info("init:%d", conn);
         if(conn <= 0){
             log.info("初始化失败...");
-            Util.SLEEP(3000);
+            Utils.SLEEP(3000);
             System.exit(1);
         }
         String action = "helloworld";
@@ -55,10 +55,10 @@ public class Test_cluster_node2 extends MessageHandler{
         node.sendMessage(new Message(Message.MTYPE_MESSAGE, node.getNodeId(), null, "head", null));
         node.sendMessage(new Message(Message.MTYPE_SUBSCRIBE, action, null, "head", null));
         
-        Util.SLEEP(5000);
+        Utils.SLEEP(5000);
         System.out.println("remove:" + node.removeSubscribe("helloworld"));;
         node.close();
-        Util.SLEEP(20000);
+        Utils.SLEEP(20000);
         System.exit(0);
     }
     

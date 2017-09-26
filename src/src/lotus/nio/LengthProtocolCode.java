@@ -2,7 +2,7 @@ package lotus.nio;
 
 import java.nio.ByteBuffer;
 
-import lotus.util.Util;
+import lotus.utils.Utils;
 
 /**
  * 使用此解码器需要注意的是, 包长度使用的是2字节数据 即最大一个包不能超过 65535 字节
@@ -19,13 +19,13 @@ public class LengthProtocolCode implements ProtocolCodec{
 			    in.reset();
 			    byte[] tmp = new byte[in.remaining()];
 			    in.get(tmp);
-			    System.out.println("包头不对, 总长度:" + tmp.length + ", data:" + Util.byte2str(tmp));
+			    System.out.println("包头不对, 总长度:" + tmp.length + ", data:" + Utils.byte2str(tmp));
 				session.closeNow();
 				return false;
 			}
 			byte[] blen = new byte[2];/*len*/
 			in.get(blen);
-			int packlen = Util.byte2short(blen);
+			int packlen = Utils.byte2short(blen);
 			if(packlen > 65535){
 			    System.out.println("包长度过长");
 				session.closeNow();
@@ -54,7 +54,7 @@ public class LengthProtocolCode implements ProtocolCodec{
 	    
 	    ByteBuffer buff = session.getWriteCacheBuffer(content.length + 2 + 2);
 	    buff.put((byte) 0x02);
-	    buff.put(Util.short2byte(content.length + 2 + 2));
+	    buff.put(Utils.short2byte(content.length + 2 + 2));
 	    buff.put(content);
 	    buff.put((byte) 0x03);
         byte[] send =  new byte[content.length + 2 + 2];

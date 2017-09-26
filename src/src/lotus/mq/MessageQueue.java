@@ -7,7 +7,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantLock;
 
-import lotus.util.Util;
+import lotus.utils.Utils;
 
 /**
  * 用来检测消息超时的类
@@ -110,7 +110,7 @@ public class MessageQueue implements Runnable{
             sleeptime =  et - st;
             if(sleeptime < 100){
                 sleeptime = 100 - sleeptime;
-                Util.SLEEP(sleeptime);
+                Utils.SLEEP(sleeptime);
             }
             Object msgid = msg_receipt.poll();
             st = System.currentTimeMillis();
@@ -139,7 +139,7 @@ public class MessageQueue implements Runnable{
                     lock_msg_sent.unlock();
                 }
             }else{
-                Util.SLEEP(100);//防止死循环过度占用cpu
+                Utils.SLEEP(100);//防止死循环过度占用cpu
             }
             et = System.currentTimeMillis();
         }

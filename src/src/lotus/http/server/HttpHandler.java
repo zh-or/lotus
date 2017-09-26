@@ -1,6 +1,6 @@
 package lotus.http.server;
 
-import lotus.util.Util;
+import lotus.utils.Utils;
 
 
 public abstract class HttpHandler {
@@ -59,7 +59,7 @@ public abstract class HttpHandler {
     public boolean _checkparameter(String[] pars, HttpRequest request){
         if(pars == null || pars.length <= 0) return true;
         for(int i = 0; i < pars.length; i++){
-            if(Util.CheckNull(request.getParameter(pars[i]))){
+            if(Utils.CheckNull(request.getParameter(pars[i]))){
                 return false;
             }
         }

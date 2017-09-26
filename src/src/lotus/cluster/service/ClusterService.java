@@ -14,7 +14,7 @@ import lotus.cluster.NetPack;
 import lotus.nio.IoHandler;
 import lotus.nio.Session;
 import lotus.socket.server.SocketServer;
-import lotus.util.Util;
+import lotus.utils.Utils;
 
 public class ClusterService {
     
@@ -82,7 +82,7 @@ public class ClusterService {
     public ClusterService setEnableEncryption(boolean isenable, String key){
         this.enableEncryption = isenable;
         this.use_encryption_key = key;
-        if(Util.CheckNull(key)){
+        if(Utils.CheckNull(key)){
             this.use_encryption_key = DEF_ENCRYPTION_KEY;
         }
         return this;
@@ -121,12 +121,12 @@ public class ClusterService {
     }
     
     public void sendBrodcast(String head, byte[] body){
-        Message msg = new Message(Message.MTYPE_BROADCAST, null, Util.getUUID(), head, body);
+        Message msg = new Message(Message.MTYPE_BROADCAST, null, Utils.getUUID(), head, body);
         sendMessage(msg);
     }
     
     public void sendSubMessage(String action, String head, byte[] body){
-        Message msg = new Message(Message.MTYPE_SUBSCRIBE, action, Util.getUUID(), head, body);
+        Message msg = new Message(Message.MTYPE_SUBSCRIBE, action, Utils.getUUID(), head, body);
         sendMessage(msg);
     }
     
@@ -150,7 +150,7 @@ public class ClusterService {
                 return;
             }
             if(enableEncryption){
-                data = Util.Decode(data, session.getAttr(ENCRYPTION_KEY, DEF_ENCRYPTION_KEY) + "");
+                data = Utils.Decode(data, session.getAttr(ENCRYPTION_KEY, DEF_ENCRYPTION_KEY) + "");
             }
             // String session_type = session.getAttr(SESSION_TYPE) + "";
             NetPack pack = new NetPack(data);
@@ -314,7 +314,7 @@ public class ClusterService {
         public void onIdle(Session session) throws Exception {
             String nodeid = session.getAttr(NODE_ID, "") + "";
             String session_type = session.getAttr(SESSION_TYPE) + "";
-            if(Util.CheckNull(nodeid) == false && Util.CheckNull(session_type) == false){
+            if(Utils.CheckNull(nodeid) == false && Utils.CheckNull(session_type) == false){
                 
             }else{
                 System.out.println("空闲了->" + session.toString() + "," + session.getCreateTime() +"/" + System.currentTimeMillis() +", 关闭之");
@@ -327,7 +327,7 @@ public class ClusterService {
             System.out.println("server session close:" + session);
             String nodeid = session.getAttr(NODE_ID, "") + "";
             String session_type = session.getAttr(SESSION_TYPE) + "";
-            if(!Util.CheckNull(nodeid)){
+            if(!Utils.CheckNull(nodeid)){
 
                 Node node = nodes.get(nodeid);
                 if(SESSION_TYPE_DATA.equals(session_type)){

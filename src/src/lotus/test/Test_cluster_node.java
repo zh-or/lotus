@@ -9,7 +9,7 @@ import lotus.cluster.Message;
 import lotus.cluster.node.MessageHandler;
 import lotus.cluster.node.NodeSession;
 import lotus.log.Log;
-import lotus.util.Util;
+import lotus.utils.Utils;
 
 public class Test_cluster_node extends MessageHandler{
     static NodeSession node;
@@ -38,14 +38,14 @@ public class Test_cluster_node extends MessageHandler{
         String[] modes = new String[]{"", "发送", "接收"};
         log.info("当前模式:%s, 1 秒发送 %d 条消息", modes[m], total);
         in.close();
-        node = new NodeSession(new InetSocketAddress(host, 5000), Util.getUUID());
+        node = new NodeSession(new InetSocketAddress(host, 5000), Utils.getUUID());
         node.setHandler(new Test_cluster_node());
         log.info("init..");
         int conn = node.init(10000);
         log.info("init:%d", conn);
         if(conn <= 0){
             log.info("初始化失败...");
-            Util.SLEEP(3000);
+            Utils.SLEEP(3000);
             System.exit(1);
         }
         log.info("订阅 fuck -> %s", node.addSubscribe("fuck"));
@@ -81,11 +81,11 @@ public class Test_cluster_node extends MessageHandler{
                      }
                      t2 = System.currentTimeMillis();
                      long s = 1000 - (t2 - t1);
-                     if(s > 0) Util.SLEEP(s);
+                     if(s > 0) Utils.SLEEP(s);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                Util.SLEEP(1000);
+                Utils.SLEEP(1000);
             }
         }else{
             
