@@ -19,8 +19,8 @@ public class Test_http extends HttpHandler{
     }
     public static void main(String[] args) throws IOException {
         
-        Test t = Test.valueOf("0");
-        System.out.println(t);
+        Test t = Test.valueOf("B");
+        System.out.println(t + " " + t.type);
 /*        httpserver = new HttpServer(0, 1024);
         httpserver.setHandler(new Test_http());
         httpserver.start(new InetSocketAddress(8090));

@@ -50,7 +50,7 @@ public class Test_Util {
 //        System.out.println(json2);
         
         
-        String ip = "0.0.1.1";
+        String ip = "163.125.241.164";
         long ipint = Utils.ip2int(ip);
         System.out.println(ipint);
         System.out.println(Utils.int2ip(ipint));

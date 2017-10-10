@@ -315,15 +315,16 @@ public class Utils {
     public static long ip2int(String ip){
         try {
             byte[] data = InetAddress.getByName(ip).getAddress();
-            long addr = data[3] & 0xFF;
+            long addr = data[3] & 0xFF, t = 0l;
             addr |= ((data[2] << 8) & 0xFF00);
             addr |= ((data[1] << 16) & 0xFF0000);
-            addr |= ((data[0] << 24) & 0xFF000000);
+            t = data[0] & 0xFF;//出现负数??
+            addr |= ((t << 24) & 0xFF000000);
             return addr;
         } catch (UnknownHostException e) {}
         return 0;
     }
-    
+  
     public static String int2ip(long ip){
         StringBuilder sb = new StringBuilder();
         sb.append(((ip >> 24) & 0xff));
