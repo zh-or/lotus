@@ -33,8 +33,8 @@ public abstract class HttpHandler {
                     this.trace(request, response);
                     break;
             }
-        }catch(Exception e){
-            _exception(e, request, response);
+        }catch(Throwable e){
+            exception(e, request, response);
         }
     }
     
@@ -119,7 +119,8 @@ public abstract class HttpHandler {
      * @param request
      * @param response
      */
-    public void _exception(Exception e, HttpRequest request, HttpResponse response){
+    public void exception(Throwable e, HttpRequest request, HttpResponse response){
+        response.setStatus(ResponseStatus.SERVER_ERROR_INTERNAL_SERVER_ERROR);
         e.printStackTrace();
     }
 }

@@ -23,21 +23,21 @@ public abstract class ExHttpHandler extends HttpHandler{
             if(!this._check(m, request, response)){
                 return;
             }
-        }catch(Exception e){
-            this._exception(e, request, response);
+        }catch(Throwable e){
+            this.exception(e, request, response);
             return;
         }
         Method method = null;
         try {
             method = this.getClass().getMethod(m, HttpRequest.class, HttpResponse.class);
-        } catch (Exception e) {
-            this._exception(e, request, response);
+        } catch (Throwable e) {
+            this.exception(e, request, response);
         }
         if(method != null){
             try {
                 method.invoke(this, request, response);
-            } catch (Exception e) {
-                this._exception(e, request, response);
+            } catch (Throwable e) {
+                this.exception(e, request, response);
             }
         }
     }

@@ -20,27 +20,29 @@ public class NioTcpServer extends NioContext{
 	private AcceptThread        acceptrhread=   null;
 	private long                idcount     =   0l;
 	
-    public NioTcpServer() {
+    public NioTcpServer() throws IOException {
 		super();
-	}
 
-	public void bind(InetSocketAddress addr) throws IOException {
-		ssc = ServerSocketChannel.open();
+        ssc = ServerSocketChannel.open();
         ssc.socket().setReceiveBufferSize(buff_read_cache_size);
         ssc.configureBlocking(false);
-		ssc.bind(addr);
-		ioprocess = new NioTcpIoProcess[selector_thread_total];
-		
-		for(int i = 0; i < selector_thread_total; i++){
-		    ioprocess[i] = new NioTcpIoProcess(this);
-		    new Thread(ioprocess[i], "lotus nio tcp server selector thread - " + i).start();
-		}
+        ioprocess = new NioTcpIoProcess[selector_thread_total];
+        
+        for(int i = 0; i < selector_thread_total; i++){
+            ioprocess[i] = new NioTcpIoProcess(this);
+            new Thread(ioprocess[i], "lotus nio tcp server selector thread - " + i).start();
+        }
         /*一个线程 accept */
         acceptrhread = new AcceptThread();
         new Thread(acceptrhread, "lotus nio tcp accept thread").start();
 	}
+
+
+	public void bind(InetSocketAddress addr) throws IOException {
+        ssc.bind(addr);
+	}
 	
-	public void unbind() {
+	public void close() {
 		try {
             acceptrhread.close();
             executor_e.shutdownNow();

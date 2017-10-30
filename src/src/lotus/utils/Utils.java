@@ -464,4 +464,22 @@ public class Utils {
         return json;
     }
     
+    public static boolean ObjSet(Object obj, String name, Object val){
+        try {
+            Field field = obj.getClass().getDeclaredField(name);
+            field.set(obj, val);
+            return true;
+        } catch (Exception e) {}
+        return false;
+    }
+    
+    public static Object ObjGet(Object obj, String name){
+        try {
+            Field field = obj.getClass().getDeclaredField(name);
+            field.setAccessible(true);
+            return field.get(obj);
+        } catch (Exception e) {}
+        return null;
+    }
+
 }

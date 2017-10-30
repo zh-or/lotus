@@ -19,7 +19,7 @@ public class HttpServer {
     private NioTcpServer  server;
     private Charset     charset;
     
-    public HttpServer(int EventThreadTotal){
+    public HttpServer(int EventThreadTotal) throws IOException{
         filters = new ArrayList<Filter>();
         server = new NioTcpServer();
         server.setEventThreadPoolSize(EventThreadTotal);
@@ -74,7 +74,7 @@ public class HttpServer {
     }
     
     public void stop(){
-        server.unbind();
+        server.close();
     }
     
     private class EventHandler extends lotus.nio.IoHandler{

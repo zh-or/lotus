@@ -68,7 +68,7 @@ public class SocketServer {
     }
     
     public void stop(){
-    	server.unbind();
+    	server.close();
     	server = null;
     }
     
