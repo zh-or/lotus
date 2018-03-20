@@ -1,3 +1,7 @@
 *.class
-bin
-build
+/bin/
+/build/
+.settings
+.settings/*
+.classpath
+.project
