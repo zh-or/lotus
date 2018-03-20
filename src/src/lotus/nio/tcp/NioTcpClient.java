@@ -6,7 +6,6 @@ import java.nio.channels.SocketChannel;
 import java.util.concurrent.locks.ReentrantLock;
 
 import lotus.nio.NioContext;
-import lotus.nio.ProtocolCodec;
 import lotus.nio.Session;
 
 public class NioTcpClient extends NioContext{
@@ -17,8 +16,8 @@ public class NioTcpClient extends NioContext{
     private int                 iipBound            =   0;
     private final ReentrantLock rliplock            =   new ReentrantLock();
     
-    public NioTcpClient(ProtocolCodec codec){
-        this.procodec = codec;
+    public NioTcpClient(){
+        super();
     }
     
     public void init() throws IOException{

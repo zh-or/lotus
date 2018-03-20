@@ -16,7 +16,8 @@ public class Test_nio_client {
     public static void main(String[] args) throws IOException {
         log = Log.getInstance();
         log.setProjectName("test");
-        NioTcpClient client = new NioTcpClient(new LineProtocolCodec('}'));
+        NioTcpClient client = new NioTcpClient();
+        client.setProtocolCodec(new LineProtocolCodec('}'));
         client.setSessionCacheBufferSize(1024);
         client.setSessionIdleTime(60 * 1000);
         client.init();

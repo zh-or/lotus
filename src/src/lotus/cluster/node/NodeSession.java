@@ -59,7 +59,8 @@ public class NodeSession {
         this.subs = new ArrayList<String>();
         this.sessions = new Session[conn_max_size];
         this.handler = new MessageHandler() {};
-        this.client_data = new NioTcpClient(new LengthProtocolCode());
+        this.client_data = new NioTcpClient();
+        this.client_data.setProtocolCodec(new LengthProtocolCode());
         this.client_data.setEventThreadPoolSize(conn_max_size);
         this.client_data.setHandler(new DataHandler());
         this.client_data.setSessionCacheBufferSize(SESSION_READ_CACHE);

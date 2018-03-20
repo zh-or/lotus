@@ -21,11 +21,9 @@ public abstract class NioContext {
     protected LinkedBlockingQueue<ByteBuffer> bufferlist            =   null;/*缓存*//*应付像http这样的服务时大量的短连接用*/
     
     public NioContext(){
-        selector_thread_total = Runtime.getRuntime().availableProcessors() + 1;/* cpu + 1 */
-        //selector_thread_total = 1;//????
+        this.selector_thread_total = Runtime.getRuntime().availableProcessors() + 1;/* cpu + 1 */
         this.buffer_list_length = DEF_BUFFER_LIST_MAX_SIZE;
         
-        this.handler = new IoHandler() { };
     }
     
 

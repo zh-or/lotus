@@ -12,6 +12,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
+import lotus.nio.IoHandler;
 import lotus.nio.NioContext;
 import lotus.utils.Utils;
 
@@ -29,6 +30,10 @@ public class NioTcpServer extends NioContext{
 	}
 
     public void start(InetSocketAddress addr) throws IOException {
+        
+        if(this.handler == null) {
+            this.handler = new IoHandler() { };
+        }
         
         this.bufferlist = new LinkedBlockingQueue<ByteBuffer>(buffer_list_length);
         
