@@ -64,7 +64,7 @@ public class SocketServer {
     	server.setSocketTimeOut(sockettimeout);
     	server.setProtocolCodec(new LengthProtocolCode());
     	server.setHandler(handler);
-        server.bind(addr);
+        server.start(addr);
     }
     
     public void stop(){

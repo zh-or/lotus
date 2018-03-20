@@ -2,11 +2,14 @@ package lotus.nio.tcp;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Iterator;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
 import lotus.nio.NioContext;
@@ -20,9 +23,15 @@ public class NioTcpServer extends NioContext{
 	private AcceptThread        acceptrhread=   null;
 	private long                idcount     =   0l;
 	
-    public NioTcpServer() throws IOException {
+    public NioTcpServer(){
 		super();
 
+	}
+
+    public void start(InetSocketAddress addr) throws IOException {
+        
+        this.bufferlist = new LinkedBlockingQueue<ByteBuffer>(buffer_list_length);
+        
         ssc = ServerSocketChannel.open();
         ssc.socket().setReceiveBufferSize(buff_read_cache_size);
         ssc.configureBlocking(false);
@@ -32,20 +41,23 @@ public class NioTcpServer extends NioContext{
             ioprocess[i] = new NioTcpIoProcess(this);
             new Thread(ioprocess[i], "lotus nio tcp server selector thread - " + i).start();
         }
+        
+        if(event_pool_thread_size > 0) {
+            this.executor = Executors.newFixedThreadPool(event_pool_thread_size);
+        }
+        
         /*一个线程 accept */
         acceptrhread = new AcceptThread();
         new Thread(acceptrhread, "lotus nio tcp accept thread").start();
-	}
-
-
-	public void bind(InetSocketAddress addr) throws IOException {
+        
         ssc.bind(addr);
-	}
+    }
+
 	
 	public void close() {
 		try {
             acceptrhread.close();
-            executor_e.shutdownNow();
+            if(executor != null) executor = null;
 		    for(int i = 0; i < selector_thread_total; i++){
 		        try {
 		            ioprocess[i].close();
@@ -59,7 +71,7 @@ public class NioTcpServer extends NioContext{
 	
     private class AcceptThread implements Runnable{
         Selector mslAccept = null;
-        boolean run = true;
+        volatile boolean run = true;
         public AcceptThread() throws IOException {
             mslAccept = Selector.open();
         }

@@ -42,7 +42,7 @@ public class Test_nio_server {
             }
         });
         server.setSessionCacheBufferSize(1024);
-        server.bind(new InetSocketAddress(4000));
+        server.start(new InetSocketAddress(4000));
         
         SyncSocketClient client = new SyncSocketClient();
         client.setRecvTimeOut(1000 * 20);

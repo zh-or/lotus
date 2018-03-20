@@ -19,10 +19,9 @@ public class HttpServer {
     private NioTcpServer  server;
     private Charset     charset;
     
-    public HttpServer(int EventThreadTotal) throws IOException{
+    public HttpServer() throws IOException{
         filters = new ArrayList<Filter>();
         server = new NioTcpServer();
-        server.setEventThreadPoolSize(EventThreadTotal);
         server.setHandler(new EventHandler());
         /*
         log = Log.getInstance();
@@ -31,6 +30,10 @@ public class HttpServer {
         server.setProtocolCodec(new HttpProtocolCodec(this));
         
         server.setSessionIdleTime(20000);/*keep-alive*/
+    }
+    
+    public void setEventThreadPoolSize(int size) {
+        server.setEventThreadPoolSize(size);
     }
     
     public void setReadBufferCacheSize(int ReadBufferCacheSize){
@@ -70,7 +73,8 @@ public class HttpServer {
     }
     
     public void start(InetSocketAddress addr) throws IOException{
-        server.bind(addr);
+        
+        server.start(addr);
     }
     
     public void stop(){

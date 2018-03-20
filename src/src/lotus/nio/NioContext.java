@@ -1,32 +1,30 @@
 package lotus.nio;
 
 import java.nio.ByteBuffer;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public abstract class NioContext {
     private static final int        DEF_BUFFER_LIST_MAX_SIZE        =   2048;
-    private static final int        DEF_EVENT_THREAD_POOL_SIZE      =   100;
     public static final int         SELECT_TIMEOUT                  =   10000;
     
 	protected int                   selector_thread_total           =   0;
     protected int                   session_idle_time               =   0;
     protected int                   socket_time_out                 =   1000 * 10;
     protected int                   buff_read_cache_size            =   1024;/*读缓冲区大小*/
-    protected int                   buffer_list_length              =   0;
+    protected int                   buffer_list_length              =   0;/*缓存链表最大长度*/
+    protected int                   event_pool_thread_size          =   0;
     protected IoHandler             handler                         =   null;
     protected ProtocolCodec			procodec						=   null;
-    protected ExecutorService       executor_e                      =   null;
+    protected Executor              executor                        =   null;
     
     protected LinkedBlockingQueue<ByteBuffer> bufferlist            =   null;/*缓存*//*应付像http这样的服务时大量的短连接用*/
     
     public NioContext(){
         selector_thread_total = Runtime.getRuntime().availableProcessors() + 1;/* cpu + 1 */
-        selector_thread_total = 1;
+        //selector_thread_total = 1;//????
         this.buffer_list_length = DEF_BUFFER_LIST_MAX_SIZE;
-        this.executor_e = Executors.newFixedThreadPool(DEF_EVENT_THREAD_POOL_SIZE);
-        this.bufferlist = new LinkedBlockingQueue<ByteBuffer>(buffer_list_length);
+        
         this.handler = new IoHandler() { };
     }
     
@@ -38,20 +36,16 @@ public abstract class NioContext {
     
     public NioContext setReadBufferCacheListSize(int size){
         this.buffer_list_length = size;
-        this.bufferlist = null;
-        this.bufferlist = new LinkedBlockingQueue<ByteBuffer>(buffer_list_length);
         return this;
     }
     
     /**
-     * 设置事件线程池大小
+     * 设置事件线程池大小, strart 后调用无效
      * @param size 如果为0则表示不使用单独的线程池
      * @return
      */
     public NioContext setEventThreadPoolSize(int size){
-        this.executor_e.shutdown();
-        this.executor_e = null;
-        if(size > 0) this.executor_e = Executors.newFixedThreadPool(size);
+        this.event_pool_thread_size = size;
         return this;
     }
     
@@ -84,10 +78,11 @@ public abstract class NioContext {
         return this;
     }
     
-    public NioContext setEventExecutor(ExecutorService ex){
-        this.executor_e.shutdownNow();
-        this.executor_e = null;
-        this.executor_e = ex;
+    public NioContext setEventExecutor(Executor ex){
+        if(this.executor != null) {
+            this.executor = null;
+        }
+        this.executor = ex;
         return this;
     }
 
@@ -105,15 +100,15 @@ public abstract class NioContext {
     }
     
     public void ExecuteEvent(Runnable run){
-        if(this.executor_e == null){
+        if(this.executor == null){
             run.run();
-            return;
+        }else {
+            this.executor.execute(run);
         }
-    	this.executor_e.execute(run);
     }
     
-    public ExecutorService getEventExecutor(){
-        return this.executor_e;
+    public Executor getEventExecutor(){
+        return this.executor;
     }
     
     public IoHandler getEventHandler(){
@@ -123,7 +118,7 @@ public abstract class NioContext {
     public ByteBuffer getByteBufferFormCache(){
         ByteBuffer buffer = bufferlist.poll();
         if(buffer == null){
-            buffer = ByteBuffer.allocateDirect(buff_read_cache_size);
+            buffer = ByteBuffer.allocate(buff_read_cache_size);
         }
         return buffer;
     }
@@ -133,9 +128,9 @@ public abstract class NioContext {
             buffer.clear();
             bufferlist.add(buffer);
         }else{/*丢弃被扩容过的buffer*/
+            
             buffer = null;
         }
     }
-
     
 }
