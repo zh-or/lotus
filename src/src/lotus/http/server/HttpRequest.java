@@ -12,6 +12,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import lotus.nio.Session;
+import lotus.utils.Utils;
 
 public class HttpRequest {
     private Session                 session         =   null;
@@ -22,6 +23,7 @@ public class HttpRequest {
     private HashMap<String, String> headers         =   null;
     private byte[]                  body            =   null;
     private Charset                 charset         =   null;
+    private HashMap<String, Cookie> cookies         =   null;
     
     public HttpRequest(Session session, Charset charset) {
         headers = new HashMap<String, String>();
@@ -73,6 +75,25 @@ public class HttpRequest {
             }
         }
     }
+    
+    public synchronized Cookie getCookie(String key) {
+        Cookie cookie = null;
+        if(cookies == null) {
+            cookies = new HashMap<String, Cookie>();
+            String cookies_str = headers.get("cookie");
+            if(!Utils.CheckNull(cookies_str)) {
+                String [] cookies_str_arr = cookies_str.split(";");
+                for(String item : cookies_str_arr) {
+                    item = item.trim();
+                    Cookie tmp = Cookie.parseFormString(item);
+                    cookies.put(tmp.key, tmp);
+                }
+            }
+        }
+        cookie = cookies.get(key);
+        return cookie;
+    }
+    
 
     
     public void setBody(final byte[] body){

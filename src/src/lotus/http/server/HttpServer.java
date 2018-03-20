@@ -94,10 +94,7 @@ public class HttpServer {
             }else{
                 url_end = "";
             }
-            Filter filter = null;
-            for(int i = filters.size() - 1; i >= 0; i --){
-                filter = filters.get(i);
-                //System.out.println(String.format("filter:%s, url_end:%s", filter.path, url_end));
+            for(Filter filter : filters) {
                 if("*".equals(filter.path) || (filter.path.startsWith("*") && filter.path.endsWith(url_end)) || url.equals(filter.path)){
                     if(filter != null){
                         filter.handler.service(request.getMothed(), request, response);
@@ -106,9 +103,28 @@ public class HttpServer {
                             session.closeOnFlush();
                         }
                         dohandler = true;
+                        break;
                     }
                 }
             }
+            
+            
+            /*Filter filter = null;
+            for(int i = filters.size() - 1; i >= 0; i --){
+                filter = filters.get(i);
+                //System.out.println(String.format("filter:%s, url_end:%s", filter.path, url_end));
+                if("*".equals(filter.path) || (filter.path.startsWith("*") && filter.path.endsWith(url_end)) || url.equals(filter.path)){
+                    if(filter != null){
+                        filter.handler.service(request.getMothed(), request, response);
+                        response.flush();
+                        if("close".equals(request.getHeader("connection"))){简单判断
+                            session.closeOnFlush();
+                        }
+                        dohandler = true;
+                        break;
+                    }
+                }
+            }*/
             if(dohandler) return;
             response.setStatus(ResponseStatus.CLIENT_ERROR_NOT_FOUND);
             response.flush();

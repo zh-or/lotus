@@ -8,5 +8,9 @@ public class Filter {
         this.path = path;
         this.handler = handler;
     }
-    
+
+    @Override
+    public String toString() {
+        return "Filter [path=" + path + ", handler=" + handler + "]";
+    }
 }
