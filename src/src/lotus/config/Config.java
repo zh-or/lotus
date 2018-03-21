@@ -224,7 +224,9 @@ public class Config {
             String key = (String) entry.getKey();
             @SuppressWarnings("unchecked")
             HashMap<String, ArrStringValue> val = (HashMap<String, ArrStringValue>) entry.getValue();
-            sb.append("[" + key + "]\n");
+            sb.append("  [");
+            sb.append(key);
+            sb.append("]\n");
             Iterator<?> vs = val.entrySet().iterator();
             while(vs.hasNext()){
                 @SuppressWarnings("rawtypes")
@@ -232,6 +234,7 @@ public class Config {
                 String k = (String) c_entry.getKey();
                 ArrStringValue v = (ArrStringValue) c_entry.getValue();
                 for(String tv : v.getVal()){
+                    sb.append("    ");
                     sb.append(k);
                     sb.append("=");
                     sb.append(tv);
@@ -239,6 +242,7 @@ public class Config {
                 }
                 
             }
+            
         }
         return sb;
 	}
