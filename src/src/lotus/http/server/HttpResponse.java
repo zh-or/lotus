@@ -19,7 +19,8 @@ public class HttpResponse {
     private Session                     session;
     private ResponseStatus              status;
     private HashMap<String, String>     headers;
-    private boolean				     issendheader;
+    private boolean				        isSendHeader;
+    private boolean                     isOpenSync  =   false;
     private Charset                     charset;
     
     public static HttpResponse defaultResponse(Session session, HttpRequest request){
@@ -46,7 +47,7 @@ public class HttpResponse {
         this.session = session;
         this.status = status;
         this.headers = new HashMap<String, String>();
-        this.issendheader = false;
+        this.isSendHeader = false;
         this.buff = ByteBuffer.allocate(write_buffer_size);
         this.headers.put("Content-Type", "text/html");
     }
@@ -75,11 +76,16 @@ public class HttpResponse {
     }
     
     public HttpResponse openSync(){
-    	headers.put("Content-Encoding", "gzip");
+        isOpenSync = true;
+    	//headers.put("Content-Encoding", "gzip");
     	headers.put("Transfer-Encoding", "chunked");
     	headers.remove("Content-Length");
     	sendHeader();
     	return this;
+    }
+    
+    public boolean isOpenSync() {
+        return isOpenSync;
     }
     
     public HttpResponse setHeader(String key, String value){
@@ -105,16 +111,35 @@ public class HttpResponse {
     }
     
     public HttpResponse write(byte[] b){
-    	if(buff.capacity() - buff.position() < b.length){/*需要扩容*/
+        int len = b.length;
+        String hexlen = Integer.toHexString(len);
+        if(isOpenSync) {
+            len += 4;
+            len += hexlen.length();
+        }
+    	if(buff.remaining() < b.length){/*需要扩容*/
     		byte[] data = Arrays.copyOf(buff.array(), buff.limit() + b.length);
     		buff = ByteBuffer.wrap(data);
     	}
+    	if(isOpenSync) {
+    	    buff.put(hexlen.getBytes());
+    	    buff.put("\r\n".getBytes());
+    	}
     	buff.put(b);
+    	if(isOpenSync) {
+            buff.put("\r\n".getBytes());
+    	}
     	return this;
     }
     
+    public void syncEnd() {
+        isOpenSync = false;
+        write("0\r\n\r\n");
+        flush();
+    }
+    
     private HttpResponse sendHeader(){
-    	if(issendheader) return this;
+    	if(isSendHeader) return this;
     	StringBuilder sb = new StringBuilder();
     	sb.append(status.line());
     	Iterator<Entry<String, String>> it = headers.entrySet().iterator();
@@ -131,18 +156,19 @@ public class HttpResponse {
     	buffer.put(sb.toString().getBytes());
     	buffer.flip();
     	session.write(buffer);
-    	issendheader = true;
+    	isSendHeader = true;
     	return this;
     }
     
     public HttpResponse flush(){
-    	if(!issendheader){
+    	if(!isSendHeader){
     		setHeader("Content-Length", buff.position() + "");
     		sendHeader();
     	}
     	if(buff.limit() > 0){
     	    buff.flip();
     		session.write(buff);
+    		//buff.clear();
     	}
     	return this;
     }

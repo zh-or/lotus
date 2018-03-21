@@ -9,12 +9,12 @@ import lotus.nio.NioContext;
 import lotus.nio.Session;
 
 public class NioTcpClient extends NioContext{
-    public static final int         SELECT_TIMEOUT                  =   200;
+    public static final int         SELECT_TIMEOUT      =   200;
     
-    private NioTcpIoProcess     ioprocess[]         =   null;
-    private long                idcount             =   0l;
-    private int                 iipBound            =   0;
-    private final ReentrantLock rliplock            =   new ReentrantLock();
+    private NioTcpIoProcess         ioprocess[]         =   null;
+    private long                    idcount             =   0l;
+    private int                     iipBound            =   0;
+    private final ReentrantLock     rliplock            =   new ReentrantLock();
     
     public NioTcpClient(){
         super();

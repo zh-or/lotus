@@ -49,7 +49,7 @@ public abstract class NioContext {
     
     /**
      * 如果为 0 则不会检测空闲
-     * @param idletime
+     * @param idletime 毫秒
      * @return
      */
     public NioContext setSessionIdleTime(int idletime){

@@ -90,7 +90,6 @@ public class HttpServer {
             response.setCharacterEncoding(request.getCharacterEncoding());
             response.setHeader("Content-Type", "text/html; charset=" + charset.displayName());
             String url = request.getPath(), url_end;
-            boolean dohandler = false;
             int len = url.length();
             if(len > 0){
                 int p = url.lastIndexOf(".");
@@ -103,11 +102,16 @@ public class HttpServer {
                     if(filter != null){
                         filter.handler.service(request.getMothed(), request, response);
                         response.flush();
-                        if("close".equals(request.getHeader("connection"))){/*简单判断*/
+                        if("close".equals(request.getHeader("connection"))){
+                            /*简单判断
+                             * keep-alive 则不关闭
+                             * */
                             session.closeOnFlush();
                         }
-                        dohandler = true;
-                        break;
+                        if(response.isOpenSync()) {
+                            response.syncEnd();
+                        }
+                        return;
                     }
                 }
             }
@@ -129,7 +133,7 @@ public class HttpServer {
                     }
                 }
             }*/
-            if(dohandler) return;
+            
             response.setStatus(ResponseStatus.CLIENT_ERROR_NOT_FOUND);
             response.flush();
             session.closeOnFlush();

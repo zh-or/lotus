@@ -31,11 +31,12 @@ public class HttpClient {
                 client = new HttpClient();
             }
         }
+        
         return client;
     }
     
     private HttpClient() {
-        
+        callback.onError(this, null);
     }
     
     public HttpClient init() throws Exception{
@@ -78,7 +79,7 @@ public class HttpClient {
     }
     
     /**
-     * 如果当前不为异步模式则设置回调无效
+     * 濡傛灉褰撳墠涓嶄负寮傛妯″紡鍒欒缃洖璋冩棤鏁�
      * @param callback 
      * @return
      */
