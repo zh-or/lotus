@@ -49,7 +49,7 @@ public class HttpServer {
     }
     
     /**
-     * 
+     * 先添加先调用, 顺序查找handler
      * @param path  <br> 
      *   三种类型  :<br>
      *      1. * 表示所有请求都监听<br>

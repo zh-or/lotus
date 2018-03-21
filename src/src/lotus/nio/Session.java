@@ -83,7 +83,7 @@ public abstract class Session {
         ByteBuffer buff = context.getByteBufferFormCache();
         if(buff.capacity() < len){
             context.putByteBufferToCache(buff);
-            buff = ByteBuffer.allocateDirect(len);
+            buff = ByteBuffer.allocate(len);
         }
         return buff;
     }

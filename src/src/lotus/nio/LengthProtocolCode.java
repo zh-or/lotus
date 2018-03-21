@@ -19,7 +19,7 @@ public class LengthProtocolCode implements ProtocolCodec{
 			    in.reset();
 			    byte[] tmp = new byte[in.remaining()];
 			    in.get(tmp);
-			    System.out.println("包头不对, 总长度:" + tmp.length + ", data:" + Utils.byte2str(tmp));
+			    //System.out.println("包头不对, 总长度:" + tmp.length + ", data:" + Utils.byte2str(tmp));
 				session.closeNow();
 				return false;
 			}
@@ -27,7 +27,7 @@ public class LengthProtocolCode implements ProtocolCodec{
 			in.get(blen);
 			int packlen = Utils.byte2short(blen);
 			if(packlen > 65535){
-			    System.out.println("包长度过长");
+			    //System.out.println("包长度过长");
 				session.closeNow();
 				return false;
 			}
@@ -38,7 +38,7 @@ public class LengthProtocolCode implements ProtocolCodec{
 					out.write(bpack);
 	                return true;
 				}else{
-				    System.out.println("包尾不对");
+				    //System.out.println("包尾不对");
 				    session.closeNow();
 				    return true;
 				}
