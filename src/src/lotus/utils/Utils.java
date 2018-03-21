@@ -41,7 +41,7 @@ public class Utils {
         return rc4_crypt(data, s_box);
     }
 
-    private static char[] rc4_init(String key) {
+    public static char[] rc4_init(String key) {
         char[] rs = new char[S_BOX_MAX_SIZE];
         char[] key_ = key.toCharArray();
         int[] k = new int[S_BOX_MAX_SIZE];
@@ -61,7 +61,7 @@ public class Utils {
         return rs;
     }
 
-    private static byte[] rc4_crypt(byte[] data, char[] s_box) {
+    public static byte[] rc4_crypt(byte[] data, char[] s_box) {
         int x = 0, y = 0, t = 0, i = 0, len = data.length;
         char tmp;
         for (i = 0; i < len; i++) {
