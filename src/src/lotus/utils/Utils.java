@@ -12,15 +12,17 @@ import lotus.json.JSONException;
 import lotus.json.JSONObject;
 
 public class Utils {
-    
-    public static final String EN_TYPE_MD5      =   "md5";
-    public static final String EN_TYPE_SHA1     =   "sha1";
-    public static final int S_BOX_MAX_SIZE      =   255;
-    
-    private Utils(){}
-    
+
+    public static final String EN_TYPE_MD5 = "md5";
+    public static final String EN_TYPE_SHA1 = "sha1";
+    public static final int S_BOX_MAX_SIZE = 255;
+
+    private Utils() {
+    }
+
     /**
      * 加密
+     * 
      * @param data
      * @param key
      * @return
@@ -32,6 +34,7 @@ public class Utils {
 
     /**
      * 解密
+     * 
      * @param data
      * @param key
      * @return
@@ -76,40 +79,41 @@ public class Utils {
         return data;
     }
 
-    /*获取随机字符
+    /*
+     * 获取随机字符
      */
     public static char[] RandomChars(int countNumber) {
         char[] c = new char[countNumber];
         int i = 0;
         while (i < countNumber) {
             char t = (char) (65 + Math.random() * (122 - 65 + 1));
-            if (t < 91 || t > 96) {//去掉大小写中间的几个符号
+            if (t < 91 || t > 96) {// 去掉大小写中间的几个符号
                 c[i] = t;
                 i++;
             }
         }
         return c;
     }
-    
+
     /**
      * 获取随机数
      */
-    public static int RandomNum(int start, int end){
-        return (int)(start + Math.random() * (end - start + 1));
+    public static int RandomNum(int start, int end) {
+        return (int) (start + Math.random() * (end - start + 1));
     }
-    
-    public static byte[] GetRepeatByte(int len, byte b){
+
+    public static byte[] GetRepeatByte(int len, byte b) {
         byte[] res = new byte[len];
-        for(int i = 0; i < len; i ++){
+        for (int i = 0; i < len; i++) {
             res[i] = b;
         }
         return res;
     }
-    
+
     public static int byte2short(byte[] b) {
         return byte2short(b, 0);
     }
-    
+
     /**
      * 2byte to int
      */
@@ -129,7 +133,7 @@ public class Utils {
         return result;
     }
 
-    public static byte[] int2byte(int i){
+    public static byte[] int2byte(int i) {
         byte[] result = new byte[4];
         result[0] = (byte) (i & 0xff);
         result[1] = (byte) ((i >>> 8) & 0xff);
@@ -137,28 +141,28 @@ public class Utils {
         result[3] = (byte) ((i >>> 24) & 0xff);
         return result;
     }
-    
-    public static int byte2int(byte[] b){
+
+    public static int byte2int(byte[] b) {
         return byte2int(b, 0);
     }
-    
-    public static int byte2int(byte[] b, int offset){
+
+    public static int byte2int(byte[] b, int offset) {
         if (b == null || b.length < 4)
             return 0;
         int bound = offset;
         int i = 0;
         i = b[bound] & 0xff;
-        bound ++;
+        bound++;
         i |= b[bound] << 8 & 0xff00;
-        bound ++;
+        bound++;
         i |= b[bound] << 16 & 0xff0000;
-        bound ++;
+        bound++;
         i |= b[bound] << 24 & 0xff000000;
         return i;
     }
-    
-    public static long byte2long(byte[] b){
-        if(b == null || b.length != 8)
+
+    public static long byte2long(byte[] b) {
+        if (b == null || b.length != 8)
             return 0;
         long i = 0l;
         i = b[0] & 0xff;
@@ -171,9 +175,8 @@ public class Utils {
         i |= b[7] << 56 & 0xff00000000000000l;
         return i;
     }
-    
 
-    public static byte[] long2byte(long i){
+    public static byte[] long2byte(long i) {
         byte[] result = new byte[8];
         result[0] = (byte) (i & 0xff);
         result[1] = (byte) ((i >>> 8) & 0xff);
@@ -185,15 +188,14 @@ public class Utils {
         result[7] = (byte) ((i >>> 56) & 0xff);
         return result;
     }
-    
-    
-    public static int byte2charA(byte b){
-        if(b < 0){
+
+    public static int byte2charA(byte b) {
+        if (b < 0) {
             return b + 256;
         }
         return b;
     }
-    
+
     public static String byte2str(byte[] b) {
         if (b == null)
             return "null";
@@ -205,41 +207,46 @@ public class Utils {
         return sb.toString();
     }
 
-    public static String byte2hex(byte[] b) {  
-        if(b == null || b.length <= 0) return "null";
+    public static String byte2hex(byte[] b) {
+        if (b == null || b.length <= 0)
+            return "null";
         StringBuilder sb = new StringBuilder();
-        String stmp = "";  
-        for (int n = 0; n < b.length; n++) {  
-            stmp = (Integer.toHexString(b[n] & 0xFF));  
-            if (stmp.length() == 1) {  
+        String stmp = "";
+        for (int n = 0; n < b.length; n++) {
+            stmp = (Integer.toHexString(b[n] & 0xFF));
+            if (stmp.length() == 1) {
                 sb.append("0");
                 sb.append(stmp);
-            } else {  
-                sb.append(stmp);  
-            }  
+            } else {
+                sb.append(stmp);
+            }
             sb.append(' ');
-        }  
-        return sb.toString().toUpperCase();  
-    } 
-    
+        }
+        return sb.toString().toUpperCase();
+    }
+
     public static void SLEEP(long time) {
         try {
             Thread.sleep(time);
-        } catch (InterruptedException e) {}
+        } catch (InterruptedException e) {
+        }
     }
 
     public final static boolean CheckNull(String str) {
         return str == null || "".equals(str);
     }
-    
+
     /**
      * md5 或 sha1 加密
-     * @param s 欲加密字符串
-     * @param entype 加密方式
+     * 
+     * @param s
+     *            欲加密字符串
+     * @param entype
+     *            加密方式
      * @return
      * @throws Exception
      */
-    public final static String EnCode(String s, String entype) throws Exception{
+    public final static String EnCode(String s, String entype) throws Exception {
         MessageDigest md = MessageDigest.getInstance(entype);
         md.update(s.getBytes("UTF-8"));
         byte[] digest = md.digest();
@@ -251,24 +258,27 @@ public class Utils {
         s = md5.toString();
         return s;
     }
-    
+
     /**
      * 取中间文本
+     * 
      * @param str
      * @param l
      * @param r
      * @return
      */
-    public static String getMid(String str, String l, String r){
+    public static String getMid(String str, String l, String r) {
         int _l = str.indexOf(l);
-        if(_l == -1) return "";
+        if (_l == -1)
+            return "";
         _l += l.length();
         int _r = str.indexOf(r, _l);
-        if(_r == -1) return "";
+        if (_r == -1)
+            return "";
         return str.substring(_l, _r);
     }
-    
-    public static int StrtoInt(String str){
+
+    public static int StrtoInt(String str) {
         int res = 0;
         try {
             res = Integer.valueOf(str);
@@ -277,8 +287,8 @@ public class Utils {
         }
         return res;
     }
-    
-    public static long StrtoLong(String str){
+
+    public static long StrtoLong(String str) {
         long res = 0;
         try {
             res = Long.valueOf(str);
@@ -287,45 +297,48 @@ public class Utils {
         }
         return res;
     }
-    
-    public static double StrtoDouble(String str){
+
+    public static double StrtoDouble(String str) {
         double res = 0d;
         try {
             res = Double.valueOf(str);
         } catch (Exception e) {
-            
+
         }
         return res;
     }
-    
+
     public static boolean StrtoBoolean(String str) {
-        if(!CheckNull(str) && "true".equals(str)) return true;
+        if (!CheckNull(str) && "true".equals(str))
+            return true;
         return false;
     }
-    
-    public static String getUUID(){
+
+    public static String getUUID() {
         return UUID.randomUUID().toString().replace("-", "").toUpperCase();
     }
-    
+
     /**
      * 这里返回用长整数代替以免出现负号
+     * 
      * @param ip
      * @return
      */
-    public static long ip2int(String ip){
+    public static long ip2int(String ip) {
         try {
             byte[] data = InetAddress.getByName(ip).getAddress();
             long addr = data[3] & 0xFF, t = 0l;
             addr |= ((data[2] << 8) & 0xFF00);
             addr |= ((data[1] << 16) & 0xFF0000);
-            t = data[0] & 0xFF;//出现负数??
+            t = data[0] & 0xFF;// 出现负数??
             addr |= ((t << 24) & 0xFF000000);
             return addr;
-        } catch (UnknownHostException e) {}
+        } catch (UnknownHostException e) {
+        }
         return 0;
     }
-  
-    public static String int2ip(long ip){
+
+    public static String int2ip(long ip) {
         StringBuilder sb = new StringBuilder();
         sb.append(((ip >> 24) & 0xff));
         sb.append('.');
@@ -336,9 +349,8 @@ public class Utils {
         sb.append(ip & 0xff);
         return sb.toString();
     }
-    
-    
-    public static long strHash(String str){
+
+    public static long strHash(String str) {
         int len = str.length();
         long h = len;
         int step = (len >> 5) + 1;
@@ -347,49 +359,52 @@ public class Utils {
         return h;
     }
 
-    
-    public static int[] getNumberFromStr(String str){
+    public static int[] getNumberFromStr(String str) {
         String t = "";
         int[] ret = new int[1];
         int bound = 0;
         boolean ex = false;
-        for(int i = 0; i < str.length(); i ++){
-            if(str.charAt(i) >= 48 && str.charAt(i) <= 57 || str.charAt(i) == 45){
-                if(ex) ret = Arrays.copyOf(ret, ret.length + 1);
-                t+= str.charAt(i);
+        for (int i = 0; i < str.length(); i++) {
+            if (str.charAt(i) >= 48 && str.charAt(i) <= 57 || str.charAt(i) == 45) {
+                if (ex)
+                    ret = Arrays.copyOf(ret, ret.length + 1);
+                t += str.charAt(i);
                 ex = false;
-            }else if(!ex && !"".equals(t)){
+            } else if (!ex && !"".equals(t)) {
                 ex = true;
                 ret[bound] = Integer.valueOf(t);
                 t = "";
                 bound++;
             }
         }
-        if(!"".equals(t) && !ex){
+        if (!"".equals(t) && !ex) {
             ret[bound] = Integer.valueOf(t);
         }
         return ret;
     }
-    
+
     /**
      * 在src中查找dest的位置
+     * 
      * @param src
      * @param dest
-     * @return 找到了返回dest在src的起始下标  未找到返回-1 此下标从0开始 
+     * @return 找到了返回dest在src的起始下标 未找到返回-1 此下标从0开始
      */
-    public static int byteArrSearch(byte[] src, byte[] dest){
-        if(dest == null || src == null || src.length < dest.length) return -1;//fuck 了
+    public static int byteArrSearch(byte[] src, byte[] dest) {
+        if (dest == null || src == null || src.length < dest.length)
+            return -1;// fuck 了
         int p = -1, destLenEP = dest.length - 1, srcLen = src.length - destLenEP + 1, k = 0, i = 0;
         boolean foundit = true;
-        for(; i < srcLen; i++){
-            if(src[i] == dest[0] && src[i + destLenEP] == dest[destLenEP]){//第一个匹配 最后一个匹配
-                for(k = 0; k < destLenEP; k ++){
-                    if(src[i + k] != dest[k]){
+        for (; i < srcLen; i++) {
+            if (src[i] == dest[0] && src[i + destLenEP] == dest[destLenEP]) {// 第一个匹配
+                                                                             // 最后一个匹配
+                for (k = 0; k < destLenEP; k++) {
+                    if (src[i + k] != dest[k]) {
                         foundit = false;
                         break;
                     }
                 }
-                if(foundit){
+                if (foundit) {
                     p = i;
                     break;
                 }
@@ -397,10 +412,11 @@ public class Utils {
         }
         return p;
     }
-    
+
     /**
      * 
-     * @param c 此类不能为内部类, 必须要有一个空的构造方法
+     * @param c
+     *            此类不能为内部类, 必须要有一个空的构造方法
      * @param json
      * @return
      * @throws InstantiationException
@@ -412,74 +428,77 @@ public class Utils {
      * @throws InvocationTargetException
      * @throws NoSuchMethodException
      */
-    public static <E> E JsonToObj(Class<E> obj, JSONObject json) throws Exception{
+    public static <E> E JsonToObj(Class<E> obj, JSONObject json) throws Exception {
         E e = obj.newInstance();
         Field[] fields = obj.getDeclaredFields();
-        for(Field f : fields){
+        for (Field f : fields) {
             f.setAccessible(true);
             Class<?> type = f.getType();
             String name = f.getName();
-            if(type == String.class) 
+            if (type == String.class)
                 f.set(e, json.getString(name));
-            else if(type == boolean.class) 
+            else if (type == boolean.class)
                 f.setBoolean(e, json.getBoolean(name));
-            else if(type == long.class) 
+            else if (type == long.class)
                 f.setLong(e, json.getLong(name));
-            else if(type == int.class || type == char.class || type == byte.class || type == short.class) 
+            else if (type == int.class || type == char.class || type == byte.class || type == short.class)
                 f.set(e, json.getInt(name));
-            else if(type == float.class || type == double.class) 
+            else if (type == float.class || type == double.class)
                 f.set(e, json.getDouble(name));
-            
+
         }
         return e;
     }
-    
-    public static JSONObject ObjToJson(Object obj) throws Exception{
+
+    public static JSONObject ObjToJson(Object obj) throws Exception {
         JSONObject json = new JSONObject();
         Class<?> cla = obj.getClass();
         Field[] fields = cla.getDeclaredFields();
-        for(Field f : fields){
+        for (Field f : fields) {
             f.setAccessible(true);
             Class<?> type = f.getType();
             String name = f.getName();
-            if(type == String.class) 
+            if (type == String.class)
                 json.put(name, f.get(obj));
-            else if(type == boolean.class) 
+            else if (type == boolean.class)
                 json.put(name, f.getBoolean(obj));
-            else if(type == long.class) 
+            else if (type == long.class)
                 json.put(name, f.getLong(obj));
-            else if(type == int.class)
+            else if (type == int.class)
                 json.put(name, f.getInt(obj));
-            else if(type == char.class)
+            else if (type == char.class)
                 json.put(name, f.getChar(obj));
-            else if(type == byte.class)
+            else if (type == byte.class)
                 json.put(name, f.getByte(obj));
-            else if(type == short.class)
+            else if (type == short.class)
                 json.put(name, f.getShort(obj));
-            else if(type == float.class) 
+            else if (type == float.class)
                 json.put(name, f.getFloat(obj));
-            else if(type == double.class)
+            else if (type == double.class)
                 json.put(name, f.getDouble(obj));
         }
         return json;
     }
-    
-    public static boolean ObjSet(Object obj, String name, Object val){
+
+    public static boolean ObjSet(Object obj, String name, Object val) {
         try {
             Field field = obj.getClass().getDeclaredField(name);
             field.set(obj, val);
             return true;
-        } catch (Exception e) {}
+        } catch (Exception e) {
+        }
         return false;
     }
-    
-    public static Object ObjGet(Object obj, String name){
+
+    public static Object ObjGet(Object obj, String name) {
         try {
             Field field = obj.getClass().getDeclaredField(name);
             field.setAccessible(true);
             return field.get(obj);
-        } catch (Exception e) {}
+        } catch (Exception e) {
+        }
         return null;
     }
+
 
 }
