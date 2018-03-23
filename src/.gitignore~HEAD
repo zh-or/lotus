@@ -1,7 +1,5 @@
-*.class
+/lotus/
 /bin/
-/build/
 .settings
-.settings/*
 .classpath
 .project
