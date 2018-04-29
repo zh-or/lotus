@@ -8,6 +8,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.Proxy;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
@@ -162,6 +163,10 @@ public class HTTP {
 		}
 	
 	public static String post(String url, HashMap<String, String> args, String cookie){
+	    return post(url, args, cookie, null);
+	}
+	
+	public static String post(String url, HashMap<String, String> args, String cookie, Proxy proxy){
 		StringBuffer content = new StringBuffer();
 		try {
 			content.append("?");
@@ -172,26 +177,34 @@ public class HTTP {
 				content.append("&");
 			}
 			content.deleteCharAt(content.length() - 1);
-			return post(url, content.toString(), cookie, "application/x-www-form-urlencoded");
+			return post(url, content.toString(), cookie, "application/x-www-form-urlencoded", proxy);
 		} catch (Exception e) {
 			
 		}
 		return "";
 	}
-	
+	public static String post(String url, String content, String cookie, String contentType){
+	    return post(url, content, cookie, contentType, null);
+	}
 	/**
 	 * urlencoded
 	 * @param url
 	 * @param content application/x-www-form-urlencoded  text/plain
 	 * @return
 	 */
-	public static String post(String url, String content, String cookie, String contentType) {
+	public static String post(String url, String content, String cookie, String contentType, Proxy proxy) {
 		OutputStream out = null;
 		InputStream in = null;
 		try {
 	 
 	        URL console = new URL(url);
-	        URLConnection connection = console.openConnection();
+	        URLConnection connection = null;
+	        if(proxy != null){
+                connection = console.openConnection(proxy);
+	        }else{
+	            connection = console.openConnection();
+	        }
+	        
 	        connection.setConnectTimeout(60 * 1000);
 	        connection.setReadTimeout(60 * 1000);
 	        
@@ -242,15 +255,23 @@ public class HTTP {
         return "";
 	}
 	
-	
 	public static String get(String url, String cookie){
+	    return get(url, cookie, null);
+	}
+	
+	public static String get(String url, String cookie, Proxy proxy){
 		InputStream is = null;
 		ByteArrayOutputStream outStream = null;
 		URLConnection connection = null;
 		try {
 	 
 	        URL console = new URL(url);
-	        connection = console.openConnection();
+	        connection = null;
+            if(proxy != null){
+                connection = console.openConnection(proxy);
+            }else{
+                connection = console.openConnection();
+            }
             connection.setConnectTimeout(60 * 1000);
             connection.setReadTimeout(60 * 1000);
 	        if(connection instanceof HttpsURLConnection){
