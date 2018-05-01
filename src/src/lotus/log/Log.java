@@ -15,7 +15,7 @@ public class Log implements ILog{
     
     private static String    PROJECT_NAME         =    "";
     private static SimpleDateFormat format        =   new SimpleDateFormat("MM-dd hh:mm:ss");
-    
+    private static boolean   enable_class         =   true;
     private static Log log                        =   null;
     private static Object lock_obj                =   new Object();
     
@@ -50,29 +50,32 @@ public class Log implements ILog{
     public void log(int l, String str, Object ...args){
         log(l, String.format(str, args));
     }
-    
+    private static final String NULL_STR = "";
     public void log(int l, String str){
-        StackTraceElement[] ste = new Throwable().getStackTrace();
-        String cname = null;
-        for(StackTraceElement e : ste){
-            cname = e.getClassName();
-            if(!getClass().getName().equals(cname)){
-                break;
+        String cname = NULL_STR;
+        if(enable_class){
+            StackTraceElement[] ste = new Throwable().getStackTrace();
+            for(StackTraceElement e : ste){
+                cname = e.getClassName();
+                if(!getClass().getName().equals(cname)){
+                    break;
+                }
             }
+            int startp = cname.lastIndexOf(".");
+            if(startp <= 0){
+                cname = "UNKNOW_CLASS";
+            }
+            startp += 1;
+            int endp = cname.lastIndexOf("$");
+            if(endp <= startp){
+                endp = cname.length();
+            }
+            cname = cname.substring(startp, endp);
+            cname = "[" + cname + "]";
         }
         
-        int startp = cname.lastIndexOf(".");
-        if(startp <= 0){
-            cname = "UNKNOW_CLASS";
-        }
-        startp += 1;
-        int endp = cname.lastIndexOf("$");
-        if(endp <= startp){
-            endp = cname.length();
-        }
-        cname = cname.substring(startp, endp);
         String msg_ = format.format(new Date(System.currentTimeMillis()));
-        msg_ = String.format("%s %s [%s] %s \t%s", msg_, PROJECT_NAME, cname, lvl[l], str);
+        msg_ = String.format("%s %s %s%s \t%s", msg_, PROJECT_NAME, cname, lvl[l], str);
         if(logfilter.log(l, msg_)){
             System.out.println(msg_);
             System.out.flush();
@@ -81,6 +84,10 @@ public class Log implements ILog{
     
     public void setProjectName(String name){
         PROJECT_NAME = "[" + name + "] ";
+    }
+    
+    public void setEnableClassNameOut(boolean enable){
+        enable_class = enable;
     }
     
     public void setLogFilter(LogFilter logfilter){
