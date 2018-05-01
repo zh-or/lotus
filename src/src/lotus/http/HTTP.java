@@ -30,7 +30,6 @@ public class HTTP {
     public static boolean downloadFile(String url, String savepath, String cookie){
         InputStream is = null;
         FileOutputStream fout = null;
-        
         try {
      
             URL console = new URL(url);
