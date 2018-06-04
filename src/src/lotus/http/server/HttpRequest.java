@@ -145,6 +145,46 @@ public class HttpRequest {
     public SocketAddress getRemoteAddress(){
         return session.getRemoteAddress();
     }
+    
+    public String getIpAddress() {  
+        
+        String ip = getHeader("X-Forwarded-For");  
+
+        try {
+            if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {  
+                if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {  
+                    ip = getHeader("Proxy-Client-IP");
+                }  
+                if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {  
+                    ip = getHeader("WL-Proxy-Client-IP");
+                }  
+                if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {  
+                    ip = getHeader("HTTP_CLIENT_IP");
+                }  
+                if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {  
+                    ip = getHeader("HTTP_X_FORWARDED_FOR"); 
+                }  
+                if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {  
+                    ip = getRemoteAddress().toString();
+                }  
+            } else if (ip.length() > 15) {  
+                String[] ips = ip.split(",");  
+                for (int index = 0; index < ips.length; index++) {  
+                    String strIp = (String) ips[index];  
+                    if (!("unknown".equalsIgnoreCase(strIp))) {  
+                        ip = strIp;  
+                        break;  
+                    }  
+                }  
+            }
+            int p = ip.indexOf(":");
+            if(p != -1){
+                ip = ip.substring(0, p);
+            }
+        } catch (Exception e) {
+        }
+        return ip;  
+    }
 
     @Override
     public String toString() {

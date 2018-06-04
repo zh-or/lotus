@@ -50,6 +50,7 @@ public class Log implements ILog{
     public void log(int l, String str, Object ...args){
         log(l, String.format(str, args));
     }
+    
     private static final String NULL_STR = "";
     public void log(int l, String str){
         String cname = NULL_STR;
