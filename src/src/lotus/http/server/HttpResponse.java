@@ -10,6 +10,8 @@ import java.util.Map.Entry;
 
 import lotus.json.JSONObject;
 import lotus.nio.Session;
+import lotus.utils.Base64;
+import lotus.utils.Utils;
 
 
 public class HttpResponse {
@@ -24,7 +26,8 @@ public class HttpResponse {
     private Charset                     charset;
     
     public static HttpResponse defaultResponse(Session session, HttpRequest request){
-    	HttpResponse response = new HttpResponse(session, ResponseStatus.SUCCESS_OK);
+        
+    	HttpResponse response = new HttpResponse(session, request.isWebSocketConnection() ? ResponseStatus.INFORMATIONAL_SWITCHING_PROTOCOLS : ResponseStatus.SUCCESS_OK);
     	response.setHeader("Server", "simple http server by lotus");
     	Date time = new Date();
     	response.setHeader("Expires", time.toString());
@@ -34,6 +37,21 @@ public class HttpResponse {
     		response.setHeader("Connection", connection);
     	}
         response.setCharacterEncoding(request.getCharacterEncoding());
+        
+        if(request.isWebSocketConnection()) {
+            response.setHeader("Upgrade", request.getHeader("Upgrade"));
+            response.setHeader("Connection", request.getHeader("Connection"));
+            String sec = request.getHeader("Sec-WebSocket-Key") + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+            try {
+                sec = Utils.EnCode(sec, Utils.EN_TYPE_SHA1);
+                sec = Base64.encode(sec, request.getCharacterEncoding().name());
+            }catch(Exception e) {
+                sec = "";
+            }
+            
+            response.setHeader("Sec-WebSocket-Accept", sec);
+            response.setHeader("Sec-WebSocket-Protocol", "");
+        }
     	return response;
     }
     

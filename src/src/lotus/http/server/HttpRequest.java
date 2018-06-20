@@ -24,6 +24,7 @@ public class HttpRequest {
     private byte[]                  body            =   null;
     private Charset                 charset         =   null;
     private HashMap<String, Cookie> cookies         =   null;
+    private boolean                 isWebSocket     =   false;
     
     public HttpRequest(Session session, Charset charset) {
         headers = new HashMap<String, String>();
@@ -37,6 +38,10 @@ public class HttpRequest {
     
     public String getPath(){
         return path;
+    }
+    
+    public boolean isWebSocketConnection() {
+        return isWebSocket;
     }
     
     public void setCharacterEncoding(String charset){
@@ -71,6 +76,14 @@ public class HttpRequest {
                     version = HttpVersion.HTTP_1_1;
                 }else if(elements[2].indexOf("HTTP/1.0") != -1){
                     version = HttpVersion.HTTP_1_0;
+                }
+            }
+            
+            if("Upgrade".equals(getHeader("Connection"))) {
+                String Upgrade = getHeader("Upgrade");
+                if("WebSocket".equals(Upgrade)) {//web socket 协议
+                    isWebSocket = true;
+                    
                 }
             }
         }
