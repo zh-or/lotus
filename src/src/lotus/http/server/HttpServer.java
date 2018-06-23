@@ -5,6 +5,7 @@ import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 
+import lotus.nio.IoHandler;
 import lotus.nio.Session;
 import lotus.nio.tcp.NioTcpServer;
 import lotus.utils.Utils;
@@ -14,22 +15,35 @@ import lotus.utils.Utils;
  * */
 public class HttpServer {
 
+    public static final byte            OPCODE_TEXT         =   1;
+    public static final byte            OPCODE_BINARY       =   2;
+    public static final byte            OPCODE_CLOSE        =   8;
+    public static final byte            OPCODE_PING         =   9;
+    public static final byte            OPCODE_PONG         =   10;
+    
+    
+    
+
 //  private Log         log;
-    private ArrayList<Filter> filters;
-    private NioTcpServer  server;
-    private Charset     charset;
+    private ArrayList<Filter> filters               =   null;
+    private NioTcpServer      server                =   null;
+    private Charset           charset               =   null;
+    private boolean           openWebSocket         =   false;
+    private WebSocketHandler  wsHandler             =   null;
     
     public HttpServer() throws IOException{
         filters = new ArrayList<Filter>();
         server = new NioTcpServer();
-        server.setHandler(new EventHandler());
+        server.setHandler(new HttpEventHandler());
         /*
         log = Log.getInstance();
         log.setProjectName("simpli http server");*/
-        this.charset = Charset.forName("utf-8");
+        charset = Charset.forName("utf-8");
         server.setProtocolCodec(new HttpProtocolCodec(this));
         
         server.setSessionIdleTime(20000);/*keep-alive*/
+        wsHandler = new WebSocketHandler() {
+        };
     }
     
     public void setEventThreadPoolSize(int size) {
@@ -39,6 +53,20 @@ public class HttpServer {
     public void setReadBufferCacheSize(int ReadBufferCacheSize){
         server.setSessionCacheBufferSize(ReadBufferCacheSize);
     }
+    
+    
+    public void setWebSocketHandler(WebSocketHandler wsHandler){
+        this.wsHandler = wsHandler;
+    }
+    
+    public boolean isOpenWebSocket(){
+        return openWebSocket;
+    }
+    
+    public void openWebSocket(boolean open){
+        this.openWebSocket = open;
+    }
+    
     
     /**
      * 设置连接超时时间, 超时后会关闭该连接
@@ -81,13 +109,50 @@ public class HttpServer {
         server.close();
     }
     
-    private class EventHandler extends lotus.nio.IoHandler{
+    public IoHandler getWsEventHandler(){
+        return WebSocketEventHandler;
+    }
+    
+    private IoHandler WebSocketEventHandler = new  IoHandler() {
+        
+        public void onClose(Session session) throws Exception {
+            wsHandler.WebSocketClose(session);
+        };
+        
+        public void onRecvMessage(Session session, Object msg) throws Exception {
+            WsRequest request = (WsRequest) msg;
+            if(request.op == OPCODE_PING){
+                wsHandler.WebSocketPing(session);
+            }else if(request.op == OPCODE_CLOSE){
+                session.write(WsResponse.close());
+            }else{
+                wsHandler.WebSocketMessage(session, request);
+            }
+            
+        };
+        
+        public void onIdle(Session session) throws Exception {
+            /*这里可以做成多久没有操作 就关闭该 ws 通道*/
+        };
+    };
+    
+    private class HttpEventHandler extends lotus.nio.IoHandler{
         
         @Override
         public void onRecvMessage(Session session, Object msg)throws Exception {
             HttpRequest request = (HttpRequest) msg;
+            
             HttpResponse response = HttpResponse.defaultResponse(session, request);
             response.setCharacterEncoding(request.getCharacterEncoding());
+            
+            if(request.isWebSocketConnection()){
+                session.setProtocolCodec(new WsProtocolCodec());
+                session.setIoHandler(WebSocketEventHandler);
+                response.flush();
+                wsHandler.WebSocketConnection(session);
+                return;
+            }
+            
             response.setHeader("Content-Type", "text/html; charset=" + charset.displayName());
             String url = request.getPath(), url_end;
             int len = url.length();
@@ -153,12 +218,13 @@ public class HttpServer {
         
         @Override
         public void onClose(Session session) {
-//            log.info("close:" + session.getRemoteAddress());
+
         }
         
         @Override
         public void onIdle(Session session) throws Exception {
-            session.closeNow();
+            
+             session.closeNow();
         }
     }
 

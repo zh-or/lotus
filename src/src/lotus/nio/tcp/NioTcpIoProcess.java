@@ -119,7 +119,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
                         boolean ishavepack = false;
                         
                         try {
-                            ishavepack = context.getProtocoCodec().decode(session, readcache, msgout);
+                            ishavepack = session.getProtocoCodec().decode(session, readcache, msgout);
                           //把未读的数据复制到缓冲区起始位置 此时 position 为数据结尾
                             
                         } catch (Exception e) {
@@ -171,7 +171,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
                         ByteBuffer out = null;
                         try {
                             //编码解码器放session更好
-                            out = context.getProtocoCodec().encode(session, msg);
+                            out = session.getProtocoCodec().encode(session, msg);
                         } catch (Exception e) {
                             session.pushEventRunnable(new IoEventRunnable(e, IoEventType.SESSION_EXCEPTION, session, context));
                         }

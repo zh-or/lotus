@@ -4,6 +4,7 @@ import lotus.utils.Utils;
 
 
 public abstract class HttpHandler {
+    
 
     public void service(HttpMethod mothed, HttpRequest request, HttpResponse response){
         try{

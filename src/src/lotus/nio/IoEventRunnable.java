@@ -36,7 +36,7 @@ public class IoEventRunnable implements Runnable{
         session.RuningEvent(true);
         Exception _e = null;
         try {
-            IoHandler handler = context.getEventHandler();
+            IoHandler handler = session.getEventHandler();
             switch (type) {
                 case SESSION_CONNECTION:
                     handler.onConnection(session);

@@ -25,11 +25,17 @@ public class HttpRequest {
     private Charset                 charset         =   null;
     private HashMap<String, Cookie> cookies         =   null;
     private boolean                 isWebSocket     =   false;
+    private HttpServer              context         =   null;
     
-    public HttpRequest(Session session, Charset charset) {
+    public HttpRequest(Session session, Charset charset, HttpServer context) {
         headers = new HashMap<String, String>();
         this.session = session;
         this.charset = charset;
+        this.context = context;
+    }
+    
+    public HttpServer getContext(){
+        return context;
     }
     
     public HttpMethod getMothed(){
@@ -79,13 +85,15 @@ public class HttpRequest {
                 }
             }
             
-            if("Upgrade".equals(getHeader("Connection"))) {
-                String Upgrade = getHeader("Upgrade");
-                if("WebSocket".equals(Upgrade)) {//web socket 协议
-                    isWebSocket = true;
-                    
+            if(context.isOpenWebSocket()){
+                if("Upgrade".equals(getHeader("Connection"))) {
+                    String Upgrade = getHeader("Upgrade").toLowerCase();
+                    if("websocket".equals(Upgrade)) {//websocket 协议
+                        isWebSocket = true;
+                    }
                 }
             }
+            
         }
     }
     

@@ -35,7 +35,7 @@ public class HttpProtocolCodec implements ProtocolCodec{
                         final byte[] bheaders = new byte[in.position()];
                         in.reset();
                         in.get(bheaders);
-                        final HttpRequest req = new HttpRequest(session, context.getCharset());
+                        final HttpRequest req = new HttpRequest(session, context.getCharset(), context);
                         final String sheaders = new String(bheaders, context.getCharset());
                         req.parseHeader(sheaders);
                         final int contentLength = Utils.StrtoInt(req.getHeader("content-length"));

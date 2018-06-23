@@ -17,16 +17,15 @@ import lotus.utils.Utils;
 public class HttpResponse {
 	private static final int write_buffer_size		=	2048;
 	
-	private ByteBuffer					buff;
-    private Session                     session;
-    private ResponseStatus              status;
-    private HashMap<String, String>     headers;
-    private boolean				        isSendHeader;
-    private boolean                     isOpenSync  =   false;
-    private Charset                     charset;
+	private ByteBuffer					buff                =   null;
+    private Session                     session             =   null;
+    private ResponseStatus              status              =   null;
+    private HashMap<String, String>     headers             =   null;
+    private boolean				        isSendHeader        =   false;
+    private boolean                     isOpenSync          =   false;
+    private Charset                     charset             =   null;
     
     public static HttpResponse defaultResponse(Session session, HttpRequest request){
-        
     	HttpResponse response = new HttpResponse(session, request.isWebSocketConnection() ? ResponseStatus.INFORMATIONAL_SWITCHING_PROTOCOLS : ResponseStatus.SUCCESS_OK);
     	response.setHeader("Server", "simple http server by lotus");
     	Date time = new Date();
@@ -38,19 +37,18 @@ public class HttpResponse {
     	}
         response.setCharacterEncoding(request.getCharacterEncoding());
         
-        if(request.isWebSocketConnection()) {
+        if(request.isWebSocketConnection() && request.getContext().isOpenWebSocket()) {
             response.setHeader("Upgrade", request.getHeader("Upgrade"));
             response.setHeader("Connection", request.getHeader("Connection"));
             String sec = request.getHeader("Sec-WebSocket-Key") + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
             try {
-                sec = Utils.EnCode(sec, Utils.EN_TYPE_SHA1);
-                sec = Base64.encode(sec, request.getCharacterEncoding().name());
+                sec = Base64.byteArrayToBase64(Utils.SHA1(sec));
             }catch(Exception e) {
                 sec = "";
             }
             
             response.setHeader("Sec-WebSocket-Accept", sec);
-            response.setHeader("Sec-WebSocket-Protocol", "");
+            //response.setHeader("Sec-WebSocket-Protocol", "");
         }
     	return response;
     }

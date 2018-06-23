@@ -5,6 +5,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.UUID;
 
@@ -257,6 +258,13 @@ public class Utils {
         }
         s = md5.toString();
         return s;
+    }
+    
+    
+    public final static byte[] SHA1(String s) throws NoSuchAlgorithmException{
+        MessageDigest md = MessageDigest.getInstance(EN_TYPE_SHA1);
+        md.update(s.getBytes());
+        return md.digest();
     }
 
     /**

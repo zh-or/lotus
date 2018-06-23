@@ -21,15 +21,36 @@ public abstract class Session {
     protected volatile boolean                  closed          = false;
     protected boolean                           isWaitForRecvPack = false;
     protected Object                            notifiRecvMsg   = null;
+    protected ProtocolCodec                     codec           = null;
+    protected IoHandler                         handler         = null;
     
     public Session (NioContext context, long id){
         this.context = context;
         this.attrs = new ConcurrentHashMap<Object, Object>();
         this.id = id;
         this.createtime = System.currentTimeMillis();
+        this.codec = context.getProtocoCodec();
+        this.handler = context.getEventHandler();
         setLastActive(System.currentTimeMillis());
         eventlist = new LinkedBlockingQueue<Runnable>();
         deout = new ProtocolDecoderOutput();
+       
+    }
+    
+    public IoHandler getEventHandler(){
+        return handler;
+    }
+    
+    public void setIoHandler(IoHandler handler){
+        this.handler = handler;
+    }
+    
+    public void setProtocolCodec(ProtocolCodec codec){
+        this.codec = codec;
+    }
+    
+    public ProtocolCodec getProtocoCodec(){
+        return codec;
     }
     
     public long getId(){

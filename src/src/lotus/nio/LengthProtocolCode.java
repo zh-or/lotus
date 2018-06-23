@@ -10,6 +10,7 @@ import lotus.utils.Utils;
  *
  */
 public class LengthProtocolCode implements ProtocolCodec{
+    
 	@Override
 	public boolean decode(Session session, ByteBuffer in, ProtocolDecoderOutput out) throws Exception {
 		int total = in.remaining();

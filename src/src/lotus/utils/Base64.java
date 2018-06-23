@@ -1,234 +1,190 @@
 package lotus.utils;
 
-public class Base64 {            
-    private static final byte[] encodingTable = {            
-            (byte) 'A', (byte) 'B', (byte) 'C', (byte) 'D', (byte) 'E',            
-            (byte) 'F', (byte) 'G', (byte) 'H', (byte) 'I', (byte) 'J',            
-            (byte) 'K', (byte) 'L', (byte) 'M', (byte) 'N', (byte) 'O',            
-            (byte) 'P', (byte) 'Q', (byte) 'R', (byte) 'S', (byte) 'T',            
-            (byte) 'U', (byte) 'V', (byte) 'W', (byte) 'X', (byte) 'Y',            
-            (byte) 'Z', (byte) 'a', (byte) 'b', (byte) 'c', (byte) 'd',            
-            (byte) 'e', (byte) 'f', (byte) 'g', (byte) 'h', (byte) 'i',            
-            (byte) 'j', (byte) 'k', (byte) 'l', (byte) 'm', (byte) 'n',            
-            (byte) 'o', (byte) 'p', (byte) 'q', (byte) 'r', (byte) 's',            
-            (byte) 't', (byte) 'u', (byte) 'v', (byte) 'w', (byte) 'x',            
-            (byte) 'y', (byte) 'z', (byte) '0', (byte) '1', (byte) '2',            
-            (byte) '3', (byte) '4', (byte) '5', (byte) '6', (byte) '7',            
-            (byte) '8', (byte) '9', (byte) '+', (byte) '/'            
-        };            
-    private static final byte[] decodingTable;            
-    static {            
-        decodingTable = new byte[128];            
-        for (int i = 0; i < 128; i++) {            
-            decodingTable[i] = (byte) -1;            
-        }            
-        for (int i = 'A'; i <= 'Z'; i++) {            
-            decodingTable[i] = (byte) (i - 'A');            
-        }            
-        for (int i = 'a'; i <= 'z'; i++) {            
-            decodingTable[i] = (byte) (i - 'a' + 26);            
-        }            
-        for (int i = '0'; i <= '9'; i++) {            
-            decodingTable[i] = (byte) (i - '0' + 52);            
-        }            
-        decodingTable['+'] = 62;            
-        decodingTable['/'] = 63;            
-    }            
-    public static byte[] encode(byte[] data,int offset) {            
-        byte[] bytes;            
-        int realCount=data.length-offset;            
-        int modulus = realCount % 3;            
-        if (modulus == 0) {            
-            bytes = new byte[(4 * realCount) / 3];            
-        } else {            
-            bytes = new byte[4 * ((realCount / 3) + 1)];            
-        }            
-        int dataLength = (data.length - modulus);            
-        int a1;            
-        int a2;            
-        int a3;            
-        for (int i = offset, j = 0; i < dataLength; i += 3, j += 4) {            
-            a1 = data[i] & 0xff;            
-            a2 = data[i + 1] & 0xff;            
-            a3 = data[i + 2] & 0xff;            
-            bytes[j] = encodingTable[(a1 >>> 2) & 0x3f];            
-            bytes[j + 1] = encodingTable[((a1 << 4) | (a2 >>> 4)) & 0x3f];            
-            bytes[j + 2] = encodingTable[((a2 << 2) | (a3 >>> 6)) & 0x3f];            
-            bytes[j + 3] = encodingTable[a3 & 0x3f];            
-        }            
-        int b1;            
-        int b2;            
-        int b3;            
-        int d1;            
-        int d2;            
-        switch (modulus) {            
-        case 0: /* nothing left to do */            
-            break;            
-        case 1:            
-            d1 = data[data.length - 1] & 0xff;            
-            b1 = (d1 >>> 2) & 0x3f;            
-            b2 = (d1 << 4) & 0x3f;            
-            bytes[bytes.length - 4] = encodingTable[b1];            
-            bytes[bytes.length - 3] = encodingTable[b2];            
-            bytes[bytes.length - 2] = (byte) '=';            
-            bytes[bytes.length - 1] = (byte) '=';            
-            break;            
-        case 2:            
-            d1 = data[data.length - 2] & 0xff;            
-            d2 = data[data.length - 1] & 0xff;            
-            b1 = (d1 >>> 2) & 0x3f;            
-            b2 = ((d1 << 4) | (d2 >>> 4)) & 0x3f;            
-            b3 = (d2 << 2) & 0x3f;            
-            bytes[bytes.length - 4] = encodingTable[b1];            
-            bytes[bytes.length - 3] = encodingTable[b2];            
-            bytes[bytes.length - 2] = encodingTable[b3];            
-            bytes[bytes.length - 1] = (byte) '=';            
-            break;            
-        }            
-        return bytes;            
-    }            
-    public static byte[] decode(byte[] data) {            
-        byte[] bytes;            
-        byte b1;            
-        byte b2;            
-        byte b3;            
-        byte b4;            
-        data = discardNonBase64Bytes(data);            
-        if (data[data.length - 2] == '=') {            
-            bytes = new byte[(((data.length / 4) - 1) * 3) + 1];            
-        } else if (data[data.length - 1] == '=') {            
-            bytes = new byte[(((data.length / 4) - 1) * 3) + 2];            
-        } else {            
-            bytes = new byte[((data.length / 4) * 3)];            
-        }            
-        for (int i = 0, j = 0; i < (data.length - 4); i += 4, j += 3) {            
-            b1 = decodingTable[data[i]];            
-            b2 = decodingTable[data[i + 1]];            
-            b3 = decodingTable[data[i + 2]];            
-            b4 = decodingTable[data[i + 3]];            
-            bytes[j] = (byte) ((b1 << 2) | (b2 >> 4));            
-            bytes[j + 1] = (byte) ((b2 << 4) | (b3 >> 2));            
-            bytes[j + 2] = (byte) ((b3 << 6) | b4);            
-        }            
-        if (data[data.length - 2] == '=') {            
-            b1 = decodingTable[data[data.length - 4]];            
-            b2 = decodingTable[data[data.length - 3]];            
-            bytes[bytes.length - 1] = (byte) ((b1 << 2) | (b2 >> 4));            
-        } else if (data[data.length - 1] == '=') {            
-            b1 = decodingTable[data[data.length - 4]];            
-            b2 = decodingTable[data[data.length - 3]];            
-            b3 = decodingTable[data[data.length - 2]];            
-            bytes[bytes.length - 2] = (byte) ((b1 << 2) | (b2 >> 4));            
-            bytes[bytes.length - 1] = (byte) ((b2 << 4) | (b3 >> 2));            
-        } else {            
-            b1 = decodingTable[data[data.length - 4]];            
-            b2 = decodingTable[data[data.length - 3]];            
-            b3 = decodingTable[data[data.length - 2]];            
-            b4 = decodingTable[data[data.length - 1]];            
-            bytes[bytes.length - 3] = (byte) ((b1 << 2) | (b2 >> 4));            
-            bytes[bytes.length - 2] = (byte) ((b2 << 4) | (b3 >> 2));            
-            bytes[bytes.length - 1] = (byte) ((b3 << 6) | b4);            
-        }            
-        return bytes;            
-    }            
-    public static byte[] decode(String data) {            
-        byte[] bytes;            
-        byte b1;            
-        byte b2;            
-        byte b3;            
-        byte b4;            
-        data = discardNonBase64Chars(data);            
-        if (data.charAt(data.length() - 2) == '=') {            
-            bytes = new byte[(((data.length() / 4) - 1) * 3) + 1];            
-        } else if (data.charAt(data.length() - 1) == '=') {            
-            bytes = new byte[(((data.length() / 4) - 1) * 3) + 2];            
-        } else {            
-            bytes = new byte[((data.length() / 4) * 3)];            
-        }            
-        for (int i = 0, j = 0; i < (data.length() - 4); i += 4, j += 3) {            
-            b1 = decodingTable[data.charAt(i)];            
-            b2 = decodingTable[data.charAt(i + 1)];            
-            b3 = decodingTable[data.charAt(i + 2)];            
-            b4 = decodingTable[data.charAt(i + 3)];            
-            bytes[j] = (byte) ((b1 << 2) | (b2 >> 4));            
-            bytes[j + 1] = (byte) ((b2 << 4) | (b3 >> 2));            
-            bytes[j + 2] = (byte) ((b3 << 6) | b4);            
-        }            
-        if (data.charAt(data.length() - 2) == '=') {            
-            b1 = decodingTable[data.charAt(data.length() - 4)];            
-            b2 = decodingTable[data.charAt(data.length() - 3)];            
-            bytes[bytes.length - 1] = (byte) ((b1 << 2) | (b2 >> 4));            
-        } else if (data.charAt(data.length() - 1) == '=') {            
-            b1 = decodingTable[data.charAt(data.length() - 4)];            
-            b2 = decodingTable[data.charAt(data.length() - 3)];            
-            b3 = decodingTable[data.charAt(data.length() - 2)];            
-            bytes[bytes.length - 2] = (byte) ((b1 << 2) | (b2 >> 4));            
-            bytes[bytes.length - 1] = (byte) ((b2 << 4) | (b3 >> 2));            
-        } else {            
-            b1 = decodingTable[data.charAt(data.length() - 4)];            
-            b2 = decodingTable[data.charAt(data.length() - 3)];            
-            b3 = decodingTable[data.charAt(data.length() - 2)];            
-            b4 = decodingTable[data.charAt(data.length() - 1)];            
-            bytes[bytes.length - 3] = (byte) ((b1 << 2) | (b2 >> 4));            
-            bytes[bytes.length - 2] = (byte) ((b2 << 4) | (b3 >> 2));            
-            bytes[bytes.length - 1] = (byte) ((b3 << 6) | b4);            
-        }            
-        //for(int i=0;i<bytes.length;i++) System.out.println(","+bytes[i]);            
-        return bytes;            
-    }            
-    private static byte[] discardNonBase64Bytes(byte[] data) {            
-        byte[] temp = new byte[data.length];            
-        int bytesCopied = 0;            
-        for (int i = 0; i < data.length; i++) {            
-            if (isValidBase64Byte(data[i])) {            
-                temp[bytesCopied++] = data[i];            
-            }            
-        }            
-        byte[] newData = new byte[bytesCopied];            
-        System.arraycopy(temp, 0, newData, 0, bytesCopied);            
-        return newData;            
-    }            
-    private static String discardNonBase64Chars(String data) {            
-        StringBuffer sb = new StringBuffer();            
-        int length = data.length();            
-        for (int i = 0; i < length; i++) {            
-            if (isValidBase64Byte((byte) (data.charAt(i)))) {            
-                sb.append(data.charAt(i));            
-            }            
-        }            
-        return sb.toString();            
-    }            
-    private static boolean isValidBase64Byte(byte b) {            
-        if (b == '=') {            
-            return true;            
-        } else if ((b < 0) || (b >= 128)) {            
-            return false;            
-        } else if (decodingTable[b] == -1) {            
-            return false;            
-        }            
-        return true;            
-    }            
-    public static String  encode(String data,String charset)throws Exception            
-    {            
-        // byte[] result =  (data.getBytes("Unicode"));            
-         if(data==null || data.length()==0) return data;            
-         int offset=0;            
-         // getBytes("unicode")转完后会在前头加上两字节”FE“            
-         byte[] result=encode (data.getBytes(charset),offset);            
-         StringBuffer sb=new StringBuffer(result.length);            
-         for (int i=0;i<result.length;i++)   sb.append((char)result[i]);            
-         return sb.toString();            
-    }            
-    public static String  decode(String data,String charset)throws Exception            
-    {            
-        if(data==null || data.length()==0) return data;             
-        return new String(Base64.decode(data),charset);            
-    }            
-    public static void main(String[] args) throws Exception {            
-        
-        String str = Utils.EnCode("w4v7O6xFTi36lq3RNcgctw==258EAFA5-E914-47DA-95CA-C5AB0DC85B11", Utils.EN_TYPE_SHA1);
-        System.out.println(str);
-        System.out.println(encode(str, "utf-8"));
-        System.out.println(decode(encode(str, "utf-8"), "utf-8"));
-    }            
+import java.security.NoSuchAlgorithmException;
+
+public class Base64 {
+
+    /**
+     * This array is a lookup table that translates 6-bit positive integer
+     * index values into their "Base64 Alphabet" equivalents as specified in
+     * Table 1 of RFC 2045.
+     */
+    private static final char intToBase64[] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+            'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6',
+            '7', '8', '9', '+', '/' };
+
+    /**
+     * This array is a lookup table that translates 6-bit positive integer
+     * index values into their "Alternate Base64 Alphabet" equivalents. This is
+     * NOT the real Base64 Alphabet as per in Table 1 of RFC 2045. This
+     * alternate alphabet does not use the capital letters. It is designed for
+     * use in environments where "case folding" occurs.
+     */
+    private static final char intToAltBase64[] = { '!', '"', '#', '$', '%', '&', '\'', '(', ')', ',', '-', '.', ':', ';', '<', '>', '@', '[', ']', '^', '`', '_', '{', '|', '}',
+            '~', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5',
+            '6', '7', '8', '9', '+', '?' };
+
+    /**
+     * This array is a lookup table that translates unicode characters drawn
+     * from the "Base64 Alphabet" (as specified in Table 1 of RFC 2045) into
+     * their 6-bit positive integer equivalents. Characters that are not in the
+     * Base64 alphabet but fall within the bounds of the array are translated
+     * to -1.
+     */
+    private static final byte base64ToInt[] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -1, -1, -1, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+            12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1, -1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
+            48, 49, 50, 51 };
+
+    /**
+     * This array is the analogue of base64ToInt, but for the nonstandard
+     * variant that avoids the use of uppercase alphabetic characters.
+     */
+    private static final byte altBase64ToInt[] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+            -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, -1, 62, 9, 10, 11, -1, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 12, 13, 14, -1, 15, 63, 16, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 17, -1, 18, 19, 21, 20, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46,
+            47, 48, 49, 50, 51, 22, 23, 24, 25 };
+
+    /**
+     * Translates the specified "alternate representation" Base64 string into a
+     * byte array.
+     */
+    public static byte[] altBase64ToByteArray(String s) {
+        return base64ToByteArray(s, true);
+    }
+
+    /**
+     * Translates the specified Base64 string (as per Preferences.get(byte[]))
+     * into a byte array.
+     */
+    public static byte[] base64ToByteArray(String s) {
+        return base64ToByteArray(s, false);
+    }
+
+    private static byte[] base64ToByteArray(String s, boolean alternate) {
+        byte[] alphaToInt = alternate ? altBase64ToInt : base64ToInt;
+        int sLen = s.length();
+        int numGroups = sLen / 4;
+        if (4 * numGroups != sLen) {
+            throw new IllegalArgumentException("String length must be a multiple of four. len=" + sLen);
+        }
+        int missingBytesInLastGroup = 0;
+        int numFullGroups = numGroups;
+        if (sLen != 0) {
+            if (s.charAt(sLen - 1) == '=') {
+                missingBytesInLastGroup++;
+                numFullGroups--;
+            }
+            if (s.charAt(sLen - 2) == '=') {
+                missingBytesInLastGroup++;
+            }
+        }
+        byte[] result = new byte[3 * numGroups - missingBytesInLastGroup];
+
+        // Translate all full groups from base64 to byte array elements
+        int inCursor = 0, outCursor = 0;
+        for (int i = 0; i < numFullGroups; i++) {
+            int ch0 = base64toInt(s.charAt(inCursor++), alphaToInt);
+            int ch1 = base64toInt(s.charAt(inCursor++), alphaToInt);
+            int ch2 = base64toInt(s.charAt(inCursor++), alphaToInt);
+            int ch3 = base64toInt(s.charAt(inCursor++), alphaToInt);
+            result[outCursor++] = (byte) (ch0 << 2 | ch1 >> 4);
+            result[outCursor++] = (byte) (ch1 << 4 | ch2 >> 2);
+            result[outCursor++] = (byte) (ch2 << 6 | ch3);
+        }
+
+        // Translate partial group, if present
+        if (missingBytesInLastGroup != 0) {
+            int ch0 = base64toInt(s.charAt(inCursor++), alphaToInt);
+            int ch1 = base64toInt(s.charAt(inCursor++), alphaToInt);
+            result[outCursor++] = (byte) (ch0 << 2 | ch1 >> 4);
+
+            if (missingBytesInLastGroup == 1) {
+                int ch2 = base64toInt(s.charAt(inCursor++), alphaToInt);
+                result[outCursor++] = (byte) (ch1 << 4 | ch2 >> 2);
+            }
+        }
+        // assert inCursor == s.length()-missingBytesInLastGroup;
+        // assert outCursor == result.length;
+        return result;
+    }
+
+    /**
+     * Translates the specified character, which is assumed to be in the
+     * "Base 64 Alphabet" into its equivalent 6-bit positive integer.
+     *
+     * @throw IllegalArgumentException or ArrayOutOfBoundsException if c is not
+     *        in the Base64 Alphabet.
+     */
+    private static int base64toInt(char c, byte[] alphaToInt) {
+        int result = alphaToInt[c];
+        if (result < 0) {
+            throw new IllegalArgumentException("Illegal character " + c);
+        }
+        return result;
+    }
+
+    /**
+     * Translates the specified byte array into an "alternate representation"
+     * Base64 string. This non-standard variant uses an alphabet that does not
+     * contain the uppercase alphabetic characters, which makes it suitable for
+     * use in situations where case-folding occurs.
+     */
+    public static String byteArrayToAltBase64(byte[] a) {
+        return byteArrayToBase64(a, true);
+    }
+
+    /**
+     * Translates the specified byte array into a Base64 string as per
+     * Preferences.put(byte[]).
+     */
+    public static String byteArrayToBase64(byte[] a) {
+        return byteArrayToBase64(a, false);
+    }
+
+    private static String byteArrayToBase64(byte[] a, boolean alternate) {
+        int aLen = a.length;
+        int numFullGroups = aLen / 3;
+        int numBytesInPartialGroup = aLen - 3 * numFullGroups;
+        int resultLen = 4 * ((aLen + 2) / 3);
+        StringBuilder result = new StringBuilder(resultLen);
+        char[] intToAlpha = alternate ? intToAltBase64 : intToBase64;
+
+        // Translate all full groups from byte array elements to Base64
+        int inCursor = 0;
+        for (int i = 0; i < numFullGroups; i++) {
+            int byte0 = a[inCursor++] & 0xff;
+            int byte1 = a[inCursor++] & 0xff;
+            int byte2 = a[inCursor++] & 0xff;
+            result.append(intToAlpha[byte0 >> 2]);
+            result.append(intToAlpha[byte0 << 4 & 0x3f | byte1 >> 4]);
+            result.append(intToAlpha[byte1 << 2 & 0x3f | byte2 >> 6]);
+            result.append(intToAlpha[byte2 & 0x3f]);
+        }
+
+        // Translate partial group if present
+        if (numBytesInPartialGroup != 0) {
+            int byte0 = a[inCursor++] & 0xff;
+            result.append(intToAlpha[byte0 >> 2]);
+            if (numBytesInPartialGroup == 1) {
+                result.append(intToAlpha[byte0 << 4 & 0x3f]);
+                result.append("==");
+            } else {
+                // assert numBytesInPartialGroup == 2;
+                int byte1 = a[inCursor++] & 0xff;
+                result.append(intToAlpha[byte0 << 4 & 0x3f | byte1 >> 4]);
+                result.append(intToAlpha[byte1 << 2 & 0x3f]);
+                result.append('=');
+            }
+        }
+        // assert inCursor == a.length;
+        // assert result.length() == resultLen;
+        return result.toString();
+    }
+    
+    
+    public static void main(String[] args) throws NoSuchAlgorithmException {
+        System.out.println(byteArrayToBase64(Utils.SHA1("nqPxICuZqOTVoMtK45HUBA==258EAFA5-E914-47DA-95CA-C5AB0DC85B11")));
+    }
+
 }
