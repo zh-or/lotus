@@ -16,6 +16,9 @@ public class WsRequest {
     public byte[]  mask;
     public byte[]  body;
     
+    public String  basePath;
+    public String  queryString;
+    
     private boolean decode = false;
 
     public WsRequest(boolean fin, int rsv, byte op) {

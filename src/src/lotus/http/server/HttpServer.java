@@ -21,6 +21,9 @@ public class HttpServer {
     public static final byte            OPCODE_PING         =   9;
     public static final byte            OPCODE_PONG         =   10;
     
+    public static final String          WS_BASE_PATH        =   "_____________WS_BASE_PATH_______________";
+    public static final String          WS_QUERY_STR        =   "_____________WS_QUERY_STR_______________";
+    
     
     
 
@@ -121,6 +124,8 @@ public class HttpServer {
         
         public void onRecvMessage(Session session, Object msg) throws Exception {
             WsRequest request = (WsRequest) msg;
+            request.basePath = (String) session.getAttr(WS_BASE_PATH);
+            request.queryString = (String) session.getAttr(WS_QUERY_STR);
             if(request.op == OPCODE_PING){
                 wsHandler.WebSocketPing(session);
             }else if(request.op == OPCODE_CLOSE){
@@ -148,6 +153,8 @@ public class HttpServer {
             if(request.isWebSocketConnection()){
                 session.setProtocolCodec(new WsProtocolCodec());
                 session.setIoHandler(WebSocketEventHandler);
+                session.setAttr(WS_BASE_PATH, request.getPath());
+                session.setAttr(WS_QUERY_STR, request.getQueryString());
                 response.flush();
                 wsHandler.WebSocketConnection(session);
                 return;
