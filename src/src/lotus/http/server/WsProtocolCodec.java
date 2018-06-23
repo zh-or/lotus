@@ -95,8 +95,8 @@ public class WsProtocolCodec implements ProtocolCodec{
             buff = session.getWriteCacheBuffer(bodyLen + 4);
             buff.put(op);
             buff.put((byte) 126);
-            buff.put((byte) (bodyLen & 0xff));
             buff.put((byte) (bodyLen >>> 8));
+            buff.put((byte) (bodyLen & 0xff));
             
         }else{
             buff = session.getWriteCacheBuffer(bodyLen + 10);
