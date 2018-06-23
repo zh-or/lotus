@@ -153,8 +153,12 @@ public class HttpServer {
             if(request.isWebSocketConnection()){
                 session.setProtocolCodec(new WsProtocolCodec());
                 session.setIoHandler(WebSocketEventHandler);
-                session.setAttr(WS_BASE_PATH, request.getPath());
-                session.setAttr(WS_QUERY_STR, request.getQueryString());
+                if(request.getPath() != null){
+                    session.setAttr(WS_BASE_PATH, request.getPath());
+                }
+                if(request.getQueryString() != null) {
+                    session.setAttr(WS_QUERY_STR, request.getQueryString());
+                }
                 response.flush();
                 wsHandler.WebSocketConnection(session);
                 return;
