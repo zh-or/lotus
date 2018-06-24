@@ -142,7 +142,7 @@ public class HttpRequest {
         Matcher m = Pattern.compile("[&?]" + name + "=([^&]*)").matcher("&" + queryString);
         if(m.find()){
             return m.group(1);
-        }else if(getHeader("Content-Type") != null && getHeader("Content-Type").indexOf("application/x-www-form-urlencoded") != -1){
+        }else if(body != null && getHeader("Content-Type") != null && getHeader("Content-Type").indexOf("application/x-www-form-urlencoded") != -1){
             m = Pattern.compile("[&]" + name + "=([^&]*)").matcher("&" + new String(body, charset));
             if(m.find()){
                 try {
