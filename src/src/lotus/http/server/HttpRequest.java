@@ -143,10 +143,13 @@ public class HttpRequest {
         if(m.find()){
             return m.group(1);
         }else if(body != null && getHeader("Content-Type") != null && getHeader("Content-Type").indexOf("application/x-www-form-urlencoded") != -1){
-            m = Pattern.compile("[&]" + name + "=([^&]*)").matcher("&" + new String(body, charset));
+            String bodyStr = new String(body, charset);
+            
+            m = Pattern.compile("[&]" + name + "=([^&]*)").matcher("&" + bodyStr);
             if(m.find()){
                 try {
-                    return URLDecoder.decode(m.group(1), charset.displayName());
+                    String par = m.group(1);
+                    return URLDecoder.decode(par, charset.displayName());
                 } catch (UnsupportedEncodingException e) {
                 }
             }

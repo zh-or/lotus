@@ -206,7 +206,7 @@ public class HTTP {
 	            connection = console.openConnection();
 	        }
 	        
-	        connection.setConnectTimeout(60 * 1000);
+	        connection.setConnectTimeout(5000);
 	        connection.setReadTimeout(60 * 1000);
 	        
     	    if(connection instanceof HttpsURLConnection){
