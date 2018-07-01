@@ -31,7 +31,6 @@ public class HttpProtocolCodec implements ProtocolCodec{
                 while(in.remaining() > 3){
                     /*\r\n\r\n*/
                     if(in.get() == 13 && in.get() == 10 && in.get() == 13 && in.get() == 10){/*消息头完了*/
-                        
                         final byte[] bheaders = new byte[in.position()];
                         in.reset();
                         in.get(bheaders);
@@ -74,6 +73,7 @@ public class HttpProtocolCodec implements ProtocolCodec{
                         req.setBody(body);
                         out.write(req);
                         session.removeAttr(CONTENT_LENGTH);
+                        session.setAttr(STATUS, HttpStatus.HEAD);//不知道为什么以前这里写漏了???
                         return true;
                     }else{
                         return false;
