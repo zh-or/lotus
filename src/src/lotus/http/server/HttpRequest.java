@@ -47,7 +47,10 @@ public class HttpRequest {
     }
     
     public String getFullPath(){
-        return path + "?" + queryString;
+        if(queryString != null){
+            return path + "?" + queryString;
+        }
+        return path;
     }
     
     public boolean isWebSocketConnection() {
