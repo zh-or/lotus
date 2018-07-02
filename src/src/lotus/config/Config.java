@@ -8,7 +8,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * 简单ini配置文件读取
@@ -18,7 +18,6 @@ public class Config {
 	
 	private HashMap<String, HashMap<String, ArrStringValue>> group = null;
 	private File file;
-	private String lastReadCharset;
 	
 	public class ArrStringValue{
 	    private ArrayList<String> val;
@@ -66,7 +65,6 @@ public class Config {
 	 * 读取配置文件
 	 */
 	public void read(String charset){//
-	    lastReadCharset = charset;
 		BufferedReader bis = null;
 		try {
 			bis = new BufferedReader(new InputStreamReader(new FileInputStream(file), charset));
@@ -109,6 +107,30 @@ public class Config {
 		}
 		
 		
+	}
+	
+	public String[] keys() {
+	    int b = 0;
+	    if(group.size() <= 0) return new String[0];
+	    String[] keys = new String[group.size()];
+	    Iterator<Entry<String, HashMap<String, ArrStringValue>>> it = group.entrySet().iterator();
+	    while(it.hasNext()) {
+	        Entry<String, HashMap<String, ArrStringValue>> e = it.next();
+	        keys[b++] = e.getKey();
+	    }
+	    return keys;
+	}
+	
+	public String[] names(String key) {
+	    int b = 0, size = group.get(key).size();
+	    if(size <= 0) return new String[0];
+        String[] names = new String[size];
+        Iterator<Entry<String, ArrStringValue>> it = group.get(key).entrySet().iterator();
+        while(it.hasNext()) {
+            Entry<String, ArrStringValue> e = it.next();
+            names[b++] = e.getKey();
+        }
+        return names;
 	}
 
 	/**
@@ -157,7 +179,7 @@ public class Config {
 	 * @return
 	 */
 	public synchronized void addValue(String groupkey, String childkey, String value){
-	    read(lastReadCharset);
+	    //read(lastReadCharset);
 		HashMap<String, ArrStringValue>  child = group.get(groupkey);
 		if(child == null){
 			child = new HashMap<String, ArrStringValue>();
@@ -180,7 +202,7 @@ public class Config {
 	 * @param value
 	 */
 	public synchronized void setValue(String groupkey, String childkey, String value){
-        read(lastReadCharset);
+        //read(lastReadCharset);
 	    HashMap<String, ArrStringValue>  child = group.get(groupkey);
         if(child == null){
             child = new HashMap<String, ArrStringValue>();
@@ -217,22 +239,46 @@ public class Config {
 	
 	public StringBuilder build(){
 	    StringBuilder sb = new StringBuilder();
-        Iterator<?> iter = group.entrySet().iterator();
+	    Iterator<Entry<String, HashMap<String, ArrStringValue>>> iter = group.entrySet().iterator();
         while (iter.hasNext()) {
-            @SuppressWarnings("rawtypes")
-            Map.Entry entry = (Map.Entry) iter.next();
+            Entry<String, HashMap<String, ArrStringValue>> entry = iter.next();
             String key = (String) entry.getKey();
-            @SuppressWarnings("unchecked")
-            HashMap<String, ArrStringValue> val = (HashMap<String, ArrStringValue>) entry.getValue();
+            HashMap<String, ArrStringValue> val = entry.getValue();
+            sb.append("[");
+            sb.append(key);
+            sb.append("]\n");
+            Iterator<Entry<String, ArrStringValue>> vs = val.entrySet().iterator();
+            while(vs.hasNext()){
+                Entry<String, ArrStringValue> c_entry =  vs.next();
+                String k = c_entry.getKey();
+                ArrStringValue v = c_entry.getValue();
+                for(String tv : v.getVal()){
+                    sb.append(k);
+                    sb.append("=");
+                    sb.append(tv);
+                    sb.append("\n");
+                }
+            }
+        }
+        return sb;
+	}
+
+	@Override
+	public String toString() {
+	    StringBuilder sb = new StringBuilder();
+        Iterator<Entry<String, HashMap<String, ArrStringValue>>> iter = group.entrySet().iterator();
+        while (iter.hasNext()) {
+            Entry<String, HashMap<String, ArrStringValue>> entry = iter.next();
+            String key = (String) entry.getKey();
+            HashMap<String, ArrStringValue> val = entry.getValue();
             sb.append("  [");
             sb.append(key);
             sb.append("]\n");
-            Iterator<?> vs = val.entrySet().iterator();
+            Iterator<Entry<String, ArrStringValue>> vs = val.entrySet().iterator();
             while(vs.hasNext()){
-                @SuppressWarnings("rawtypes")
-                Map.Entry c_entry = (Map.Entry) vs.next();
-                String k = (String) c_entry.getKey();
-                ArrStringValue v = (ArrStringValue) c_entry.getValue();
+                Entry<String, ArrStringValue> c_entry =  vs.next();
+                String k = c_entry.getKey();
+                ArrStringValue v = c_entry.getValue();
                 for(String tv : v.getVal()){
                     sb.append("    ");
                     sb.append(k);
@@ -244,12 +290,7 @@ public class Config {
             }
             
         }
-        return sb;
-	}
-
-	@Override
-	public String toString() {
-		return "\nConfig [\n" + build() + "\n]";
+		return "\nConfig [\n" + sb.toString() + "\n]";
 	}
 	
 }
