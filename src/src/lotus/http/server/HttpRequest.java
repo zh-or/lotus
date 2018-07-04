@@ -48,7 +48,7 @@ public class HttpRequest {
     
     public String getFullPath(){
         if(queryString != null){
-            return path + "?" + queryString;
+            return path + queryString;
         }
         return path;
     }
