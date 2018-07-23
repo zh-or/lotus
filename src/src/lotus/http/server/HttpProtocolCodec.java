@@ -2,6 +2,7 @@ package lotus.http.server;
 
 import java.nio.ByteBuffer;
 
+import lotus.http.server.support.HttpsProtocolCodec;
 import lotus.nio.ProtocolCodec;
 import lotus.nio.ProtocolDecoderOutput;
 import lotus.nio.Session;
@@ -27,6 +28,13 @@ public class HttpProtocolCodec implements ProtocolCodec{
         switch (status) {
             case HEAD:
             {
+                if(HttpsProtocolCodec.checkHTTPS(session, in, out)) {
+                    HttpsProtocolCodec newdec = new HttpsProtocolCodec(context);
+                    session.setAttr(STATUS, HttpsStatus.SHAKEHANDS);
+                    session.setProtocolCodec(newdec);
+                    return newdec.decode(session, in, out);
+                }
+                
                 in.mark();
                 while(in.remaining() > 3){
                     /*\r\n\r\n*/

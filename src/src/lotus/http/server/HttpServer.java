@@ -21,6 +21,10 @@ public class HttpServer {
     public static final byte            OPCODE_PING         =   9;
     public static final byte            OPCODE_PONG         =   10;
     
+    public static final int             SERVER_TYPE_HTTP    =   1;
+    public static final int             SERVER_TYPE_HTTPS   =   2;
+    
+    
     public static final String          WS_BASE_PATH        =   "_____________WS_BASE_PATH_______________";
     public static final String          WS_QUERY_STR        =   "_____________WS_QUERY_STR_______________";
     
@@ -32,6 +36,8 @@ public class HttpServer {
     private NioTcpServer      server                =   null;
     private Charset           charset               =   null;
     private boolean           openWebSocket         =   false;
+    private int               server_type           =   SERVER_TYPE_HTTP;
+    private String            file_keystore         =   null;
     private WebSocketHandler  wsHandler             =   null;
     
     public HttpServer() throws IOException{
@@ -43,7 +49,6 @@ public class HttpServer {
         log.setProjectName("simpli http server");*/
         charset = Charset.forName("utf-8");
         server.setProtocolCodec(new HttpProtocolCodec(this));
-        
         server.setSessionIdleTime(20000);/*keep-alive*/
         wsHandler = new WebSocketHandler() {
         };
@@ -70,6 +75,21 @@ public class HttpServer {
         this.openWebSocket = open;
     }
     
+    /**
+     * use SERVER_TYPE_HTTP SERVER_TYPE_HTTPS
+     * @param type
+     */
+    public void setServerType(int type) {
+        this.server_type = type;
+    }
+    
+    public void setKeystoreFilePath(String path) {
+        this.file_keystore = path;
+    }
+    
+    public int getServerType() {
+        return this.server_type;
+    }
     
     /**
      * 设置连接超时时间, 超时后会关闭该连接
@@ -104,12 +124,16 @@ public class HttpServer {
     }
     
     public void start(InetSocketAddress addr) throws IOException{
-        
+        if((server_type & SERVER_TYPE_HTTPS) > 0 && file_keystore == null) {
+            throw new IOException("keystore file is null");
+        }
         server.start(addr);
     }
     
     public void stop(){
-        server.close();
+        if(server != null) {
+            server.close();
+        }
     }
     
     public IoHandler getWsEventHandler(){

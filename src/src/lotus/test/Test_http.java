@@ -1,6 +1,7 @@
 package lotus.test;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 
 import lotus.http.server.HttpHandler;
 import lotus.http.server.HttpMethod;
@@ -21,16 +22,16 @@ public class Test_http extends HttpHandler{
         
         Test t = Test.valueOf("B");
         System.out.println(t + " " + t.type);
-/*        httpserver = new HttpServer(0, 1024);
-        httpserver.setHandler(new Test_http());
+        httpserver = new HttpServer();
+        httpserver.addHandler("*", new Test_http());
         httpserver.start(new InetSocketAddress(8090));
-        System.out.println("启动完成...");*/
+        System.out.println("启动完成...");
     }
     
     @Override
     public void service(HttpMethod mothed, HttpRequest request, HttpResponse response) {
 //    	response.sendRedirect("/?a=b");
-        System.out.println(request.toString());
+        System.out.println(request.getFullPath());
 //        System.out.println(request.getRemoteAddress());
       //  response.setStatus(ResponseStatus.CLIENT_ERROR_NOT_FOUND);
         response.write("hello world");
