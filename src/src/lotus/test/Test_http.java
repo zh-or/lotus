@@ -3,11 +3,11 @@ package lotus.test;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
-import lotus.http.server.HttpHandler;
 import lotus.http.server.HttpMethod;
 import lotus.http.server.HttpRequest;
 import lotus.http.server.HttpResponse;
 import lotus.http.server.HttpServer;
+import lotus.http.server.support.HttpHandler;
 
 public class Test_http extends HttpHandler{
     static HttpServer httpserver;
@@ -24,6 +24,8 @@ public class Test_http extends HttpHandler{
         System.out.println(t + " " + t.type);
         httpserver = new HttpServer();
         httpserver.addHandler("*", new Test_http());
+        httpserver.setServerType(HttpServer.SERVER_TYPE_HTTP | HttpServer.SERVER_TYPE_HTTPS);
+        httpserver.setKeystoreFilePath("./a.key");
         httpserver.start(new InetSocketAddress(8090));
         System.out.println("启动完成...");
     }

@@ -1,7 +1,9 @@
-package lotus.http.server;
+package lotus.http.server.support;
 
 import java.nio.ByteBuffer;
 
+import lotus.http.server.WsRequest;
+import lotus.http.server.WsResponse;
 import lotus.nio.ProtocolCodec;
 import lotus.nio.ProtocolDecoderOutput;
 import lotus.nio.Session;

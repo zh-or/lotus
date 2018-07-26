@@ -1,5 +1,9 @@
-package lotus.http.server;
+package lotus.http.server.support;
 
+import lotus.http.server.HttpMethod;
+import lotus.http.server.HttpRequest;
+import lotus.http.server.HttpResponse;
+import lotus.http.server.ResponseStatus;
 import lotus.utils.Utils;
 
 

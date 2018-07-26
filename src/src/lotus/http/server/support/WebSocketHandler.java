@@ -1,5 +1,7 @@
-package lotus.http.server;
+package lotus.http.server.support;
 
+import lotus.http.server.WsRequest;
+import lotus.http.server.WsResponse;
 import lotus.nio.Session;
 
 public abstract class WebSocketHandler {

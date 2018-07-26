@@ -1,6 +1,10 @@
-package lotus.http.server;
+package lotus.http.server.support;
 
 import java.lang.reflect.Method;
+
+import lotus.http.server.HttpMethod;
+import lotus.http.server.HttpRequest;
+import lotus.http.server.HttpResponse;
 
 /**
  * 此handler为模仿web用的 加个m参数则调用子类的m方法, (m为方法名称)

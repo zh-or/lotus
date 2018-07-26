@@ -67,7 +67,7 @@ public class HttpsProtocolCodec implements ProtocolCodec{
                 int len = in.remaining();
                 byte[] t = new byte[len];
                 in.get(t);
-                System.out.println(new String(t));
+                System.out.println(Utils.byte2str(t));
                 if(in.remaining() > 3) {
                     byte[] _hash = new byte[len];
                     in.get(_hash);
