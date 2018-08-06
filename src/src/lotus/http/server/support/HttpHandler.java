@@ -4,7 +4,6 @@ import lotus.http.server.HttpMethod;
 import lotus.http.server.HttpRequest;
 import lotus.http.server.HttpResponse;
 import lotus.http.server.ResponseStatus;
-import lotus.utils.Utils;
 
 
 public abstract class HttpHandler {
@@ -56,7 +55,7 @@ public abstract class HttpHandler {
     
 
     /**
-     * 检查参数是否为空
+     * 检查参数是否为空, 值可以为空, key不能为空
      * @param pars 参数key数组
      * @param request
      * @return 如果有为空的则返回 false
@@ -64,7 +63,7 @@ public abstract class HttpHandler {
     public boolean _checkparameter(String[] pars, HttpRequest request){
         if(pars == null || pars.length <= 0) return true;
         for(int i = 0; i < pars.length; i++){
-            if(Utils.CheckNull(request.getParameter(pars[i]))){
+            if(request.getParameter(pars[i]) == null){
                 return false;
             }
         }
