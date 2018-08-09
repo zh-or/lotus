@@ -148,7 +148,12 @@ public class HttpRequest {
     public String getParameter(String name){
         Matcher m = Pattern.compile("[&?]" + name + "=([^&]*)").matcher("&" + queryString);
         if(m.find()){
-            return m.group(1);
+            String par = m.group(1);
+            try {
+                return URLDecoder.decode(par, charset.displayName());
+            } catch (Exception e) {
+                // TODO: handle exception
+            }
         }else if(body != null && getHeader("Content-Type") != null && getHeader("Content-Type").indexOf("application/x-www-form-urlencoded") != -1){
             String bodyStr = new String(body, charset);
             
