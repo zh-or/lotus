@@ -484,6 +484,9 @@ public class Utils {
                 json.put(name, f.getFloat(obj));
             else if (type == double.class)
                 json.put(name, f.getDouble(obj));
+            else {
+                json.put(name, f.get(obj).toString());
+            }
         }
         return json;
     }
