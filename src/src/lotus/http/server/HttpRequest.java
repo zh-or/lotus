@@ -43,6 +43,9 @@ public class HttpRequest {
     }
     
     public String getPath(){
+        if(Utils.CheckNull(path)) {
+            return "/";
+        }
         return path;
     }
     
