@@ -14,7 +14,7 @@ public class Log implements ILog{
     }
     
     private static String    PROJECT_NAME         =    "";
-    private static SimpleDateFormat format        =   new SimpleDateFormat("MM-dd hh:mm:ss");
+    private static SimpleDateFormat format        =   new SimpleDateFormat("MM-dd HH:mm:ss");
     private static boolean   enable_class         =   true;
     private static Log log                        =   null;
     private static Object lock_obj                =   new Object();
