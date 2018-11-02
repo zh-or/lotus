@@ -1,7 +1,9 @@
 *.class
 /bin/
 /build/
-.settings
+.settings/
 .settings/*
 .classpath
 .project
+.idea/
+lotus.iml
