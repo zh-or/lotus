@@ -246,8 +246,8 @@ public class HttpServer {
         }
         
         @Override
-        public void onException(Session session, Exception e) {
-            
+        public void onException(Session session, Throwable e) {
+            session.closeNow();
         	e.printStackTrace();
         }
         

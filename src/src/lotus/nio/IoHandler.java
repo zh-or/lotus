@@ -7,7 +7,7 @@ public abstract class IoHandler{
     public void onSentMessage(Session session, Object msg) throws Exception{}
     public void onClose(Session session) throws Exception{}
     public void onIdle(Session session) throws Exception{}
-    public void onException(Session session, Exception e){
+    public void onException(Session session, Throwable e){
     	e.printStackTrace();
     }
 }

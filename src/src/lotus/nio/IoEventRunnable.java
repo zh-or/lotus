@@ -34,7 +34,7 @@ public class IoEventRunnable implements Runnable{
     public void run() {
 //        long s = System.currentTimeMillis();
         session.RuningEvent(true);
-        Exception _e = null;
+        Throwable _e = null;
         try {
             IoHandler handler = session.getEventHandler();
             switch (type) {
@@ -59,14 +59,14 @@ public class IoEventRunnable implements Runnable{
                     handler.onClose(session);
                     break;
                 case SESSION_EXCEPTION:
-                    handler.onException(session, (Exception) att);
+                    handler.onException(session, (Throwable) att);
                     break;
             }
             IoEventRunnable iorun = null;
             while((iorun = (IoEventRunnable) session.pullEventRunnable()) != null){
                 iorun.run();
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             _e = e;
         }finally{
             session.RuningEvent(false);

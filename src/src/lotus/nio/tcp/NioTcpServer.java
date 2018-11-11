@@ -10,6 +10,7 @@ import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.locks.ReentrantLock;
 
 import lotus.nio.IoHandler;
@@ -48,7 +49,13 @@ public class NioTcpServer extends NioContext{
         }
         
         if(event_pool_thread_size > 0) {
-            this.executor = Executors.newFixedThreadPool(event_pool_thread_size);
+            this.executor = Executors.newFixedThreadPool(event_pool_thread_size, new ThreadFactory() {
+                
+                @Override
+                public Thread newThread(Runnable r) {
+                    return new Thread(r, "lotus nio tcp server default fixed thread pool");
+                }
+            });
         }
         
         /*一个线程 accept */
