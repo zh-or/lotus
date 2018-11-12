@@ -70,7 +70,7 @@ public class Log implements ILog{
         }
         
         String msg_ = format.format(new Date(System.currentTimeMillis()));
-        msg_ = String.format("%s %s %s%s \t%s", msg_, PROJECT_NAME, cname, lvl[l], str);
+        msg_ = String.format("%s %s %s%s %s", msg_, PROJECT_NAME, cname, lvl[l], str);
         if(logfilter == null || logfilter.log(l, msg_)){
             System.out.println(msg_);
             System.out.flush();
