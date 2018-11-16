@@ -193,4 +193,7 @@ public class HttpResponse {
         session.closeOnFlush();
     }
     
+    public void closeNow() {
+        session.closeNow();
+    }
 }
