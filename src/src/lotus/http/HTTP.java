@@ -221,6 +221,7 @@ public class HTTP {
                 ((HttpURLConnection) connection).setRequestMethod("POST");
             }
 	        connection.setRequestProperty("Charset", "UTF-8");
+	        connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.2; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36");
             connection.setUseCaches(false);
             if(!Utils.CheckNull(cookie)) connection.setRequestProperty("Cookie", cookie);
 	        connection.setDoInput(true);
@@ -289,7 +290,7 @@ public class HTTP {
 	        connection.setDoInput(true);
 	        connection.setRequestProperty("Charset", "UTF-8");
             if(!Utils.CheckNull(cookie)) connection.setRequestProperty("Cookie", cookie);
-            connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36");
+            connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.2; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36");
 	        connection.setUseCaches(false);
 	        connection.connect();
 	      
