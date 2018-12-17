@@ -96,7 +96,12 @@ public class HttpRequest {
             }
             
             if(context.isOpenWebSocket()){
-                if("Upgrade".equals(getHeader("Connection"))) {
+                String connection = getHeader("Connection");
+                if(
+                        "Upgrade".equals(connection) || 
+                        (!Utils.CheckNull(connection) && connection.indexOf("Upgrade") != -1)
+                         /*这里可能是多个值, 如 FireFox-> Connection:keep-alive, Upgrade*/
+                  ) {
                     String Upgrade = getHeader("Upgrade").toLowerCase();
                     if("websocket".equals(Upgrade)) {//websocket 协议
                         isWebSocket = true;
