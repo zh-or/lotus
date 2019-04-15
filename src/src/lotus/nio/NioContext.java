@@ -1,5 +1,7 @@
 package lotus.nio;
 
+import java.net.SocketException;
+import java.net.SocketOptions;
 import java.nio.ByteBuffer;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -10,20 +12,23 @@ public abstract class NioContext {
     
 	protected int                   selector_thread_total           =   0;
     protected int                   session_idle_time               =   0;
-    protected int                   socket_time_out                 =   1000 * 10;
+
+    protected int                   so_time_out                     =   1000 * 10;
     protected int                   buff_read_cache_size            =   1024;/*读缓冲区大小*/
     protected int                   buffer_list_length              =   0;/*缓存链表最大长度*/
     protected int                   event_pool_thread_size          =   0;
+    protected boolean               use_direct_buffer               =   false;//使用
+    
     protected IoHandler             handler                         =   null;
     protected ProtocolCodec			procodec						=   null;
     protected Executor              executor                        =   null;
+    
     
     protected LinkedBlockingQueue<ByteBuffer> bufferlist            =   null;/*缓存*//*应付像http这样的服务时大量的短连接用*/
     
     public NioContext(){
         this.selector_thread_total = Runtime.getRuntime().availableProcessors() + 1;/* cpu + 1 */
         this.buffer_list_length = DEF_BUFFER_LIST_MAX_SIZE;
-        
     }
     
 
@@ -34,6 +39,11 @@ public abstract class NioContext {
     
     public NioContext setReadBufferCacheListSize(int size){
         this.buffer_list_length = size;
+        return this;
+    }
+    
+    public NioContext setUseDirectBuffer(boolean isUse) {
+        this.use_direct_buffer = isUse;
         return this;
     }
     
@@ -57,8 +67,25 @@ public abstract class NioContext {
         return this;
     }
     
-    public NioContext setSocketTimeOut(int timeout){
-        this.socket_time_out = timeout;
+    /**
+     *  Enable/disable {@link SocketOptions#SO_TIMEOUT SO_TIMEOUT}
+     *  with the specified timeout, in milliseconds. With this option set
+     *  to a non-zero timeout, a read() call on the InputStream associated with
+     *  this Socket will block for only this amount of time.  If the timeout
+     *  expires, a <B>java.net.SocketTimeoutException</B> is raised, though the
+     *  Socket is still valid. The option <B>must</B> be enabled
+     *  prior to entering the blocking operation to have effect. The
+     *  timeout must be {@code > 0}.
+     *  A timeout of zero is interpreted as an infinite timeout.
+     *
+     * @param timeout the specified timeout, in milliseconds.
+     * @exception SocketException if there is an error
+     * in the underlying protocol, such as a TCP error.
+     * @since   JDK 1.1
+     * @see #getSoTimeout()
+     */
+    public NioContext setSoTimeOut(int timeout){
+        this.so_time_out = timeout;
         return this;
     }
     
@@ -70,6 +97,11 @@ public abstract class NioContext {
     public int getSessionCacheBufferSize(){
         return this.buff_read_cache_size;
     }
+    
+    public boolean getUseDirectBuffer() {
+        return this.use_direct_buffer;
+    }
+    
     
     public NioContext setHandler(IoHandler handler){
         this.handler = handler;
@@ -116,7 +148,11 @@ public abstract class NioContext {
     public ByteBuffer getByteBufferFormCache(){
         ByteBuffer buffer = bufferlist.poll();
         if(buffer == null){
-            buffer = ByteBuffer.allocate(buff_read_cache_size);
+            if(use_direct_buffer) {
+                buffer = ByteBuffer.allocateDirect(buff_read_cache_size);
+            }else {
+                buffer = ByteBuffer.allocate(buff_read_cache_size);
+            }
         }
         return buffer;
     }

@@ -23,7 +23,7 @@ public class ClusterService {
     private int             read_buffer_size            =   2048;
     private int             idletime                    =   60 * 3;
     private int             buffer_list_size            =   1024;
-    private int             socket_timeout              =   50000;
+    private int             so_timeout              =   50000;
     
     private int             conn_max_size               =   100;/*连接数最大数量*/
     
@@ -104,7 +104,7 @@ public class ClusterService {
         server.setReadbuffsize(read_buffer_size);
         server.setReadBufferCacheListSize(buffer_list_size);
         server.setIdletime(idletime);
-        server.setSockettimeout(socket_timeout);
+        server.setSoTimeout(so_timeout);
         
         server.setHandler(new ExIoHandler());
         server.start();
@@ -261,7 +261,7 @@ public class ClusterService {
                                 }
                             }
                             synchronized (subs) {
-                                if(subs.contains(subs) == false){
+                                if(!subs.contains(nodeid)){
                                     subs.add(nodeid);
                                 }
                             }
