@@ -16,7 +16,7 @@ public class SocketServer {
     private int                      readbuffsize           = 1024 * 2;
     private int                      idletime               = 0;
     private int 					 bufferlistmaxsize      = 1024;
-    private int  				     sockettimeout          = 1000 * 10;
+    private int  				     soTimeout          = 1000 * 10;
     
     /**
      * @param host 
@@ -50,8 +50,8 @@ public class SocketServer {
         this.bufferlistmaxsize = size;
     }
 
-    public void setSockettimeout(int sockettimeout) {
-        this.sockettimeout = sockettimeout;
+    public void setSoTimeout(int soTimeout) {
+        this.soTimeout = soTimeout;
     }
 
     public void start() throws IOException{
@@ -61,7 +61,7 @@ public class SocketServer {
     	server.setSessionCacheBufferSize(readbuffsize);
     	server.setSessionCacheBufferSize(readbuffsize);
     	server.setSessionIdleTime(idletime);
-    	server.setSocketTimeOut(sockettimeout);
+    	server.setSoTimeOut(soTimeout);
     	server.setProtocolCodec(new LengthProtocolCode());
     	server.setHandler(handler);
         server.start(addr);

@@ -116,7 +116,9 @@ public class NioTcpServer extends NioContext{
                                 SocketChannel client = ssc.accept();
                                 if(client == null) continue;
                                 client.configureBlocking(false);
-                                client.socket().setSoTimeout(socket_time_out);
+                                if(so_time_out > 0) {
+                                    client.socket().setSoTimeout(so_time_out);
+                                }
                                 client.socket().setReceiveBufferSize(buff_read_cache_size);
                                 client.socket().setSendBufferSize(buff_read_cache_size);
                                 client.finishConnect();
