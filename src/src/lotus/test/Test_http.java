@@ -2,12 +2,18 @@ package lotus.test;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 
 import lotus.http.server.HttpMethod;
 import lotus.http.server.HttpRequest;
 import lotus.http.server.HttpResponse;
 import lotus.http.server.HttpServer;
+import lotus.http.server.WsRequest;
 import lotus.http.server.support.HttpHandler;
+import lotus.http.server.support.WebSocketHandler;
+import lotus.nio.Session;
 
 public class Test_http extends HttpHandler{
     static HttpServer httpserver;
@@ -18,7 +24,23 @@ public class Test_http extends HttpHandler{
         int type;
         Test(int num){this.type = num;}
     }
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, URISyntaxException {
+        URI uri = new URI("ws://a.com/xx?b=1");
+
+        System.out.println(uri.getScheme());
+        System.out.println(uri.getHost());
+        System.out.println(uri.getPort());
+        System.out.println(uri.getPath());
+        System.out.println(uri.getQuery());
+        
+        System.out.println("---------------------------------------");
+        URL url = new URL("ws://a.com/xx?b=1");
+        
+        System.out.println(url.getProtocol());
+        System.out.println(url.getHost());
+        System.out.println(url.getPort());
+        System.out.println(url.getPath());
+        System.out.println(url.getQuery());
         
         Test t = Test.valueOf("B");
         System.out.println(t + " " + t.type);
@@ -26,6 +48,19 @@ public class Test_http extends HttpHandler{
         httpserver.addHandler("*", new Test_http());
         httpserver.setServerType(HttpServer.SERVER_TYPE_HTTP | HttpServer.SERVER_TYPE_HTTPS);
         httpserver.setKeystoreFilePath("./a.key");
+        httpserver.openWebSocket(true);
+        httpserver.setWebSocketHandler(new WebSocketHandler() {
+            @Override
+            public void WebSocketConnection(Session session) {
+                // TODO Auto-generated method stub
+                super.WebSocketConnection(session);
+            }
+            @Override
+            public void WebSocketMessage(Session session, WsRequest request) {
+                // TODO Auto-generated method stub
+                super.WebSocketMessage(session, request);
+            }
+        });
         httpserver.start(new InetSocketAddress(8090));
         System.out.println("启动完成...");
     }
