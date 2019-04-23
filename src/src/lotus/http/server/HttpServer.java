@@ -40,7 +40,7 @@ public class HttpServer {
     private ArrayList<Filter> filters               =   null;
     private NioTcpServer      server                =   null;
     private Charset           charset               =   null;
-    private boolean           openWebSocket         =   false;
+    private boolean           enableWebSocket         =   false;
     private String            file_keystore         =   null;
     private WebSocketHandler  wsHandler             =   null;
     
@@ -72,11 +72,15 @@ public class HttpServer {
     }
     
     public boolean isOpenWebSocket(){
-        return openWebSocket;
+        return enableWebSocket;
     }
     
-    public void openWebSocket(boolean open){
-        this.openWebSocket = open;
+    /**
+     * https://tools.ietf.org/html/rfc6455#page-31
+     * @param open
+     */
+    public void enableWebSocket(boolean enable){
+        this.enableWebSocket = enable;
     }
     
     

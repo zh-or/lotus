@@ -10,6 +10,10 @@ import lotus.nio.Session;
 
 public class WsProtocolCodec implements ProtocolCodec{
 
+    /*
+     * 参考实现
+     * https://tools.ietf.org/html/rfc6455#page-31
+     */    
     @Override
     public boolean decode(Session session, ByteBuffer in, ProtocolDecoderOutput out) throws Exception {
         int remaining = in.remaining();

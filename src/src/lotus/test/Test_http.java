@@ -41,7 +41,7 @@ public class Test_http extends HttpHandler{
         httpserver = new HttpServer();
         httpserver.addHandler("*", new Test_http());
         httpserver.setKeystoreFilePath("./a.key");
-        httpserver.openWebSocket(true);
+        httpserver.enableWebSocket(true);
         httpserver.setWebSocketHandler(new WebSocketHandler() {
             @Override
             public void WebSocketConnection(Session session) {
