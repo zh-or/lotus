@@ -11,6 +11,7 @@ import lotus.http.server.HttpRequest;
 import lotus.http.server.HttpResponse;
 import lotus.http.server.HttpServer;
 import lotus.http.server.WsRequest;
+import lotus.http.server.WsResponse;
 import lotus.http.server.support.HttpHandler;
 import lotus.http.server.support.WebSocketHandler;
 import lotus.nio.Session;
@@ -34,31 +35,22 @@ public class Test_http extends HttpHandler{
         System.out.println(uri.getQuery());
         
         System.out.println("---------------------------------------");
-        URL url = new URL("ws://a.com/xx?b=1");
-        
-        System.out.println(url.getProtocol());
-        System.out.println(url.getHost());
-        System.out.println(url.getPort());
-        System.out.println(url.getPath());
-        System.out.println(url.getQuery());
         
         Test t = Test.valueOf("B");
         System.out.println(t + " " + t.type);
         httpserver = new HttpServer();
         httpserver.addHandler("*", new Test_http());
-        httpserver.setServerType(HttpServer.SERVER_TYPE_HTTP | HttpServer.SERVER_TYPE_HTTPS);
         httpserver.setKeystoreFilePath("./a.key");
         httpserver.openWebSocket(true);
         httpserver.setWebSocketHandler(new WebSocketHandler() {
             @Override
             public void WebSocketConnection(Session session) {
-                // TODO Auto-generated method stub
-                super.WebSocketConnection(session);
+                System.out.println("ws 连接...");
             }
             @Override
             public void WebSocketMessage(Session session, WsRequest request) {
-                // TODO Auto-generated method stub
-                super.WebSocketMessage(session, request);
+                System.out.println("ws recv:" + new String(request.getBody()));
+                session.write(WsResponse.text("test"));
             }
         });
         httpserver.start(new InetSocketAddress(8090));
