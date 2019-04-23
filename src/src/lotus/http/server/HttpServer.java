@@ -41,7 +41,6 @@ public class HttpServer {
     private NioTcpServer      server                =   null;
     private Charset           charset               =   null;
     private boolean           openWebSocket         =   false;
-    private int               server_type           =   SERVER_TYPE_HTTP;
     private String            file_keystore         =   null;
     private WebSocketHandler  wsHandler             =   null;
     
@@ -80,20 +79,9 @@ public class HttpServer {
         this.openWebSocket = open;
     }
     
-    /**
-     * use SERVER_TYPE_HTTP SERVER_TYPE_HTTPS
-     * @param type
-     */
-    public void setServerType(int type) {
-        this.server_type = type;
-    }
     
     public void setKeystoreFilePath(String path) {
         this.file_keystore = path;
-    }
-    
-    public int getServerType() {
-        return this.server_type;
     }
     
     /**
@@ -129,9 +117,7 @@ public class HttpServer {
     }
     
     public void start(InetSocketAddress addr) throws IOException{
-        if((server_type & SERVER_TYPE_HTTPS) > 0 && file_keystore == null) {
-            throw new IOException("keystore file is null");
-        }
+        
         server.start(addr);
     }
     

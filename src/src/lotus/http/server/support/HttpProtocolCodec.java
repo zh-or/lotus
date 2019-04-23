@@ -5,7 +5,6 @@ import java.nio.ByteBuffer;
 import lotus.http.server.HttpRequest;
 import lotus.http.server.HttpServer;
 import lotus.http.server.HttpStatus;
-import lotus.http.server.HttpsStatus;
 import lotus.nio.ProtocolCodec;
 import lotus.nio.ProtocolDecoderOutput;
 import lotus.nio.Session;
@@ -31,12 +30,12 @@ public class HttpProtocolCodec implements ProtocolCodec{
         switch (status) {
             case HEAD:
             {
-                if((context.getServerType() & HttpServer.SERVER_TYPE_HTTPS) > 0 &&  HttpsProtocolCodec.checkHTTPS(session, in, out)) {
+                /*if((context.getServerType() & HttpServer.SERVER_TYPE_HTTPS) > 0 &&  HttpsProtocolCodec.checkHTTPS(session, in, out)) {
                     HttpsProtocolCodec newdec = new HttpsProtocolCodec(context);
                     session.setAttr(STATUS, HttpsStatus.SHAKEHANDS);
                     session.setProtocolCodec(newdec);
                     return newdec.decode(session, in, out);
-                }
+                }*/
                 
                 in.mark();
                 while(in.remaining() > 3){
