@@ -2,6 +2,11 @@ package lotus.http.server;
 
 import java.nio.charset.Charset;
 
+/**
+ * 简单版, 还需要修改
+ * @author yf
+ *
+ */
 public class WsResponse {
 
     public boolean fin;
