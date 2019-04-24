@@ -1,8 +1,8 @@
 package lotus.http.server.support;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+
+import lotus.utils.Utils;
 
 public class WebSocketFrame {
 
@@ -22,63 +22,78 @@ public class WebSocketFrame {
     public byte[]   mask     =   null;          // 32 bits in length 可选, 如masked = 0 则此处为空
     public byte[]   body     =   null;          // n*8 bits in length, where n >= 0
     
+    private boolean decodeMask =   false;//已解码
     
-    public void wrap(OutputStream out) throws IOException {
-        long datalen = (body != null ? body.length : 0);
-        
-        byte b1 = 
-                (byte)( (fin ? 0x80 : 0x00)  | 
-                        (rsv1 ? 0x40 : 0x00) |
-                        (rsv2 ? 0x20 : 0x00) |
-                        (rsv3 ? 0x10 : 0x00)
-                       );
-        b1 = (byte) (b1 | (0x0f & opcode));
-        
-        out.write(b1);
-        
-        byte b2 = (byte) (masked ? 0x80 : 0x00);
-        byte[] len = null;
-        if(datalen < 126) {
-            b2 = (byte) (b2 | datalen);
-            out.write(b2);
-        }else if(datalen < 65535) {
-            b2 = (byte) (b2 | 126);
-            //发送2b长度
-            len = new byte[2];
-            len[0] = (byte) (datalen >>> 8);
-            len[1] = (byte) (datalen & 0xff);
-            out.write(b2);
-        }else {
-            b2 = (byte) (b2 | 127);
-            //发送8b长度
-            len = new byte[8];
-            len[0] = (byte) (datalen & 0xff);
-            len[1] = (byte) ((datalen >>> 8) & 0xff);
-            len[2] = (byte) ((datalen >>> 16) & 0xff);
-            len[3] = (byte) ((datalen >>> 24) & 0xff);
-            len[4] = (byte) ((datalen >>> 32) & 0xff);
-            len[5] = (byte) ((datalen >>> 40) & 0xff);
-            len[6] = (byte) ((datalen >>> 48) & 0xff);
-            len[7] = (byte) ((datalen >>> 56) & 0xff);
-        }
-        
-        if(datalen > 0) {
-            if(masked) {
-                int pLen = body.length;
-                for(int i = 0; i < pLen; i++){
+    public WebSocketFrame(byte op) {
+        opcode = op;
+    }
+
+    public static WebSocketFrame text(String str) throws UnsupportedEncodingException {
+        WebSocketFrame frame = new WebSocketFrame(OPCODE_TEXT);
+        frame.body = str.getBytes("utf-8");
+        return frame;
+    }
+
+
+    public static WebSocketFrame binary(byte[] bin) {
+        WebSocketFrame frame = new WebSocketFrame(OPCODE_BINARY);
+        frame.body = bin;
+        return frame;
+    }
+
+    public static WebSocketFrame ping() {
+        WebSocketFrame frame = new WebSocketFrame(OPCODE_PING);
+        return frame;
+    }
+
+    public static WebSocketFrame pong() {
+        WebSocketFrame frame = new WebSocketFrame(OPCODE_PONG);
+        return frame;
+    }
+    
+    public static WebSocketFrame close() {
+        WebSocketFrame frame = new WebSocketFrame(OPCODE_CLOSE);
+        return frame;
+    }
+    
+    public String getText() {
+        return new String(getBinary());
+    }
+    
+    public byte[] getBinary() {
+        if(masked) {
+            if(!decodeMask) {
+                int len = body.length;
+                for(int i = 0; i < len; i++){
                     body[i] = (byte) (body[i] ^ mask[i % 4]);
                 }
+                decodeMask = true;
             }
-            
-            
         }
-        
+        return body;
     }
     
-    
-    public void unWrap(InputStream in) {
-        
+    /**
+     * 使用mask
+     * @return
+     */
+    public WebSocketFrame mask() {
+        byte[] tMask = new byte[4];
+        tMask[0] = (byte) Utils.RandomNum(0, 255);
+        tMask[1] = (byte) Utils.RandomNum(0, 255);
+        tMask[2] = (byte) Utils.RandomNum(0, 255);
+        tMask[3] = (byte) Utils.RandomNum(0, 255);
+        return mask(tMask);
     }
-    
+
+    /**
+     * 使用mask
+     * @return
+     */
+    public WebSocketFrame mask(byte[] mask) {
+        this.mask = mask;
+        this.masked = true;
+        return this;
+    }
     
 }
