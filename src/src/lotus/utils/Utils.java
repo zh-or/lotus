@@ -102,6 +102,14 @@ public class Utils {
     public static int RandomNum(int start, int end) {
         return (int) (start + Math.random() * (end - start + 1));
     }
+    
+    public static String RandomNum(int length) {
+        StringBuilder sb = new StringBuilder(length);
+        for(int i = 0; i < length; i++) {
+            sb.append(RandomNum(0, 9));
+        }
+        return sb.toString();
+    }
 
     public static byte[] GetRepeatByte(int len, byte b) {
         byte[] res = new byte[len];
