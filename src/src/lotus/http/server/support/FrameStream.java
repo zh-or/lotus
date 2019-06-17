@@ -43,6 +43,10 @@ public class FrameStream {
             out.write((int) ((datalen >>> 56) & 0xff));
         }
         
+        if(frame.mask != null) {
+            out.write(frame.mask);
+        }
+        
         if(datalen > 0) {
             if(frame.masked) {
                 int pLen = frame.body.length;
