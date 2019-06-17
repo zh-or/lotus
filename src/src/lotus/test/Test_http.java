@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 
 import lotus.http.server.HttpMethod;
 import lotus.http.server.HttpRequest;

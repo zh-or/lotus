@@ -16,7 +16,7 @@ public class SocketServer {
     private int                      readbuffsize           = 1024 * 2;
     private int                      idletime               = 0;
     private int 					 bufferlistmaxsize      = 1024;
-    private int  				     soTimeout          = 1000 * 10;
+    private int  				     soTimeout              = 1000 * 10;
     
     /**
      * @param host 
