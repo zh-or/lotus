@@ -13,12 +13,13 @@ public class Log implements ILog{
         public boolean log(int lvl, String logstr);
     }
     
-    private static String    PROJECT_NAME         =    "";
-    private static SimpleDateFormat format        =   new SimpleDateFormat("MM-dd HH:mm:ss");
-    private static boolean   enable_class         =   true;
-    private static boolean   trace_enabled        =   false;
-    private static Log log                        =   null;
-    private static Object lock_obj                =   new Object();
+    private static String           PROJECT_NAME         =    "";
+    private static SimpleDateFormat format               =   new SimpleDateFormat("MM-dd HH:mm:ss");
+    private static boolean          enable_class         =   true;
+    private static boolean          trace_enabled        =   false;
+    private static boolean          debug_enable         =   false;
+    private static Log              log                  =   null;
+    private static Object           lock_obj             =   new Object();
     
     private LogFilter   logfilter   =   null;
     
@@ -85,9 +86,13 @@ public class Log implements ILog{
     public boolean isTraceEnabled(){
         return trace_enabled;
     }
-    
+
     public void setTraceEnable(boolean isEnable){
         trace_enabled = isEnable;
+    }
+
+    public void setDebugEnable(boolean isEnable){
+        debug_enable = isEnable;
     }
     
     public void setEnableClassNameOut(boolean enable){
@@ -131,12 +136,16 @@ public class Log implements ILog{
 
     @Override
     public void debug(String str) {
-        log(ILog.L_D, str);
+        if(debug_enable){
+            log(ILog.L_D, str); 
+        }
     }
 
     @Override
     public void debug(String str, Object... args) {
-        log(ILog.L_D, str, args);
+        if(debug_enable){
+            log(ILog.L_D, str, args);
+        }
     }
 
     @Override
