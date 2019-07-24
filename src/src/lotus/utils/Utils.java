@@ -32,9 +32,9 @@ public class Utils {
         char[] s_box = rc4_init(key);
         return rc4_crypt(data, s_box);
     }
-
+    
     /**
-     * 解密
+     * rc4 加密解密
      * 
      * @param data
      * @param key
