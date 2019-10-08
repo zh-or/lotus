@@ -170,6 +170,15 @@ public class Config {
 		return "true".equals(v) || "1".equals(v);
 	}
 	
+	public HashMap<String, String> getGroup(String key){
+		HashMap<String, String> res = new HashMap<String, String>();
+        Iterator<Entry<String, ArrStringValue>> it = group.get(key).entrySet().iterator();
+        while(it.hasNext()) {
+            Entry<String, ArrStringValue> e = it.next();
+            res.put(e.getKey(), e.getValue().toString());
+        }
+		return res;
+	}
 	
 	/**
 	 * 设置值 没有则创建 此方法多次put会有多个key value
