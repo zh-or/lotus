@@ -85,11 +85,11 @@ public abstract class HttpHandler {
     
 
     /*参数错误*/
-    public static final int STATE_PARAMETER_ERROR       =   -1;
+    public static final int STATE_PARAMETER_ERROR       =   -3;
     /*服务器发生错误*/
     public static final int STATE_SERVER_ERROR          =   -2;
     /*其他错误*/
-    public static final int STATE_ERROR                 =   -3;
+    public static final int STATE_ERROR                 =   -1;
     /*未登陆*/
     public static final int STATE_NOT_LOGIN             =   -4;
     /*成功*/
