@@ -2,6 +2,8 @@ package lotus.utils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -43,12 +45,63 @@ public class BeanBase {
 		for(Field field : fields) {
 			name = field.getName();
 			//名字需要处理
-			val = res.getObject(name);
+			val = res.getObject(makeName(name));
 			obj._set(name, val);
 			field.set(obj, val);
 		}
 		
 		return obj;
+	}
+	
+	public static PreparedStatement CreateInsertStatementFromBean(Connection conn, Object bean) throws Exception{
+	    Class<?> clazz = bean.getClass();
+	    Field[] fields = clazz.getFields();
+	    int len = fields.length;
+        String className = makeName(clazz.getSimpleName());
+	    if(fields.length < 1){
+	       throw new Exception("no fields from " + clazz.getName()); 
+	    }
+	    StringBuilder sql = new StringBuilder();
+	    sql.append("INSERT INTO ");
+	    sql.append(className);
+	    sql.append(" (");
+        for (int i = 0; i < len; i++) {
+            Field f = fields[i];
+	        sql.append(makeName(f.getName()));
+	        sql.append(',');
+	    }
+	    sql.deleteCharAt(sql.length() - 1);
+	    sql.append(") VALUES ( ");
+	    for(int i = 0; i < len; i++){
+	        sql.append("?,");
+	    }
+        sql.deleteCharAt(sql.length() - 1);
+	    sql.append(" );");
+	    System.out.println(sql.toString());
+	    PreparedStatement stmt = conn.prepareStatement(sql.toString());
+	    for (int i = 0; i < len; i++) {
+    	        Field f = fields[i]; 
+            Class<?> type = f.getType();
+            if (type == String.class)
+                stmt.setString(i + 1, f.get(bean).toString());
+            else if (type == boolean.class)
+                stmt.setBoolean(i + 1, f.getBoolean(bean));
+            else if (type == long.class)
+                stmt.setLong(i + 1, f.getLong(bean));
+            else if (type == int.class)
+                stmt.setInt(i + 1, f.getInt(bean));
+            else if(type == short.class)
+                stmt.setShort(i + 1, f.getShort(bean));
+            else if(type == byte.class)
+                stmt.setByte(i + 1, f.getByte(bean));
+            else if (type == float.class)
+                stmt.setFloat(i + 1, f.getFloat(bean));
+            else if( type == double.class)
+                stmt.setDouble(i + 1, f.getDouble(bean));
+            else if(type == byte[].class)
+                stmt.setBytes(i + 1, (byte[]) f.get(bean));
+        }
+	    return stmt;
 	}
 	
 	private static String makeName(String name) {
@@ -107,7 +160,6 @@ public class BeanBase {
                 f.set(e, json.getInt(name));
             else if (type == float.class || type == double.class)
                 f.set(e, json.getDouble(name));
-
         }
         return e;
     }
@@ -168,5 +220,10 @@ public class BeanBase {
     
     public static void main(String[] args) {
 		System.out.println(makeName("AllenPeople"));
+		try {
+            CreateInsertStatementFromBean(null, new BeanBase());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 	}
 }
