@@ -86,7 +86,12 @@ public class BeanBase {
             else if (type == double.class)
                 json.put(name, f.getDouble(obj));
             else {
-                json.put(name, f.get(obj).toString());
+            	Object child = f.get(obj);
+            	if(child != null && BeanBase.class.isAssignableFrom(type)) {
+            		json.put(name, ObjToJson(child));
+            	} else {
+                    json.put(name, child);
+            	}
             }
         }
         return json;
