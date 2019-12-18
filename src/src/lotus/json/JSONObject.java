@@ -241,7 +241,7 @@ public class JSONObject {
      */
     public JSONObject put(String name, Object value) throws JSONException {
         if (value == null) {
-            nameValuePairs.remove(name);
+            //nameValuePairs.remove(name);
             return this;
         }
         if (value instanceof Number) {
