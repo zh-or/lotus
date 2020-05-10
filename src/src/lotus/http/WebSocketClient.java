@@ -84,6 +84,8 @@ public class WebSocketClient {
                 }else {
                     this.socket = new Socket();
                 }
+                //socket.setTcpNoDelay(true);
+                socket.setKeepAlive(true);
                 this.socket.connect(new InetSocketAddress(uri.getHost(), port));
                 break;
             case "https":
@@ -94,6 +96,8 @@ public class WebSocketClient {
                     sslCtx.init(null, null, null);
                     if(proxy != null) {
                         Socket tSock = new Socket(proxy);
+                        //tSock.setTcpNoDelay(true);
+                        tSock.setKeepAlive(true);
                         tSock.connect(new InetSocketAddress(uri.getHost(), port));
                         this.socket = sslCtx.getSocketFactory().createSocket(tSock, uri.getHost(), port, true);
                     }else {
@@ -107,10 +111,8 @@ public class WebSocketClient {
         }
         bIn  = socket.getInputStream();
         bOut = socket.getOutputStream();
-        socket.setSoTimeout(10000);
+        socket.setSoTimeout(1000);
         //socket.setReceiveBufferSize(1024 * 4);
-        socket.setTcpNoDelay(true);
-        socket.setKeepAlive(false);
         cdWaitThreadQuit = new CountDownLatch(2);
         
         //握手
@@ -150,11 +152,11 @@ public class WebSocketClient {
         isConnection = true;
         Thread recv = new Thread(rRecv);
         recv.setName("websocket - recv thread " + this.hashCode());
-        recv.start();
         Thread send = new Thread(rSend);
         send.setName("websocket - send thread " + this.hashCode());
-        send.start();
         setIdeaTimeDiff(ideaTime);
+        recv.start();
+        send.start();
     }
     
     public static WebSocketClient connection(URI uri, Handler handler) throws Exception {
@@ -328,6 +330,7 @@ public class WebSocketClient {
                         errClose = true;
                         break;
                     }
+                    lastActiveTime = System.currentTimeMillis();
                     WebSocketFrame frame = new WebSocketFrame((byte) (b & 0x0f));
                     frame.fin = (b & 0x80) != 0;
                     frame.rsv1 = (b & 0x40) != 0;
@@ -339,9 +342,9 @@ public class WebSocketClient {
                     frame.payload = b & 0x7f;
                     
                     if(frame.payload == 126) {
-                        byte[] sizebytes = new byte[3];
+                        byte[] sizebytes = new byte[2];
+                        sizebytes[0] = (byte) bIn.read();
                         sizebytes[1] = (byte) bIn.read();
-                        sizebytes[2] = (byte) bIn.read();
                         len = new BigInteger(sizebytes).intValue();
                     } else if(frame.payload == 127) {
                         byte[] bytes = new byte[8];
@@ -357,13 +360,20 @@ public class WebSocketClient {
                         bIn.read(frame.mask);
                     }
                     if(len > 0) {
-                        /// 127 就读不出来了 ///
+                        
                         frame.body = new byte[(int) len];
-                        bIn.read(frame.body);
+                        int start = 0, read = 0, t = 0;
+                        do{
+                            read = bIn.read(frame.body, start, ((int) len - start));
+                            start += read;
+                            t ++;
+                            if(t >= 2){
+                                System.out.println("多次读入");
+                            }
+                        } while(start < len - 1);
                     }
                     
                     if(frame != null) {
-                        lastActiveTime = System.currentTimeMillis();
                         try {
                             handler.onRecv(WebSocketClient.this, frame);
                         } catch (Exception e) {
