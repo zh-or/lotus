@@ -42,6 +42,11 @@ public abstract class NioContext {
         return this;
     }
     
+    /**
+     * 分配bytebuffer时是否使用系统的内存
+     * @param isUse true 时分配系统内存， false 时分配jvm内存
+     * @return
+     */
     public NioContext setUseDirectBuffer(boolean isUse) {
         this.use_direct_buffer = isUse;
         return this;
@@ -98,7 +103,7 @@ public abstract class NioContext {
         return this.buff_read_cache_size;
     }
     
-    public boolean getUseDirectBuffer() {
+    public boolean isUseDirectBuffer() {
         return this.use_direct_buffer;
     }
     
