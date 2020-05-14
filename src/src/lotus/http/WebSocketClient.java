@@ -15,6 +15,7 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -70,6 +71,7 @@ public class WebSocketClient {
     private int                                 ideaTime            = 5000;//超过空闲时间则发送 ping 包
     private long                                lastActiveTime      = 0;
     private Timer                               ideaCheckTimer      = null;
+    private ConcurrentHashMap<String, Object>   attr                = null;
     
     
     private WebSocketClient(URI uri, Handler handler, Proxy proxy) throws Exception {
@@ -111,7 +113,7 @@ public class WebSocketClient {
         }
         bIn  = socket.getInputStream();
         bOut = socket.getOutputStream();
-        socket.setSoTimeout(1000);
+        //socket.setSoTimeout(1000);
         //socket.setReceiveBufferSize(1024 * 4);
         cdWaitThreadQuit = new CountDownLatch(2);
         
@@ -154,9 +156,10 @@ public class WebSocketClient {
         recv.setName("websocket - recv thread " + this.hashCode());
         Thread send = new Thread(rSend);
         send.setName("websocket - send thread " + this.hashCode());
-        setIdeaTimeDiff(ideaTime);
+        setIdeaTime(ideaTime);
         recv.start();
         send.start();
+        attr = new ConcurrentHashMap<String, Object>();
     }
     
     public static WebSocketClient connection(URI uri, Handler handler) throws Exception {
@@ -167,11 +170,23 @@ public class WebSocketClient {
         return new WebSocketClient(uri, handler, proxy);
     }
     
+    public void setAttr(String key, Object val){
+        attr.put(key, val);
+    }
+    
+    public Object getAttr(String key){
+        return attr.get(key);
+    }
+    
+    public Object removeAttr(String key){
+        return attr.remove(key);
+    }
+    
     /**
      * 设置连接空闲时间, 超过空闲时间时则发送 ping 包
      * @param t 间隔时间 毫秒
      */
-    public void setIdeaTimeDiff(int t){
+    public void setIdeaTime(int t){
         this.ideaTime = t;
         if(ideaCheckTimer != null){
             ideaCheckTimer.cancel();
@@ -204,6 +219,7 @@ public class WebSocketClient {
      * 调用时会等待发送线程/接收线程退出, 最多等待10S如线程没有退出当前方法会直接返回
      */
     public void close() {
+        isConnection = false;
         if(ideaCheckTimer != null){
             ideaCheckTimer.cancel();
             ideaCheckTimer = null;
@@ -305,13 +321,13 @@ public class WebSocketClient {
                 } catch (InterruptedException e) {
                     //e.printStackTrace();
                 } catch (IOException e) {
+                    isConnection = false;
                     errClose = true;
                     handler.onError(e);
                     //e.printStackTrace();
                     break;
                 }
             }
-            isConnection = false;
             cdWaitThreadQuit.countDown();
             callClose();
         }
@@ -328,6 +344,7 @@ public class WebSocketClient {
                     b = bIn.read();
                     if(b == -1) {
                         errClose = true;
+                        isConnection = false;
                         break;
                     }
                     lastActiveTime = System.currentTimeMillis();
@@ -383,13 +400,13 @@ public class WebSocketClient {
                 } catch (SocketTimeoutException ste) {
                     //System.out.println("读超时");
                 } catch (IOException e) {
+                    isConnection = false;
                     errClose = true;
                     handler.onError(e);
                     //e.printStackTrace();
                     break;
                 }
             }
-            isConnection = false;
             cdWaitThreadQuit.countDown();
             callClose();
         }
