@@ -13,7 +13,7 @@ import lotus.utils.Utils;
 public class Test_socket {
 	static Log log;
 	public static void main(String[] args) throws IOException {
-		log = Log.getInstance();
+		log = Log.getInstance(Test_socket.class);
 		log.setProjectName("test");
 		SocketServer server = new SocketServer(new InetSocketAddress(5000));
 		server.setHandler(new IoHandler() {
