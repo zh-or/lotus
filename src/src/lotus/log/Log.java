@@ -20,19 +20,29 @@ public class Log implements ILog{
     private static boolean          debug_enable         =   false;
     private static Log              log                  =   null;
     private static Object           lock_obj             =   new Object();
+    private Class<?> 			    clazz				 =   null;
+    private String					clazzName			 =	 null;
     
     private LogFilter   logfilter   =   null;
     
     
-    private Log(){
+    private Log(Class<?> clazz){
+        this.clazz = clazz;
+        if(this.clazz != null) {
+        	this.clazzName = this.clazz.getName();
+        }
+    }
+
+    public static Log getInstance(){
         
+        return getInstance(null);
     }
     
-    public static Log getInstance(){
+    public static Log getInstance(Class<?> clazz){
         if(log == null){
             synchronized (lock_obj) {
                 if(log == null){
-                    log = new Log();
+                    log = new Log(clazz);
                 }
             }
         }
@@ -51,28 +61,12 @@ public class Log implements ILog{
     public void log(int l, String str){
         String cname = NULL_STR;
         if(enable_class){
-            StackTraceElement[] ste = new Throwable().getStackTrace();
-            for(StackTraceElement e : ste){
-                cname = e.getClassName();
-                if(!getClass().getName().equals(cname)){
-                    break;
-                }
-            }
-            int startp = cname.lastIndexOf(".");
-            if(startp <= 0){
-                cname = "UNKNOW_CLASS";
-            }
-            startp += 1;
-            int endp = cname.lastIndexOf("$");
-            if(endp <= startp){
-                endp = cname.length();
-            }
-            cname = cname.substring(startp, endp);
-            cname = "[" + cname + "]";
+            
+            cname = "[" + clazzName + "]";
         }
         
         String msg_ = format.format(new Date(System.currentTimeMillis()));
-        msg_ = String.format("%s %s %s%s %s", msg_, PROJECT_NAME, cname, lvl[l], str);
+        msg_ = String.format("%s %s%s%s %s", msg_, PROJECT_NAME, cname, lvl[l], str);
         if(logfilter == null || logfilter.log(l, msg_)){
             System.out.println(msg_);
             System.out.flush();
@@ -80,7 +74,7 @@ public class Log implements ILog{
     }
     
     public void setProjectName(String name){
-        PROJECT_NAME = "[" + name + "] ";
+        PROJECT_NAME = "[" + name + "]";
     }
     
     public boolean isTraceEnabled(){

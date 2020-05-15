@@ -321,13 +321,14 @@ public class WebSocketClient {
                 } catch (InterruptedException e) {
                     //e.printStackTrace();
                 } catch (IOException e) {
-                    isConnection = false;
                     errClose = true;
                     handler.onError(e);
                     //e.printStackTrace();
                     break;
                 }
             }
+            isConnection = false;
+            run = false; 
             cdWaitThreadQuit.countDown();
             callClose();
         }
@@ -400,13 +401,14 @@ public class WebSocketClient {
                 } catch (SocketTimeoutException ste) {
                     //System.out.println("读超时");
                 } catch (IOException e) {
-                    isConnection = false;
                     errClose = true;
                     handler.onError(e);
                     //e.printStackTrace();
                     break;
                 }
             }
+            isConnection = false;
+            run = false; 
             cdWaitThreadQuit.countDown();
             callClose();
         }
