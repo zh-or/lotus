@@ -69,6 +69,7 @@ public class WebSocketClient {
     private LinkedBlockingQueue<WebSocketFrame> qSend               = null;
     private Socket                              socket              = null;
     private int                                 ideaTime            = 5000;//超过空闲时间则发送 ping 包
+    private int                                 connectionTimeOut   = 3000;
     private long                                lastActiveTime      = 0;
     private Timer                               ideaCheckTimer      = null;
     private ConcurrentHashMap<String, Object>   attr                = null;
@@ -88,7 +89,7 @@ public class WebSocketClient {
                 }
                 //socket.setTcpNoDelay(true);
                 socket.setKeepAlive(true);
-                this.socket.connect(new InetSocketAddress(uri.getHost(), port));
+                this.socket.connect(new InetSocketAddress(uri.getHost(), port), connectionTimeOut);
                 break;
             case "https":
             case "wss":
@@ -104,7 +105,7 @@ public class WebSocketClient {
                         this.socket = sslCtx.getSocketFactory().createSocket(tSock, uri.getHost(), port, true);
                     }else {
                         this.socket = sslCtx.getSocketFactory().createSocket();
-                        this.socket.connect(new InetSocketAddress(uri.getHost(), port));
+                        this.socket.connect(new InetSocketAddress(uri.getHost(), port), connectionTimeOut);
                     }
                 }  catch (KeyManagementException e) {
                     e.printStackTrace();
@@ -181,7 +182,11 @@ public class WebSocketClient {
     public Object removeAttr(String key){
         return attr.remove(key);
     }
-    
+
+    public void setConnectionTimeOut(int mill){
+        this.connectionTimeOut = mill;
+    }
+
     /**
      * 设置连接空闲时间, 超过空闲时间时则发送 ping 包
      * @param t 间隔时间 毫秒
@@ -256,7 +261,8 @@ public class WebSocketClient {
             }
         }
     }
-    
+
+
     private Runnable rSend = new Runnable() {
         
         @Override
