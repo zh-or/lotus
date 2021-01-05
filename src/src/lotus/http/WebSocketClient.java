@@ -176,6 +176,9 @@ public class WebSocketClient {
     }
     
     public Object getAttr(String key){
+        if(attr == null){
+            return null;
+        }
         return attr.get(key);
     }
     
@@ -257,7 +260,11 @@ public class WebSocketClient {
         if(cdWaitThreadQuit.getCount() <= 0) {
             close();
             if(errClose) {
-                handler.onClose(this);
+                try{
+                    handler.onClose(this);
+                } catch(Exception e){
+                    handler.onError(e);
+                }
             }
         }
     }
@@ -267,7 +274,11 @@ public class WebSocketClient {
         
         @Override
         public void run() {
-            handler.onConn(WebSocketClient.this);
+            try{
+                handler.onConn(WebSocketClient.this);
+            } catch(Exception e) {
+                handler.onError(e);
+            }
             lastActiveTime = System.currentTimeMillis();
             while (run) {
                 WebSocketFrame frame = null;
