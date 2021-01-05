@@ -39,7 +39,7 @@ public class HttpResponse {
         
         if(request.isWebSocketConnection() && request.getContext().isOpenWebSocket()) {
             response.setHeader("Upgrade", request.getHeader("Upgrade"));
-            response.setHeader("Connection", request.getHeader("Connection"));
+            response.setHeader("Connection", "Upgrade");
             String sec = request.getHeader("Sec-WebSocket-Key") + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
             try {
                 sec = Base64.byteArrayToBase64(Utils.SHA1(sec));
