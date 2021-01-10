@@ -324,6 +324,38 @@ public class Utils {
             return true;
         return false;
     }
+    
+    /**
+     * 重组路径 删掉 ../ ../不会超过当前路径
+     * @param path
+     * @return
+     */
+    public static String BuildPath(String path){
+        int b = 0;
+        String[] dirs = path.split("/");
+        String[] build = new String[dirs.length];
+        
+        for(String dir : dirs){
+            if("..".equals(dir)){
+                build[b] = null;
+                if(b > 0){
+                    b--;
+                }
+            }else{
+                build[b] = dir;
+                b++;
+            }
+        }
+        StringBuilder sb = new StringBuilder();
+        for(String dir : build){
+            if(dir != null){
+                sb.append(dir);
+                sb.append("/");
+            }
+        }
+        if(sb.charAt(sb.length() - 1) == '/') sb.delete(sb.length() - 1, sb.length());
+        return sb.toString();
+    }
 
     public static String getUUID() {
         return UUID.randomUUID().toString().replace("-", "").toUpperCase();
