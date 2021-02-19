@@ -27,7 +27,6 @@ public class NioTcpServer extends NioContext{
 	
     public NioTcpServer(){
 		super();
-
 	}
 
     public void start(InetSocketAddress addr) throws IOException {
