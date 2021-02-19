@@ -17,7 +17,7 @@ import java.util.Map.Entry;
 public class Config {
 	
 	private HashMap<String, HashMap<String, ArrStringValue>> group = null;
-	private File file;
+	private File file = null;
 	
 	public class ArrStringValue{
 	    private ArrayList<String> val;
@@ -51,6 +51,9 @@ public class Config {
 	    
 	}
 	
+	public Config() {
+	    this(null);
+	}
 
 	public Config(File f){
 		group = new HashMap<String, HashMap<String, ArrStringValue>>();
@@ -64,7 +67,10 @@ public class Config {
 	/**
 	 * 读取配置文件
 	 */
-	public void read(String charset){//
+	public void read(String charset) {
+	    if(file == null || !file.exists()) {
+	        return;
+	    }
 		BufferedReader bis = null;
 		try {
 			bis = new BufferedReader(new InputStreamReader(new FileInputStream(file), charset));
@@ -228,9 +234,12 @@ public class Config {
 	}
 	
 	public void save(){
-		
+		if(file == null) {
+		    return;
+		}
 		FileWriter fout = null;
 		try {
+	        
 	        fout = new FileWriter(file);
 			
 			fout.write(build().toString());

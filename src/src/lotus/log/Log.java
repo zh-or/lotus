@@ -26,7 +26,7 @@ public class Log implements ILog{
     private LogFilter   logfilter   =   null;
     
     
-    private Log(Class<?> clazz){
+    public Log(Class<?> clazz) {
         this.clazz = clazz;
         if(this.clazz != null) {
         	this.clazzName = this.clazz.getName();
