@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="EclipseModuleManager">
+    <libelement value="jar://$MODULE_DIR$/../bot/code/bot/lib/sqlite-jdbc-3.14.2.1-sources.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/../bot/code/bot/lib/sqlite-jdbc-3.14.2.1.jar!/" />
+    <src_description expected_position="0">
+      <src_folder value="file://$MODULE_DIR$/../bot/code/bot/src" expected_position="0" />
+    </src_description>
+  </component>
+  <component name="NewModuleRootManager">
+    <output url="file://$MODULE_DIR$/../bot/code/bot/bin" />
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/../bot/code/bot">
+      <sourceFolder url="file://$MODULE_DIR$/../bot/code/bot/src" isTestSource="false" />
+    </content>
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library">
+      <library name="sqlite-jdbc-3.14.2.1-sources.jar">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../bot/code/bot/lib/sqlite-jdbc-3.14.2.1-sources.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="sqlite-jdbc-3.14.2.1.jar">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../bot/code/bot/lib/sqlite-jdbc-3.14.2.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="module" module-name="lotus" />
+    <orderEntry type="module" module-name="V8Base" />
+  </component>
+</module>
