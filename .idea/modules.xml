@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/V8Base.iml" filepath="$PROJECT_DIR$/V8Base.iml" />
+      <module fileurl="file://$PROJECT_DIR$/bot-coin.iml" filepath="$PROJECT_DIR$/bot-coin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/lotus.iml" filepath="$PROJECT_DIR$/lotus.iml" />
+    </modules>
+  </component>
+</project>

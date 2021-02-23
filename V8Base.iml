@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="EclipseModuleManager">
+    <libelement value="jar://$MODULE_DIR$/../v8-base/src/lib/j2v8_linux_x86_64-6.2.0.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/../v8-base/src/lib/sqlite-jdbc-3.14.2.1.jar!/" />
+    <src_description expected_position="0">
+      <src_folder value="file://$MODULE_DIR$/../v8-base/src/src" expected_position="0" />
+      <src_folder value="file://$MODULE_DIR$/../v8-base/src/j2v8" expected_position="1" />
+    </src_description>
+  </component>
+  <component name="NewModuleRootManager">
+    <output url="file://$MODULE_DIR$/../v8-base/src/bin" />
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/../v8-base/src">
+      <sourceFolder url="file://$MODULE_DIR$/../v8-base/src/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../v8-base/src/j2v8" isTestSource="false" />
+    </content>
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="jdk" jdkName="1.7" jdkType="JavaSDK" />
+    <orderEntry type="module-library">
+      <library name="j2v8_linux_x86_64-6.2.0.jar">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../v8-base/src/lib/j2v8_linux_x86_64-6.2.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="sqlite-jdbc-3.14.2.1.jar">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../v8-base/src/lib/sqlite-jdbc-3.14.2.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/../v8-base/src/lib/sqlite-jdbc-3.14.2.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="lotus" />
+  </component>
+</module>

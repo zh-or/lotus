@@ -1,12 +1,7 @@
 
 package lotus.json;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 // Note: this class was written without inspecting the non-free org.json sourcecode.
 
@@ -633,7 +628,11 @@ public class JSONObject {
             return null;
         }
     }
-    
+
+    public Set<Map.Entry<String, Object>> entrySet(){
+        return  nameValuePairs.entrySet();
+    }
+
     /**
      * 返回的json字符串按key排序
      * @return
