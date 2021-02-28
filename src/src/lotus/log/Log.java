@@ -15,7 +15,7 @@ public class Log implements ILog{
     
     private static String           PROJECT_NAME         =    "";
     private static SimpleDateFormat format               =   new SimpleDateFormat("MM-dd HH:mm:ss");
-    private static boolean          enable_class         =   true;
+    private static boolean          enable_class         =   false;
     private static boolean          trace_enabled        =   false;
     private static boolean          debug_enable         =   false;
     private static Log              log                  =   null;
@@ -30,6 +30,7 @@ public class Log implements ILog{
         this.clazz = clazz;
         if(this.clazz != null) {
         	this.clazzName = this.clazz.getName();
+        	enable_class = true;
         }
     }
 
