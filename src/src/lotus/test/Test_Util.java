@@ -1,9 +1,15 @@
 package lotus.test;
 
+import java.util.Calendar;
+import java.util.Date;
+import java.util.TimeZone;
+
 import lotus.utils.Utils;
 
 public class Test_Util {
     public static void main(String[] args) throws Exception {
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("GTM+8"));
+        System.out.println(calendar.get(Calendar.HOUR));
 //        Calendar cal = Calendar.getInstance();
         //2016 11 27 == 391 and wait 129 day is 520
         //cal.add(Calendar.DAY_OF_YEAR, 129);
