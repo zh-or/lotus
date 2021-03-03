@@ -2,6 +2,7 @@ package lotus.log;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.TimeZone;
 
 public class Log implements ILog{
     public interface LogFilter{
@@ -66,12 +67,20 @@ public class Log implements ILog{
             cname = "[" + clazzName + "]";
         }
         
-        String msg_ = format.format(new Date(System.currentTimeMillis()));
+        String msg_ = format.format(new Date());
         msg_ = String.format("%s %s%s%s %s", msg_, PROJECT_NAME, cname, lvl[l], str);
         if(logfilter == null || logfilter.log(l, msg_)){
             System.out.println(msg_);
             System.out.flush();
         }
+    }
+    
+    /**
+     * 设置时区 
+     * @param id GMT+8
+     */
+    public static void setTimeZoneID(String id) {
+        format.setTimeZone(TimeZone.getTimeZone(id));
     }
     
     public void setProjectName(String name){
