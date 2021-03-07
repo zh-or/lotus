@@ -101,7 +101,7 @@ public class WebSocketClient {
                         Socket tSock = new Socket(proxy);
                         //tSock.setTcpNoDelay(true);
                         tSock.setKeepAlive(true);
-                        tSock.connect(new InetSocketAddress(uri.getHost(), port));
+                        tSock.connect(new InetSocketAddress(uri.getHost(), port), connectionTimeOut);
                         this.socket = sslCtx.getSocketFactory().createSocket(tSock, uri.getHost(), port, true);
                     }else {
                         this.socket = sslCtx.getSocketFactory().createSocket();
