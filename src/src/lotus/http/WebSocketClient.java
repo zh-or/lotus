@@ -53,6 +53,8 @@ public class WebSocketClient {
             "Connection: Upgrade\r\n" + 
             "Upgrade: websocket\r\n" +
             "Pragma: no-cache\r\n" + 
+            "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36\r\n" + 
+            "Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits\r\n" + 
             "Cache-Control: no-cache\r\n" + 
             "Sec-WebSocket-Version: 13\r\n" + 
             "Sec-WebSocket-Key: %s\r\n\r\n";
@@ -84,6 +86,7 @@ public class WebSocketClient {
                 port = port == -1 ? 80 : port;
                 if(proxy != null) {
                     this.socket = new Socket(proxy);
+                    this.socket.setSoTimeout(connectionTimeOut * 2);
                 }else {
                     this.socket = new Socket();
                 }
@@ -102,6 +105,7 @@ public class WebSocketClient {
                         //tSock.setTcpNoDelay(true);
                         tSock.setKeepAlive(true);
                         tSock.connect(new InetSocketAddress(uri.getHost(), port), connectionTimeOut);
+                        //tSock.setSoTimeout(connectionTimeOut * 2);
                         this.socket = sslCtx.getSocketFactory().createSocket(tSock, uri.getHost(), port, true);
                     }else {
                         this.socket = sslCtx.getSocketFactory().createSocket();
@@ -121,7 +125,7 @@ public class WebSocketClient {
         //握手
 
         String key = Base64.byteArrayToBase64(Utils.RandomNum(16).getBytes());
-        String tmp = String.format(fistr_package, uri.getPath(), uri.getHost(), key);
+        String tmp = String.format(fistr_package, uri, uri.getHost(), key);
         
         bOut.write(tmp.getBytes());
         bOut.flush();
@@ -145,6 +149,7 @@ public class WebSocketClient {
             if (selfAccept == null || !selfAccept.equals(accept)) {
                 System.out.println(accept);
                 System.out.println(selfAccept);
+                System.out.println(upgrade);
                 throw new IOException("握手失败");
             }
         } catch (NoSuchAlgorithmException e) {
