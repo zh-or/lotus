@@ -40,7 +40,7 @@ public class HttpServer {
     private ArrayList<Filter> filters               =   null;
     private NioTcpServer      server                =   null;
     private Charset           charset               =   null;
-    private boolean           enableWebSocket         =   false;
+    private boolean           enableWebSocket       =   false;
     private String            file_keystore         =   null;
     private WebSocketHandler  wsHandler             =   null;
     
@@ -160,7 +160,7 @@ public class HttpServer {
         };
     };
     
-    private class HttpEventHandler extends lotus.nio.IoHandler{
+    private class HttpEventHandler extends IoHandler{
         
         @Override
         public void onRecvMessage(Session session, Object msg)throws Exception {

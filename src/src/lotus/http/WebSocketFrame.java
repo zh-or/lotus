@@ -58,7 +58,12 @@ public class WebSocketFrame {
     }
 
     public static WebSocketFrame pong() {
+        return pong(null);
+    }
+    
+    public static WebSocketFrame pong(byte[] data) {
         WebSocketFrame frame = new WebSocketFrame(OPCODE_PONG);
+        frame.body = data;
         return frame;
     }
     
