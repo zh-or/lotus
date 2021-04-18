@@ -13,6 +13,8 @@ import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,7 +22,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import lotus.utils.Base64;
 import lotus.utils.Utils;
@@ -99,7 +105,7 @@ public class WebSocketClient {
                 port = port == -1 ? 443 : port;
                 sslCtx = SSLContext.getInstance("TLSv1.2");
                 try {
-                    sslCtx.init(null, null, null);
+                    sslCtx.init(null, new TrustManager[] { new TrustAnyTrustManager() },  new java.security.SecureRandom());
                     if(proxy != null) {
                         Socket tSock = new Socket(proxy);
                         //tSock.setTcpNoDelay(true);
@@ -435,4 +441,25 @@ public class WebSocketClient {
             callClose();
         }
     };
+    
+    private static class TrustAnyTrustManager implements X509TrustManager {
+        
+        public void checkClientTrusted(X509Certificate[] chain, String authType)
+                throws CertificateException {
+        }
+ 
+        public void checkServerTrusted(X509Certificate[] chain, String authType)
+                throws CertificateException {
+        }
+ 
+        public X509Certificate[] getAcceptedIssuers() {
+            return new X509Certificate[] {};
+        }
+    }
+ 
+    private static class TrustAnyHostnameVerifier implements HostnameVerifier {
+            public boolean verify(String hostname, SSLSession session) {
+                return true;
+            }
+    }
 }
