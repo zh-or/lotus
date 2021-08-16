@@ -173,6 +173,14 @@ public abstract class Session {
         }
     }
     
+    @Override
+    public boolean equals(Object obj) {
+        if(obj != null && obj instanceof Session) {
+            return id == ((Session) obj).id;
+        }
+        return false;
+    }
+    
     public void _notify(){
         synchronized (recvPackwait) {
             isWaitForRecvPack = false;

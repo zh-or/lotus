@@ -148,10 +148,10 @@ public class WebSocketClient {
         }
         //int len = this.cIn.read(readCache, 0, readCacheLen);
         String upgrade = sb1.toString();
-        String accept = Utils.getMid(upgrade, "Sec-WebSocket-Accept: ", "\r\n");
+        String accept = Utils.getMid(upgrade.toLowerCase(), "Sec-WebSocket-Accept: ".toLowerCase(), "\r\n");
 
         try {
-            String selfAccept = Base64.byteArrayToBase64(Utils.SHA1(key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"));
+            String selfAccept = Base64.byteArrayToBase64(Utils.SHA1(key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11")).toLowerCase();
             if (selfAccept == null || !selfAccept.equals(accept)) {
                 System.out.println(accept);
                 System.out.println(selfAccept);
