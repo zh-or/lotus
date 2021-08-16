@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
+import lotus.utils.Utils;
+
 /**
  * 简单ini配置文件读取
  * @author OR
@@ -156,7 +158,11 @@ public class Config {
         if(child == null) return new ArrStringValue().put(defaultvalue);
         ArrStringValue val = child.get(childkey);
         if(val == null){
-            return new ArrStringValue().put(defaultvalue);
+            ArrStringValue vals = new ArrStringValue();
+            if(!Utils.CheckNull(defaultvalue)) {
+                vals.put(defaultvalue);
+            }
+            return vals;
         }
         return val;
 	}
