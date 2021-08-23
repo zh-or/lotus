@@ -28,7 +28,7 @@ public class HttpServer {
     public HttpServer() {
         server = new NioTcpServer();
         server.setHandler(ioHandler);
-
+        
         charset = Charset.forName("utf-8");
         server.setProtocolCodec(new HttpProtocolCodec(this));
         server.setSessionIdleTime(20000);/*keep-alive*/
@@ -127,44 +127,51 @@ public class HttpServer {
     private IoHandler ioHandler = new IoHandler() {
         @Override
         public void onRecvMessage(Session session, Object msg)throws Exception {
-            HttpRequest request = (HttpRequest) msg;
+            HttpRequest request = null;
+            HttpResponse response = null;
+            try{
+                request = (HttpRequest) msg;
 
-            HttpResponse response = HttpResponse.defaultResponse(session, request);
-            response.setCharacterEncoding(request.getCharacterEncoding());
+                response = HttpResponse.defaultResponse(session, request);
+                response.setCharacterEncoding(request.getCharacterEncoding());
 
-            if(request.isWebSocketConnection()){
-                session.setProtocolCodec(new WebSocketProtocolCodec());
-                session.setIoHandler(wsIoHandler);
-                session.setAttr(WS_HTTP_REQ, request);
-            
-                response.flush();
-                if(handler == null) {
+                if(request.isWebSocketConnection()){
+                    session.setProtocolCodec(new WebSocketProtocolCodec());
+                    session.setIoHandler(wsIoHandler);
+                    session.setAttr(WS_HTTP_REQ, request);
+                
+                    response.flush();
+                    if(handler == null) {
+                        return;
+                    }
+
+                    handler.wsConnection(session, request);
                     return;
                 }
 
-                handler.wsConnection(session, request);
-                return;
-            }
+                response.setHeader("Content-Type", "text/html; charset=" + charset.displayName());
 
-            response.setHeader("Content-Type", "text/html; charset=" + charset.displayName());
-
-            if(handler != null) {
-                handler.service(request.getMothed(), request, response);
-                response.flush();
-                if("close".equals(request.getHeader("connection"))){
-                    /*简单判断
-                     * keep-alive 则不关闭
-                     * */
+                if(handler != null) {
+                    handler.service(request.getMothed(), request, response);
+                    response.flush();
+                    if("close".equals(request.getHeader("connection"))){
+                        /*简单判断
+                         * keep-alive 则不关闭
+                         * */
+                        session.closeOnFlush();
+                    }
+                    if(response.isOpenSync()) {
+                        response.syncEnd();
+                    }
+                } else {
+                    response.setStatus(ResponseStatus.CLIENT_ERROR_NOT_FOUND);
+                    response.flush();
                     session.closeOnFlush();
                 }
-                if(response.isOpenSync()) {
-                    response.syncEnd();
-                }
-            } else {
-                response.setStatus(ResponseStatus.CLIENT_ERROR_NOT_FOUND);
-                response.flush();
-                session.closeOnFlush();
+            }catch(Throwable e){
+                handler.exception(e, request, response);
             }
+            
         }
         
         public void onSentMessage(Session session, Object msg) throws Exception {

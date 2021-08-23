@@ -108,19 +108,17 @@ public abstract class Session {
         this.readcache = buffer;
     }
     
+    /**
+     * 从缓存中获取buffer
+     * @param len 大于预设大小则会分配新buffer
+     * @return
+     */
     public ByteBuffer getWriteCacheBuffer(int len) {
-        ByteBuffer buff = context.getByteBufferFormCache();
-        if(buff.capacity() < len){
-            context.putByteBufferToCache(buff);
-            buff = ByteBuffer.allocate(len);
-        }
-        return buff;
+        return context.getByteBufferFormCache(len);
     }
     
     public void putWriteCacheBuffer(ByteBuffer buff){
-        if(buff.capacity() == context.getSessionCacheBufferSize()) {
-            context.putByteBufferToCache(buff);
-        }
+        context.putByteBufferToCache(buff);
     }
     
     public boolean IsRuningEvent(){

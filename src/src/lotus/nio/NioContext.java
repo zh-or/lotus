@@ -150,20 +150,29 @@ public abstract class NioContext {
         return this.handler;
     }
     
-    public ByteBuffer getByteBufferFormCache(){
-        ByteBuffer buffer = bufferlist.poll();
+    public ByteBuffer getByteBufferFormCache() {
+        return getByteBufferFormCache(buff_read_cache_size);
+    }
+    
+    public ByteBuffer getByteBufferFormCache(int size) {
+        ByteBuffer buffer = null;
+        if(size <= buff_read_cache_size) {
+            size = buff_read_cache_size;
+            buffer = bufferlist.poll();
+        }
+        
         if(buffer == null){
             if(use_direct_buffer) {
-                buffer = ByteBuffer.allocateDirect(buff_read_cache_size);
+                buffer = ByteBuffer.allocateDirect(size);
             }else {
-                buffer = ByteBuffer.allocate(buff_read_cache_size);
+                buffer = ByteBuffer.allocate(size);
             }
         }
         return buffer;
     }
     
     public void putByteBufferToCache(ByteBuffer buffer){
-        if(buffer != null && (buffer.capacity() <= buff_read_cache_size) && (bufferlist.size() < buffer_list_length)){
+        if(buffer != null && (buffer.capacity() == buff_read_cache_size) && (bufferlist.size() < buffer_list_length)){
             buffer.clear();
             bufferlist.add(buffer);
         }else{/*丢弃被扩容过的buffer*/

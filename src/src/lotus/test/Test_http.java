@@ -66,8 +66,12 @@ public class Test_http extends HttpHandler{
             @Override
             public void service(HttpMethod mothed, HttpRequest request, HttpResponse response) {
                 log.info("http request: %s", request.toString());
-                
-                response.write(_createResponse(STATE_PARAMETER_ERROR, "123"));
+                StringBuffer sb = new StringBuffer(1024 * 5);
+                for(int i = 0; i < sb.capacity(); i++) {
+                    sb.append("x");
+                }
+                response.write(_createResponse(STATE_PARAMETER_ERROR, "\"" + sb.toString() + "\""));
+                response.write(_createResponse(STATE_PARAMETER_ERROR, "\"" + sb.toString() + "\""));
             }
         });
         httpserver.start(new InetSocketAddress(8090));

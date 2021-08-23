@@ -146,7 +146,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
                                 readcache.get(tmp_buffer, 0, limit);
                                 int newLen = readcache.capacity() * 2;;
                                 context.putByteBufferToCache(readcache);/*回收了*/
-                                ByteBuffer newreadcache = ByteBuffer.allocateDirect(newLen);
+                                ByteBuffer newreadcache = context.getByteBufferFormCache(newLen);
                                 //session.resetCapacity(tmpdata, limit);/*直接扩容 缓存大小设置好点, 就不会有这些蛋疼的问题了*/
                                 /*扩容后这便是一个新的obj了, 故手动更新*/
                                 newreadcache.put(tmp_buffer, 0, limit);
