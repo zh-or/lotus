@@ -2,7 +2,6 @@ package lotus.http.server.support;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -180,7 +179,7 @@ public class HttpResponse {
     
     public HttpResponse flush(){
     	if(!isSendHeader){
-    		setHeader("Content-Length", buff.position() + "");
+    		setHeader("Content-Length", buff.capacity() - buff.remaining() + "");
     		sendHeader();
     	}
     	if(buff.limit() > 0){

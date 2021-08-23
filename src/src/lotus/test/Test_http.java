@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.ByteBuffer;
 
 import lotus.http.WebSocketFrame;
 import lotus.http.server.HttpHandler;
@@ -14,7 +15,7 @@ import lotus.http.server.support.HttpResponse;
 import lotus.log.Log;
 import lotus.nio.Session;
 
-public class Test_http extends HttpHandler{
+public class Test_http {
     static HttpServer httpserver;
     static Log        log = Log.getInstance();
     enum Test{
@@ -37,6 +38,20 @@ public class Test_http extends HttpHandler{
         
         Test t = Test.valueOf("B");
         System.out.println(t + " " + t.type);
+        byte[] bytes = new byte[]{0x01, 0x02, 0x03};
+        ByteBuffer buff = ByteBuffer.allocate(1024);
+        buff.put(bytes);
+        
+        
+        System.out.println(String.format(
+                "pos:%d, limit:%d, cap:%d, remaining:%d, size:%d", 
+                buff.position(), 
+                buff.limit(), 
+                buff.capacity(),
+                buff.remaining(),
+                buff.capacity() - buff.remaining()
+                ));
+        //System.exit(0);
         httpserver = new HttpServer();
         httpserver.enableWebSocket(true);
         httpserver.setHandler(new HttpHandler() {
@@ -70,21 +85,13 @@ public class Test_http extends HttpHandler{
                 for(int i = 0; i < sb.capacity(); i++) {
                     sb.append("x");
                 }
-                response.write(_createResponse(STATE_PARAMETER_ERROR, "\"" + sb.toString() + "\""));
-                response.write(_createResponse(STATE_PARAMETER_ERROR, "\"" + sb.toString() + "\""));
+                //response.write(sb.toString());
+                response.write("中文");
             }
         });
         httpserver.start(new InetSocketAddress(8090));
         log.info("启动完成...");
     }
     
-    @Override
-    public void service(HttpMethod mothed, HttpRequest request, HttpResponse response) {
-//    	response.sendRedirect("/?a=b");
-        System.out.println(request.getFullPath());
-//        System.out.println(request.getRemoteAddress());
-      //  response.setStatus(ResponseStatus.CLIENT_ERROR_NOT_FOUND);
-        response.write("hello world");
-        
-    }
+
 }
