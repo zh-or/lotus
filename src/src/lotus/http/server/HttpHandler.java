@@ -11,37 +11,34 @@ import lotus.nio.Session;
 public abstract class HttpHandler {
     
 
-    public void service(HttpMethod mothed, HttpRequest request, HttpResponse response) {
-        try{
-            switch (mothed) {
-                case GET:
-                    this.get(request, response);
-                    break;
-                case POST:
-                    this.post(request, response);
-                    break;
-                case CONNECT:
-                    this.connect(request, response);
-                    break;
-                case DELETE:
-                    this.delete(request, response);
-                    break;
-                case HEAD:
-                    this.head(request, response);
-                    break;
-                case OPTIONS:
-                    this.options(request, response);
-                    break;
-                case PUT:
-                    this.put(request, response);
-                    break;
-                case TRACE:
-                    this.trace(request, response);
-                    break;
-            }
-        }catch(Throwable e){
-            exception(e, request, response);
+    public void service(HttpMethod mothed, HttpRequest request, HttpResponse response) throws Exception {
+        switch (mothed) {
+            case GET:
+                this.get(request, response);
+                break;
+            case POST:
+                this.post(request, response);
+                break;
+            case CONNECT:
+                this.connect(request, response);
+                break;
+            case DELETE:
+                this.delete(request, response);
+                break;
+            case HEAD:
+                this.head(request, response);
+                break;
+            case OPTIONS:
+                this.options(request, response);
+                break;
+            case PUT:
+                this.put(request, response);
+                break;
+            case TRACE:
+                this.trace(request, response);
+                break;
         }
+        
     }
     
     public void get(HttpRequest request, HttpResponse response) throws Exception{}

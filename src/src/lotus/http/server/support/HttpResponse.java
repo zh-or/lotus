@@ -132,14 +132,11 @@ public class HttpResponse {
             len += 4;
             len += hexlen.length();
         }
-    	if(buff.remaining() < b.length){/*需要扩容*/
-    		byte[] data = Arrays.copyOf(buff.array(), buff.limit() + b.length);
-    		ByteBuffer newBuff = session.getWriteCacheBuffer(buff.limit() + b.length);
-    		newBuff.put(buff.array());
-    		newBuff.put(data);
-    		
+    	if(buff.remaining() < len){/*需要扩容*/
+    	    int newSize = buff.position() + len;
+    		ByteBuffer newBuff = session.getWriteCacheBuffer(newSize);
+    		newBuff.put(buff.array(), 0, buff.position());
     		session.putWriteCacheBuffer(buff);
-    		
     		buff = newBuff;
     	}
     	if(isOpenSync) {
@@ -172,9 +169,9 @@ public class HttpResponse {
     		sb.append("\r\n");
     	}
     	sb.append("\r\n");
-    	
-    	ByteBuffer buffer = session.getWriteCacheBuffer(sb.length());
-    	buffer.put(sb.toString().getBytes());
+    	byte[] bytes = sb.toString().getBytes(charset);
+    	ByteBuffer buffer = session.getWriteCacheBuffer(bytes.length);
+    	buffer.put(bytes);
     	buffer.flip();
     	session.write(buffer);
     	isSendHeader = true;
