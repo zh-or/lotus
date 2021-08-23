@@ -109,6 +109,8 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
                     int len = session.getChannel().read(readcache);
                     if(len < 0){/*EOF*/
                         session.closeNow();
+                        context.putByteBufferToCache(readcache);
+                        session.updateReadCacheBuffer(null);
                         continue;
                     }else{
                         //capacity 容量
@@ -180,7 +182,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
                             while(out.hasRemaining()) {/*这里最好不要写入超过8k的数据*/
                                 session.getChannel().write(out);
                             }
-                            out.clear();
+                            session.putWriteCacheBuffer(out);
                             session.setLastActive(System.currentTimeMillis());
                             /*call message sent*/
                             session.pushEventRunnable(new IoEventRunnable(msg, IoEventType.SESSION_SENT, session, context));

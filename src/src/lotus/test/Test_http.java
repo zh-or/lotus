@@ -5,18 +5,18 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import lotus.http.server.HttpMethod;
-import lotus.http.server.HttpRequest;
-import lotus.http.server.HttpResponse;
+import lotus.http.WebSocketFrame;
+import lotus.http.server.HttpHandler;
 import lotus.http.server.HttpServer;
-import lotus.http.server.WsRequest;
-import lotus.http.server.WsResponse;
-import lotus.http.server.support.HttpHandler;
-import lotus.http.server.support.WebSocketHandler;
+import lotus.http.server.support.HttpMethod;
+import lotus.http.server.support.HttpRequest;
+import lotus.http.server.support.HttpResponse;
+import lotus.log.Log;
 import lotus.nio.Session;
 
 public class Test_http extends HttpHandler{
     static HttpServer httpserver;
+    static Log        log = Log.getInstance();
     enum Test{
         A(1),
         B(2),
@@ -38,22 +38,40 @@ public class Test_http extends HttpHandler{
         Test t = Test.valueOf("B");
         System.out.println(t + " " + t.type);
         httpserver = new HttpServer();
-        httpserver.addHandler("*", new Test_http());
-        httpserver.setKeystoreFilePath("./a.key");
         httpserver.enableWebSocket(true);
-        httpserver.setWebSocketHandler(new WebSocketHandler() {
+        httpserver.setHandler(new HttpHandler() {
+            
             @Override
-            public void WebSocketConnection(Session session) {
-                System.out.println("ws 连接...");
+            public void wsConnection(Session session, HttpRequest request) throws Exception {
+                log.info("wsConnection, request: %s", request.toString());
             }
+            
             @Override
-            public void WebSocketMessage(Session session, WsRequest request) {
-                System.out.println("ws recv:" + new String(request.getBody()));
-                session.write(WsResponse.text("test"));
+            public void wsClose(Session session, HttpRequest request) throws Exception {
+                log.info("wsClose, request: %s", request.toString());
+            }
+            
+            @Override
+            public void wsMessage(Session session, HttpRequest request, WebSocketFrame frame) throws Exception {
+                switch(frame.opcode) {
+                    case WebSocketFrame.OPCODE_PING:
+                    case WebSocketFrame.OPCODE_CLOSE:
+                        return;
+                }
+                log.info("wsMessage, frame:%s", frame.toString());
+                
+                session.write(WebSocketFrame.text(new String(frame.getBinary())));
+            }
+            
+            @Override
+            public void service(HttpMethod mothed, HttpRequest request, HttpResponse response) {
+                log.info("http request: %s", request.toString());
+                
+                response.write(_createResponse(STATE_PARAMETER_ERROR, "123"));
             }
         });
         httpserver.start(new InetSocketAddress(8090));
-        System.out.println("启动完成...");
+        log.info("启动完成...");
     }
     
     @Override
