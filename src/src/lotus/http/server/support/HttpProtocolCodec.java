@@ -2,9 +2,7 @@ package lotus.http.server.support;
 
 import java.nio.ByteBuffer;
 
-import lotus.http.server.HttpRequest;
 import lotus.http.server.HttpServer;
-import lotus.http.server.HttpStatus;
 import lotus.nio.ProtocolCodec;
 import lotus.nio.ProtocolDecoderOutput;
 import lotus.nio.Session;
@@ -14,7 +12,7 @@ public class HttpProtocolCodec implements ProtocolCodec{
     private static final String STATUS          =   "http-status";
     private static final String CONTENT_LENGTH  =   "content-length";
     private static final String REQUEST         =   "http-request";
-    private HttpServer context                  =   null;
+    private HttpServer   context                =   null;
     
     public HttpProtocolCodec(HttpServer context) {
         this.context = context;
@@ -83,7 +81,7 @@ public class HttpProtocolCodec implements ProtocolCodec{
                         req.setBody(body);
                         out.write(req);
                         session.removeAttr(CONTENT_LENGTH);
-                        session.setAttr(STATUS, HttpStatus.HEAD);//不知道为什么以前这里写漏了???
+                        session.setAttr(STATUS, HttpStatus.HEAD);
                         return true;
                     }else{
                         return false;

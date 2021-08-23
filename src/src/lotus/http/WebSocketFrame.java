@@ -117,7 +117,7 @@ public class WebSocketFrame {
 
     @Override
     public String toString() {
-        return "WebSocketFrame [fin=" + fin + ", rsv1=" + rsv1 + ", rsv2=" + rsv2 + ", rsv3=" + rsv3 + ", opcode=" + opcode + ", masked=" + masked + ", payload=" + payload + ", mask=" + Arrays.toString(mask) + ", body=" + (body == null ? "null" : body.length) + "]";
+        return "WebSocketFrame [fin=" + fin + ", rsv1=" + rsv1 + ", rsv2=" + rsv2 + ", rsv3=" + rsv3 + ", opcode=" + opcode + ", masked=" + masked + ", payload=" + payload + ", mask=" + Arrays.toString(mask) + ", body=" + (body == null ? "null" : body.length) + "]" + (opcode == OPCODE_TEXT ? ("\n body=" + new String(getBinary())) : "");
     }
     
 }

@@ -7,7 +7,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public abstract class NioContext {
-    private static final int        DEF_BUFFER_LIST_MAX_SIZE        =   2048;
+    private static final int        DEF_BUFFER_LIST_MAX_SIZE        =   1024;
     public static final int         SELECT_TIMEOUT                  =   10000;
     
 	protected int                   selector_thread_total           =   0;

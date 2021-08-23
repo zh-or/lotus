@@ -1,4 +1,4 @@
-package lotus.http.server;
+package lotus.http.server.support;
 
 public class Cookie {
     public String path;

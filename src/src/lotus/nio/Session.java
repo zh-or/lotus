@@ -93,14 +93,22 @@ public abstract class Session {
         return deout;
     }
 
-    public ByteBuffer getReadCacheBuffer(){
+    /**
+     * 这个buffer用来缓存已经从io中读取到的数据
+     * @return
+     */
+    public ByteBuffer getReadCacheBuffer() {
         if(readcache == null){
             return context.getByteBufferFormCache();
         }
     	return readcache;
     }
     
-    public ByteBuffer getWriteCacheBuffer(int len){
+    public void updateReadCacheBuffer(ByteBuffer buffer) {
+        this.readcache = buffer;
+    }
+    
+    public ByteBuffer getWriteCacheBuffer(int len) {
         ByteBuffer buff = context.getByteBufferFormCache();
         if(buff.capacity() < len){
             context.putByteBufferToCache(buff);
@@ -110,15 +118,10 @@ public abstract class Session {
     }
     
     public void putWriteCacheBuffer(ByteBuffer buff){
-        if(buff.capacity() == context.getSessionCacheBufferSize()){
+        if(buff.capacity() == context.getSessionCacheBufferSize()) {
             context.putByteBufferToCache(buff);
         }
     }
-
-    public void updateReadCacheBuffer(ByteBuffer buffer){
-        this.readcache = buffer;
-    }
-    
     
     public boolean IsRuningEvent(){
         return runingevent;
