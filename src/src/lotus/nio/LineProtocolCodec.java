@@ -40,14 +40,13 @@ public class LineProtocolCodec implements ProtocolCodec{
 		in.reset();
 		return false;
 	}
-
+    
 	@Override
-	public ByteBuffer encode(Session session, Object msg)  throws Exception{
-		byte[] data = (byte[]) msg;
-	    ByteBuffer out = ByteBuffer.allocate(data.length);
-	    out.put(data);
-	    out.flip();
-	    return out;
-	}
+	public boolean encode(Session session, Object msg, LotusIOBuffer out)  throws Exception{
+	    byte[] content = (byte[]) msg;
+        out.append(content);
+        out.append((byte) line);
+        return true;
+    }
 
 }

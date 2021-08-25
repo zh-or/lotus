@@ -1,5 +1,8 @@
 package lotus.http.server.support;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Date;
@@ -124,7 +127,7 @@ public class HttpResponse {
     	return this;
     }
     
-    public HttpResponse write(byte[] b){
+    public HttpResponse write(byte[] b) {
         int len = b.length;
         String hexlen = Integer.toHexString(len);
         if(isOpenSync) {
@@ -149,6 +152,28 @@ public class HttpResponse {
     	return this;
     }
     
+    /**
+     * 此方法在一个请求中只能调用一次, 如需多次写入 请调用 write 方法,
+     * 小文件直接全部读出来一次发送会比较好, 此方法适用发送大文件(2G内).
+     * 此方法可能会导致文件被锁住
+     * @param file
+     * @throws IOException 
+     */
+    public void sendFile(File file) throws IOException {
+        if(!isSendHeader){
+            try(FileInputStream in = new FileInputStream(file)) {
+                setHeader("Content-Length", in.available() + "");
+                sendHeader();
+            }
+        }
+        session.write(
+            new HttpMessageWrap(
+                HttpMessageWrap.HTTP_MESSAGE_TYPE_FILE, 
+                file
+            )
+        );
+    }
+    
     public void syncEnd() {
         isOpenSync = false;
         write("0\r\n\r\n");
@@ -171,20 +196,28 @@ public class HttpResponse {
     	byte[] bytes = sb.toString().getBytes(charset);
     	ByteBuffer buffer = session.getWriteCacheBuffer(bytes.length);
     	buffer.put(bytes);
-    	buffer.flip();
-    	session.write(buffer);
+    	session.write(
+                new HttpMessageWrap(
+                        HttpMessageWrap.HTTP_MESSAGE_TYPE_HEADER, 
+                        buffer
+                    )
+                );
     	isSendHeader = true;
     	return this;
     }
     
-    public HttpResponse flush(){
+    public HttpResponse flush() {
     	if(!isSendHeader){
     		setHeader("Content-Length", buff.capacity() - buff.remaining() + "");
     		sendHeader();
     	}
     	if(buff.limit() > 0){
-    	    buff.flip();
-    		session.write(buff);
+            session.write(
+                    new HttpMessageWrap(
+                            HttpMessageWrap.HTTP_MESSAGE_TYPE_BUFFER, 
+                            buff
+                        )
+                    );
     		//buff.clear();
     	}
     	return this;

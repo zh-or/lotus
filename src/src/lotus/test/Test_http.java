@@ -6,6 +6,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 
+import lotus.format.Format;
 import lotus.http.WebSocketFrame;
 import lotus.http.server.HttpHandler;
 import lotus.http.server.HttpServer;
@@ -54,16 +55,18 @@ public class Test_http {
         //System.exit(0);
         httpserver = new HttpServer();
         httpserver.enableWebSocket(true);
+        httpserver.setEventThreadPoolSize(10);
+        httpserver.setReadBufferCacheSize(1024 * 4);
         httpserver.setHandler(new HttpHandler() {
             
             @Override
             public void wsConnection(Session session, HttpRequest request) throws Exception {
-                log.info("wsConnection, request: %s", request.toString());
+                //log.info("wsConnection, request: %s", request.toString());
             }
             
             @Override
             public void wsClose(Session session, HttpRequest request) throws Exception {
-                log.info("wsClose, request: %s", request.toString());
+                //log.info("wsClose, request: %s", request.toString());
             }
             
             @Override
@@ -73,14 +76,23 @@ public class Test_http {
                     case WebSocketFrame.OPCODE_CLOSE:
                         return;
                 }
-                log.info("wsMessage, frame:%s", frame.toString());
+                //log.info("wsMessage, frame:%s", frame.toString());
                 
                 session.write(WebSocketFrame.text(new String(frame.getBinary())));
             }
             
             @Override
             public void service(HttpMethod mothed, HttpRequest request, HttpResponse response) {
-                log.info("http request: %s", request.toString());
+                
+                try {
+                    if(this.defFileRequest("./", request, response)) {
+                        return;
+                    }
+                } catch (Exception e) {
+                    log.error("请求文件出错:%s", Format.formatException(e));
+                }
+                
+                //log.info("http request: %s", request.toString());
                 StringBuffer sb = new StringBuffer(1024 * 5);
                 for(int i = 0; i < sb.capacity(); i++) {
                     sb.append("x");

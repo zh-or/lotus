@@ -1,8 +1,13 @@
 package lotus.http.server.support;
 
+import java.io.File;
 import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.file.StandardOpenOption;
 
 import lotus.http.server.HttpServer;
+import lotus.nio.LotusIOBuffer;
 import lotus.nio.ProtocolCodec;
 import lotus.nio.ProtocolDecoderOutput;
 import lotus.nio.Session;
@@ -95,9 +100,30 @@ public class HttpProtocolCodec implements ProtocolCodec{
         
         return false;
     }
-
+    
     @Override
-    public ByteBuffer encode(Session session, Object msg) throws Exception {
-        return (ByteBuffer) msg;
+    public boolean encode(Session session, Object msg, LotusIOBuffer out) throws Exception {
+        HttpMessageWrap wrap = (HttpMessageWrap) msg;
+        switch(wrap.type) {
+            case HttpMessageWrap.HTTP_MESSAGE_TYPE_HEADER:
+            case HttpMessageWrap.HTTP_MESSAGE_TYPE_BUFFER:
+                out.append((ByteBuffer) wrap.data);
+                return true;
+
+            case HttpMessageWrap.HTTP_MESSAGE_TYPE_FILE:
+                File file = (File) wrap.data;
+                
+                try (FileChannel channel = FileChannel.open(file.toPath(), StandardOpenOption.READ);) {
+                    long len = file.length();
+                    MappedByteBuffer mapBuffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, len);
+                    mapBuffer.position((int) len);
+                    out.append(mapBuffer);
+                    channel.close();
+                    return true;
+                } 
+
+        }
+        return true;
+  
     }
 }

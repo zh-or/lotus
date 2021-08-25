@@ -50,19 +50,15 @@ public class LengthProtocolCode implements ProtocolCodec{
 	}
 
 	@Override
-	public ByteBuffer encode(Session session, Object msg) throws Exception{
+	public boolean encode(Session session, Object msg, LotusIOBuffer out) throws Exception {
+
         byte[] content = (byte[]) msg;
-	    
-	    ByteBuffer buff = session.getWriteCacheBuffer(content.length + 2 + 2);
-	    buff.put((byte) 0x02);
-	    buff.put(Utils.short2byte(content.length + 2 + 2));
-	    buff.put(content);
-	    buff.put((byte) 0x03);
-        byte[] send =  new byte[content.length + 2 + 2];
-        send[0] = 0x02;
-        send[send.length - 1] = 0x03;
-        buff.flip();
-        return buff;
+        int len = content.length + 2 + 2;
+        out.append((byte) 0x02);
+        out.append(Utils.short2byte(len));
+        out.append(content);
+        out.append((byte) 0x03);
+        return true;
 	}
 
 }

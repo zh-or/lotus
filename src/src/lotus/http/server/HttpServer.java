@@ -135,7 +135,7 @@ public class HttpServer {
                 response = HttpResponse.defaultResponse(session, request);
                 response.setCharacterEncoding(request.getCharacterEncoding());
 
-                if(request.isWebSocketConnection()){
+                if(request.isWebSocketConnection()) {
                     session.setProtocolCodec(new WebSocketProtocolCodec());
                     session.setIoHandler(wsIoHandler);
                     session.setAttr(WS_HTTP_REQ, request);
@@ -186,8 +186,12 @@ public class HttpServer {
 
         @Override
         public void onException(Session session, Throwable e) {
-            session.closeNow();
-            e.printStackTrace();
+            try {
+                session.closeNow();
+                handler.exception(e, null, null);
+            } catch(Exception e2) {
+                e2.printStackTrace();
+            }
         }
 
     };

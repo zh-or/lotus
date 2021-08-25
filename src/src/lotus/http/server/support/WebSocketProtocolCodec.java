@@ -4,6 +4,7 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 
 import lotus.http.WebSocketFrame;
+import lotus.nio.LotusIOBuffer;
 import lotus.nio.ProtocolCodec;
 import lotus.nio.ProtocolDecoderOutput;
 import lotus.nio.Session;
@@ -77,12 +78,13 @@ public class WebSocketProtocolCodec implements ProtocolCodec{
     }
 
     @Override
-    public ByteBuffer encode(Session session, Object msg) throws Exception {
-        if(msg instanceof ByteBuffer){
-            return (ByteBuffer) msg;
+    public boolean encode(Session session, Object msg, LotusIOBuffer out) throws Exception {
+        if(msg instanceof HttpMessageWrap) {
+            out.append((ByteBuffer) ((HttpMessageWrap) msg).data);
+            return true;
         }
+        
         WebSocketFrame frame   = (WebSocketFrame) msg;
-        ByteBuffer     buff    = null;
         int            datalen = (frame.body != null ? frame.body.length : 0);
         
         byte b1 = 
@@ -96,34 +98,31 @@ public class WebSocketProtocolCodec implements ProtocolCodec{
         
         if(datalen < 126) {
             b2 = (byte) (b2 | datalen);
-            buff = session.getWriteCacheBuffer(datalen + 2);
-            buff.put(b1);
-            buff.put(b2);
+            out.append(b1);
+            out.append(b2);
         }else if(datalen < 65535) {
             b2 = (byte) (b2 | 126);
             //发送2b长度
-            buff = session.getWriteCacheBuffer(datalen + 4);
-            buff.put(b1);
-            buff.put(b2);
-            buff.put((byte) (datalen >>> 8));
-            buff.put((byte) (datalen & 0xff));
+            out.append(b1);
+            out.append(b2);
+            out.append((byte) (datalen >>> 8));
+            out.append((byte) (datalen & 0xff));
         }else {
             b2 = (byte) (b2 | 127);
             //发送8b长度
-            buff = session.getWriteCacheBuffer(datalen + 8);
-            buff.put(b1);
-            buff.put(b2);
-            buff.put((byte) (datalen & 0xff));
-            buff.put((byte) ((datalen >>> 8) & 0xff));
-            buff.put((byte) ((datalen >>> 16) & 0xff));
-            buff.put((byte) ((datalen >>> 24) & 0xff));
-            buff.put((byte) ((datalen >>> 32) & 0xff));
-            buff.put((byte) ((datalen >>> 40) & 0xff));
-            buff.put((byte) ((datalen >>> 48) & 0xff));
-            buff.put((byte) ((datalen >>> 56) & 0xff));
+            out.append(b1);
+            out.append(b2);
+            out.append((byte) (datalen & 0xff));
+            out.append((byte) ((datalen >>> 8) & 0xff));
+            out.append((byte) ((datalen >>> 16) & 0xff));
+            out.append((byte) ((datalen >>> 24) & 0xff));
+            out.append((byte) ((datalen >>> 32) & 0xff));
+            out.append((byte) ((datalen >>> 40) & 0xff));
+            out.append((byte) ((datalen >>> 48) & 0xff));
+            out.append((byte) ((datalen >>> 56) & 0xff));
         }
         if(frame.mask != null) {
-            buff.put(frame.mask);
+            out.append(frame.mask);
         }
         
         if(datalen > 0) {
@@ -133,10 +132,10 @@ public class WebSocketProtocolCodec implements ProtocolCodec{
                     frame.body[i] = (byte) (frame.body[i] ^ frame.mask[i % 4]);
                 }
             }
-            buff.put(frame.body);
+            out.append(frame.body);
         }
-        buff.flip();
-        return buff;
+     
+        return true;
     }
 
 }

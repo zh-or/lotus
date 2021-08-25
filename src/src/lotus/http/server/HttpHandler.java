@@ -1,11 +1,18 @@
 package lotus.http.server;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.util.Date;
+
 import lotus.http.WebSocketFrame;
 import lotus.http.server.support.HttpMethod;
 import lotus.http.server.support.HttpRequest;
 import lotus.http.server.support.HttpResponse;
 import lotus.http.server.support.ResponseStatus;
 import lotus.nio.Session;
+import lotus.utils.Utils;
 
 
 public abstract class HttpHandler {
@@ -41,7 +48,10 @@ public abstract class HttpHandler {
         
     }
     
-    public void get(HttpRequest request, HttpResponse response) throws Exception{}
+    public void get(HttpRequest request, HttpResponse response) throws Exception {
+        defFileRequest("./", request, response);
+    }
+    
     public void post(HttpRequest request, HttpResponse response) throws Exception{}
     public void connect(HttpRequest request, HttpResponse response) throws Exception{}
     public void delete(HttpRequest request, HttpResponse response) throws Exception{}
@@ -84,6 +94,24 @@ public abstract class HttpHandler {
         return false;
     }
     
+    public static String _filename2type(String pathname){
+        if(pathname.indexOf(".js") != -1 ){
+            return "application/javascript; charset=utf-8";
+        }
+        if(pathname.indexOf(".html") != -1 ){
+            return "text/html; charset=utf-8";
+        }
+        if(pathname.indexOf(".gif") != -1 ){
+            return "image/gif";
+        }
+        if(pathname.indexOf(".png") != -1 ){
+            return "image/png";
+        }
+        if(pathname.indexOf(".jpg") != -1 ){
+            return "image/jpg";
+        }
+        return "";
+    }
 
     /*参数错误*/
     public static final int STATE_PARAMETER_ERROR       =   -3;
@@ -124,8 +152,54 @@ public abstract class HttpHandler {
      * @param request
      * @param response
      */
-    public void exception(Throwable e, HttpRequest request, HttpResponse response){
-        response.setStatus(ResponseStatus.SERVER_ERROR_INTERNAL_SERVER_ERROR);
+    public void exception(Throwable e, HttpRequest request, HttpResponse response) {
+        if(response != null) {
+            response.setStatus(ResponseStatus.SERVER_ERROR_INTERNAL_SERVER_ERROR);
+        }
         e.printStackTrace();
+    }
+    
+    /**
+     * 处理静态文件请求, 大于1M的文件将使用 response.sendFile 发送, 需要注意的是此方法最大能发送2G的文件
+     * @param basePath
+     * @param request
+     * @param response
+     * @return 返回 true 表示已返回文件
+     * @throws Exception 
+     */
+    public boolean defFileRequest(String basePath, HttpRequest request, HttpResponse response) throws Exception {
+        String reqPath  = request.getPath();
+        String filePath = basePath + Utils.BuildPath(reqPath);
+        File file = new File(filePath);
+        
+        if(!file.exists()) {
+            response.setStatus(ResponseStatus.CLIENT_ERROR_NOT_FOUND);
+            // 404
+            return false;
+        }
+        String web = request.getHeader("if-modified-since");
+        String self = new Date(Files.getLastModifiedTime(file.toPath(), LinkOption.NOFOLLOW_LINKS).toMillis()).toString();
+        response.setHeader("Cathe-Control", "max-age=315360000");
+        response.setHeader("Last-Modified", self);
+        
+        if(!Utils.CheckNull(web) && web.equals(self)) {
+            //缓存没有变
+            response.setStatus(ResponseStatus.REDIRECTION_NOT_MODIFIED);
+            return true;
+        }
+        boolean useSendFile = file.length() > 1024 * 1024;
+        response.setHeader("Content-Type", _filename2type(filePath));
+        if(useSendFile) {
+            response.sendFile(file);
+        } else {
+            try (FileInputStream fileIn = new FileInputStream(file);){
+                //编写文件下载
+                byte[] filedata = new byte[(int) file.length()];
+                fileIn.read(filedata);
+                response.write(filedata);
+            }
+        }
+        return true;
+        
     }
 }
