@@ -11,6 +11,7 @@ import java.util.Iterator;
 import lotus.nio.IoEventRunnable;
 import lotus.nio.IoEventRunnable.IoEventType;
 import lotus.nio.IoProcess;
+import lotus.nio.LotusIOBuffer;
 import lotus.nio.NioContext;
 import lotus.nio.ProtocolDecoderOutput;
 import lotus.nio.Session;
@@ -103,7 +104,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
                     session.closeNow();
                     continue;
                 }
-                if(key.isReadable()){/*call decode */
+                if(key.isReadable()) {/*call decode */
 //                    long s = System.currentTimeMillis();
                     ByteBuffer readcache = session.getReadCacheBuffer();
                     int len = session.getChannel().read(readcache);
@@ -112,7 +113,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
                         context.putByteBufferToCache(readcache);
                         session.updateReadCacheBuffer(null);
                         continue;
-                    }else{
+                    }else {
                         //capacity 容量
                         //limit 也就是缓冲区可以利用（进行读写）的范围的最大值
                         //position 当前读写位置
@@ -164,30 +165,38 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
                             session.pushEventRunnable(new IoEventRunnable(msgout.read(), IoEventType.SESSION_RECVMSG, session, context));
                             msgout.write(null);
                         }
-                        selector.wakeup();
+                        //selector.wakeup();
                     }
                 }
                 
                 if(key.isWritable()){/*call encode*/
+
                     Object msg = session.poolMessage();
                     if(msg != null){
-                        ByteBuffer out = null;
-                        try {
-                            //编码解码器放session更好
-                            out = session.getProtocoCodec().encode(session, msg);
-                        } catch (Exception e) {
-                            session.pushEventRunnable(new IoEventRunnable(e, IoEventType.SESSION_EXCEPTION, session, context));
-                        }
-                        if(out != null){
-                            while(out.hasRemaining()) {/*这里最好不要写入超过8k的数据*/
-                                session.getChannel().write(out);
+                        
+                        boolean repSend = false;
+                        do {
+                            LotusIOBuffer out = new LotusIOBuffer(context);
+                            try {
+                                //编码解码器放session更好
+                                repSend = !session.getProtocoCodec().encode(session, msg, out);
+                                ByteBuffer[] buffers = out.getAllBuffer();
+                                for(ByteBuffer buff : buffers) {
+                                    buff.flip();
+                                    while(buff.hasRemaining()) {/*这里最好不要写入超过8k的数据*/
+                                        session.getChannel().write(buff);
+                                    }
+                                }
+                                out.free();
+                                out = null;
+                            } catch (Exception e) {
+                                session.pushEventRunnable(new IoEventRunnable(e, IoEventType.SESSION_EXCEPTION, session, context));
                             }
-                            session.putWriteCacheBuffer(out);
                             session.setLastActive(System.currentTimeMillis());
-                            /*call message sent*/
-                            session.pushEventRunnable(new IoEventRunnable(msg, IoEventType.SESSION_SENT, session, context));
-                        }
-                        session.setLastActive(System.currentTimeMillis());
+                        } while(repSend);
+                        
+                        /*call message sent*/
+                        session.pushEventRunnable(new IoEventRunnable(msg, IoEventType.SESSION_SENT, session, context));
                     }else{
                         Object msglock = session.getMessageLock();
                         synchronized (msglock) {
@@ -235,6 +244,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
             } 
         }
     }    
+
     
     private void handleTimeOut(){
         Iterator<SelectionKey> keys = selector.keys().iterator();

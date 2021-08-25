@@ -59,7 +59,12 @@ public class IoEventRunnable implements Runnable{
                     handler.onClose(session);
                     break;
                 case SESSION_EXCEPTION:
-                    handler.onException(session, (Throwable) att);
+                    try{
+                        //这里的错误必须处理 否则会递归死循环
+                        handler.onException(session, (Throwable) att);
+                    } catch(Exception tobe) {
+                        tobe.printStackTrace();
+                    }
                     break;
             }
             IoEventRunnable iorun = null;
