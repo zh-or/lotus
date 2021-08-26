@@ -114,6 +114,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
                         session.updateReadCacheBuffer(null);
                         continue;
                     }else {
+                        session.setLastActive(System.currentTimeMillis());
                         //capacity 容量
                         //limit 也就是缓冲区可以利用（进行读写）的范围的最大值
                         //position 当前读写位置
@@ -161,7 +162,6 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
                         }
                         
                         if(ishavepack){
-                            session.setLastActive(System.currentTimeMillis());
                             session.pushEventRunnable(new IoEventRunnable(msgout.read(), IoEventType.SESSION_RECVMSG, session, context));
                             msgout.write(null);
                         }
@@ -187,6 +187,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
                                         session.getChannel().write(buff);
                                     }
                                 }
+                                session.setLastActive(System.currentTimeMillis());
                                 out.free();
                                 out = null;
                             } catch (Exception e) {

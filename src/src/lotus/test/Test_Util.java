@@ -1,8 +1,9 @@
 package lotus.test;
 
 import java.util.Calendar;
-import java.util.Date;
 import java.util.TimeZone;
+
+import javax.rmi.CORBA.Util;
 
 import lotus.utils.Utils;
 
@@ -30,9 +31,9 @@ public class Test_Util {
         System.out.println(json);*/
         
         
-//        byte[] a = new byte[]{1,2,3,4,5,6,6,7,8,9,00,65, 12,12,33,4,1,2,5,6,1,8,9};
-//        byte[] b = new byte[]{1,8,9};
-//        System.out.println(Util.byteArrSearch(a, b));
+        byte[] a = new byte[]{1,2,3,4,5,6,6,7,8,9,00,65, 12,12,33,4,1,2,5,6,1,8,9};
+        byte[] b = new byte[]{1,8,9};
+        System.out.println(Utils.byteArrSearch(a, b));
         
         
 //        JSONObject json = new JSONObject();
@@ -56,10 +57,10 @@ public class Test_Util {
 //        System.out.println(json2);
         
         
-        String ip = "163.125.241.164";
+       /* String ip = "163.125.241.164";
         long ipint = Utils.ip2int(ip);
         System.out.println(ipint);
-        System.out.println(Utils.int2ip(ipint));
+        System.out.println(Utils.int2ip(ipint));*/
     }
     
     

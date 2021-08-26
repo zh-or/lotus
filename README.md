@@ -1,5 +1,5 @@
 ## 包含工具库
-1. 大并发轻量级NIO框架
+1. 高并发轻量级NIO框架
 2. 轻量级HTTP服务器(基于NIO)
 3. 轻量级WebSocket客户端
 4. Android JSON库copy
