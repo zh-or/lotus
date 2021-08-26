@@ -18,8 +18,8 @@ import lotus.utils.Utils;
 public abstract class HttpHandler {
     
 
-    public void service(HttpMethod mothed, HttpRequest request, HttpResponse response) throws Exception {
-        switch (mothed) {
+    public void service(HttpMethod methed, HttpRequest request, HttpResponse response) throws Exception {
+        switch (methed) {
             case GET:
                 this.get(request, response);
                 break;
@@ -64,87 +64,6 @@ public abstract class HttpHandler {
     public void wsMessage(Session session,  HttpRequest request, WebSocketFrame frame) throws Exception{ }
     public void wsClose(Session session,  HttpRequest request) throws Exception{ }
     
-
-    /**
-     * 检查参数是否为空, 值可以为空, key不能为空
-     * @param pars 参数key数组
-     * @param request
-     * @return 如果有为空的则返回 false
-     */
-    public boolean _checkparameter(String[] pars, HttpRequest request){
-        if(pars == null || pars.length <= 0) return true;
-        for(int i = 0; i < pars.length; i++){
-            if(request.getParameter(pars[i]) == null){
-                return false;
-            }
-        }
-        return true;
-    }
-    
-    /**
-     * @param pars
-     * @param val
-     * @return 如果包含则返回true
-     */
-    public boolean _filterStrings(String[] pars, String val){
-        if(pars == null || pars.length <= 0) return false;
-        for(int i = 0; i < pars.length; i++){
-            if(pars[i].equals(val)) return true;
-        }
-        return false;
-    }
-    
-    public static String _filename2type(String pathname){
-        if(pathname.indexOf(".js") != -1 ){
-            return "application/javascript; charset=utf-8";
-        }
-        if(pathname.indexOf(".html") != -1 ){
-            return "text/html; charset=utf-8";
-        }
-        if(pathname.indexOf(".gif") != -1 ){
-            return "image/gif";
-        }
-        if(pathname.indexOf(".png") != -1 ){
-            return "image/png";
-        }
-        if(pathname.indexOf(".jpg") != -1 ){
-            return "image/jpg";
-        }
-        return "";
-    }
-
-    /*参数错误*/
-    public static final int STATE_PARAMETER_ERROR       =   -3;
-    /*服务器发生错误*/
-    public static final int STATE_SERVER_ERROR          =   -2;
-    /*其他错误*/
-    public static final int STATE_ERROR                 =   -1;
-    /*未登陆*/
-    public static final int STATE_NOT_LOGIN             =   -4;
-    /*成功*/
-    public static final int STATE_RESPONSE_SUCCESS      =   1;
-    
-    public String _createResponse(int state, String data){
-        if(data == null || data == "") data = "null";
-        String res = "";
-        switch (state) {
-            case STATE_RESPONSE_SUCCESS:
-                res = String.format("{\"state\":%d, \"message\":\"%s\", \"data\": %s}", state, "请求成功", data);
-                break;
-            case STATE_PARAMETER_ERROR:
-                res = String.format("{\"state\":%d, \"message\":\"%s\", \"data\": %s}", state, "参数错误", data);
-                break;
-            case STATE_SERVER_ERROR:
-                res = String.format("{\"state\":%d, \"message\":\"%s\", \"data\": %s}", state, "服务器发生错误", data);
-                break;
-            case STATE_NOT_LOGIN:
-                data = "请先登录";
-            case STATE_ERROR:
-                res = String.format("{\"state\":%d, \"message\":\"%s\", \"data\": %s}", state, data, "null");
-                break;
-        }
-        return res;
-    }
     
     /**
      * 如果反射发生了错误 则会调用子类实现的此方法
@@ -162,13 +81,16 @@ public abstract class HttpHandler {
     /**
      * 处理静态文件请求, 大于1M的文件将使用 response.sendFile 发送, 需要注意的是此方法最大能发送2G的文件
      * @param basePath
-     * @param request
+     * @param request 如果请求路径为 / 则会默认转换为 /index.html
      * @param response
      * @return 返回 true 表示已返回文件
      * @throws Exception 
      */
     public boolean defFileRequest(String basePath, HttpRequest request, HttpResponse response) throws Exception {
         String reqPath  = request.getPath();
+        if("/".equals(reqPath)) {
+            reqPath = "/index.html";
+        }
         String filePath = basePath + Utils.BuildPath(reqPath);
         File file = new File(filePath);
         
@@ -188,7 +110,7 @@ public abstract class HttpHandler {
             return true;
         }
         boolean useSendFile = file.length() > 1024 * 1024;
-        response.setHeader("Content-Type", _filename2type(filePath));
+        response.setHeader("Content-Type", HttpResponse.filename2type(filePath));
         if(useSendFile) {
             response.sendFile(file);
         } else {

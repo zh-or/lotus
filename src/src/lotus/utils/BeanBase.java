@@ -117,4 +117,11 @@ public class BeanBase {
         return null;
     }
     
+    
+    public static <E> E SQLResToObj(Class<E> obj) {
+        Field[] fields = obj.getDeclaredFields();
+        
+        
+        return null;
+    }
 }

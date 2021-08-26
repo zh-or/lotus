@@ -183,6 +183,21 @@ public class HttpRequest {
         return val == null ? defval : val;
     }
     
+    /**
+     * 检查是否包含参数key
+     * @param pars 参数key数组
+     * @return 如果有为空的则返回 false
+     */
+    public boolean checkparameter(String[] pars){
+        if(pars == null || pars.length <= 0) return true;
+        for(int i = 0; i < pars.length; i++){
+            if(getParameter(pars[i]) == null) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
     public byte[] getBody(){
         return this.body;
     }
