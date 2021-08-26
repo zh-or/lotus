@@ -135,7 +135,7 @@ public class HttpFormData {
                                 break;
                             case 1://read meta
                                 
-                                linePos = Utils.byteArrSearch(cache, HTTP_DB_LINE_CHAR, cachePos);
+                                linePos = Utils.byteArrSearch(cache, HTTP_DB_LINE_CHAR, cachePos - 1);
                                 if(linePos == -1) {
                                     tmp = cache.length - cachePos;
                                     if(metaPos + tmp > metaTmp.length) {//扩容
@@ -171,7 +171,7 @@ public class HttpFormData {
                                 }
                                 break;
                             case 2://read data
-                                int endPos = Utils.byteArrSearch(cache, endBoundary, cachePos);
+                                int endPos = Utils.byteArrSearch(cache, endBoundary, cachePos - 1);
                                 int len;
                                 if(endPos != -1) {
                                     len = endPos - cachePos;
@@ -220,7 +220,7 @@ public class HttpFormData {
                                         contentPos = 0;
                                     }
                                    //检查是否全部读取结束 bin:ended
-                                    int e = Utils.byteArrSearch(cache, ended, cachePos);
+                                    int e = Utils.byteArrSearch(cache, ended, cachePos - 1);
                                     if(e == endPos) {
                                         //System.out.println("全部读取完毕");
                                         break;

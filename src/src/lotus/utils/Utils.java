@@ -438,13 +438,18 @@ public class Utils {
      * @return 找到了返回dest在src的起始下标 未找到返回-1 此下标从0开始
      */
     public static int byteArrSearch(byte[] src, byte[] dest, int offset) {
+        if(offset < 0) {
+            offset = 0;
+        }
         if (dest == null || src == null || src.length < dest.length)
             return -1;// fuck 了
-        int p = -1, destLenEP = dest.length - 1, srcLen = src.length - destLenEP + 1, k = 0, i = offset;
+        int p = -1, destLenEP = dest.length - 1, srcLen = src.length - destLenEP, k = 0, i = offset;
+        if((destLenEP + offset) > src.length) {
+            return -1;
+        }
         boolean foundit = true;
         for (; i < srcLen; i++) {
-            if (src[i] == dest[0] && src[i + destLenEP] == dest[destLenEP]) {// 第一个匹配
-                                                                             // 最后一个匹配
+            if (src[i] == dest[0] && src[i + destLenEP] == dest[destLenEP]) {// 第一个匹配 // 最后一个匹配
                 for (k = 0; k < destLenEP; k++) {
                     if (src[i + k] != dest[k]) {
                         foundit = false;
