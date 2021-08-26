@@ -18,7 +18,7 @@ import lotus.nio.Session;
 import lotus.utils.Utils;
 
 
-public class NioTcpIoProcess extends IoProcess implements Runnable{
+public class NioTcpIoProcess extends IoProcess implements Runnable {
 	private Selector                    selector    = null;    
     
     public NioTcpIoProcess(NioContext context) throws IOException {
@@ -27,11 +27,11 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
 		tmp_buffer = new byte[context.getSessionCacheBufferSize()];
 	}
     
-    public NioTcpSession putChannel(SocketChannel channel, long id) throws Exception{
+    public NioTcpSession putChannel(SocketChannel channel, long id) throws Exception {
         return putChannel(channel, id, true);
     }
     
-    public NioTcpSession putChannel(SocketChannel channel, long id, boolean event) throws Exception{
+    public NioTcpSession putChannel(SocketChannel channel, long id, boolean event) throws Exception {
         if(channel == null || selector == null) throw new Exception("null");
         NioTcpSession session = new NioTcpSession(context, channel, this, id);
         SelectionKey key = null;
@@ -81,7 +81,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable{
 	private byte[] tmp_buffer;
 	
     private void handleIoEvent() throws IOException {
-        if(selector.select(NioContext.SELECT_TIMEOUT) == 0){
+        if(selector.select(NioContext.SELECT_TIMEOUT) == 0) {
             if(!isrun) return;
             Utils.SLEEP(1);
             return;

@@ -1,5 +1,6 @@
 package lotus.http.server;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
@@ -24,14 +25,27 @@ public class HttpServer {
     private Charset                     charset             =   null;
     private boolean                     enableWebSocket     =   false;
     private HttpHandler                 handler             =   null;
-
+    private String                      uploadTmpDir        =   null;
+    
     public HttpServer() {
         server = new NioTcpServer();
         server.setHandler(ioHandler);
-        
+        uploadTmpDir = System.getProperty("java.io.tmpdir") + File.separator;
         charset = Charset.forName("utf-8");
         server.setProtocolCodec(new HttpProtocolCodec(this));
         server.setSessionIdleTime(20000);/*keep-alive*/
+    }
+    
+    public String getUploadTempDir() {
+        return uploadTmpDir;
+    }
+    
+    /**
+     * 设置上传文件保存的临时目录
+     * @param dir
+     */
+    public void setUploadTempDir(String dir) {
+        uploadTmpDir = dir;
     }
     
     public void setEventThreadPoolSize(int size) {

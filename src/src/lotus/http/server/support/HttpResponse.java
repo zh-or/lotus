@@ -54,7 +54,24 @@ public class HttpResponse {
     	return response;
     }
     
-    
+    public static String filename2type(String pathname){
+        if(pathname.indexOf(".js") != -1 ){
+            return "application/javascript; charset=utf-8";
+        }
+        if(pathname.indexOf(".html") != -1 ){
+            return "text/html; charset=utf-8";
+        }
+        if(pathname.indexOf(".gif") != -1 ){
+            return "image/gif";
+        }
+        if(pathname.indexOf(".png") != -1 ){
+            return "image/png";
+        }
+        if(pathname.indexOf(".jpg") != -1 ){
+            return "image/jpg";
+        }
+        return "";
+    }
     
     public HttpResponse(Session session) {
        this(session, ResponseStatus.SUCCESS_OK);

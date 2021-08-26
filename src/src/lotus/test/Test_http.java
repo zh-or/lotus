@@ -17,7 +17,7 @@ import lotus.log.Log;
 import lotus.nio.Session;
 
 public class Test_http {
-    static HttpServer httpserver;
+    static HttpServer httpServer;
     static Log        log = Log.getInstance();
     enum Test{
         A(1),
@@ -53,11 +53,11 @@ public class Test_http {
                 buff.capacity() - buff.remaining()
                 ));
         //System.exit(0);
-        httpserver = new HttpServer();
-        httpserver.enableWebSocket(true);
-        httpserver.setEventThreadPoolSize(10);
-        httpserver.setReadBufferCacheSize(1024 * 4);
-        httpserver.setHandler(new HttpHandler() {
+        httpServer = new HttpServer();
+        httpServer.enableWebSocket(true);
+        httpServer.setEventThreadPoolSize(10);
+        httpServer.setReadBufferCacheSize(1024 * 4);
+        httpServer.setHandler(new HttpHandler() {
             
             @Override
             public void wsConnection(Session session, HttpRequest request) throws Exception {
@@ -78,11 +78,11 @@ public class Test_http {
                 }
                 //log.info("wsMessage, frame:%s", frame.toString());
                 
-                session.write(WebSocketFrame.text(new String(frame.getBinary())));
+                session.write(WebSocketFrame.text(frame.getText()));
             }
             
             @Override
-            public void service(HttpMethod mothed, HttpRequest request, HttpResponse response) {
+            public void service(HttpMethod methed, HttpRequest request, HttpResponse response) {
                 
                 try {
                     if(this.defFileRequest("./", request, response)) {
@@ -98,10 +98,10 @@ public class Test_http {
                     sb.append("x");
                 }
                 //response.write(sb.toString());
-                response.write("中文");
+                response.write("中文" + methed.toString());
             }
         });
-        httpserver.start(new InetSocketAddress(8090));
+        httpServer.start(new InetSocketAddress(8090));
         log.info("启动完成...");
     }
     
