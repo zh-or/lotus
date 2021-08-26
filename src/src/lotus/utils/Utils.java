@@ -426,6 +426,10 @@ public class Utils {
         return ret;
     }
 
+    public static int byteArrSearch(byte[] src, byte[] dest) {
+        return byteArrSearch(src, dest, 0);
+    }
+    
     /**
      * 在src中查找dest的位置
      * 
@@ -433,10 +437,10 @@ public class Utils {
      * @param dest
      * @return 找到了返回dest在src的起始下标 未找到返回-1 此下标从0开始
      */
-    public static int byteArrSearch(byte[] src, byte[] dest) {
+    public static int byteArrSearch(byte[] src, byte[] dest, int offset) {
         if (dest == null || src == null || src.length < dest.length)
             return -1;// fuck 了
-        int p = -1, destLenEP = dest.length - 1, srcLen = src.length - destLenEP + 1, k = 0, i = 0;
+        int p = -1, destLenEP = dest.length - 1, srcLen = src.length - destLenEP + 1, k = 0, i = offset;
         boolean foundit = true;
         for (; i < srcLen; i++) {
             if (src[i] == dest[0] && src[i + destLenEP] == dest[destLenEP]) {// 第一个匹配

@@ -57,6 +57,15 @@ httpServer.setHandler(new HttpHandler() {
   public void service(HttpMethod methed, HttpRequest request, HttpResponse response){
     System.out.println("收到HTTP请求");
     response.write("收到请求:" +  + methed.toString());
+    if(request.isFormData()) {//FormData 请求
+      HttpFormData formData = request.getFormData();
+      response.write("收到文件上传:" + formData.getCacheFileLength() + "<br/>");
+      //上传文件会解析到系统临时文件夹内, 如需使用请移动到自己的目录, 否则会被清理掉
+      response.write("name:" +  formData.getCacheFile().getAbsolutePath());
+      response.write("file:" +  formData.getFile("file"));//File
+      response.write("files:" +  formData.getFile("files"));// File[]
+      
+    }
   }
 });
 ```

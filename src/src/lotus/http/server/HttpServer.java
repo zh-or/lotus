@@ -6,6 +6,7 @@ import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 
 import lotus.http.WebSocketFrame;
+import lotus.http.server.support.HttpFormData;
 import lotus.http.server.support.HttpProtocolCodec;
 import lotus.http.server.support.HttpRequest;
 import lotus.http.server.support.HttpResponse;
@@ -185,7 +186,15 @@ public class HttpServer {
             }catch(Throwable e){
                 handler.exception(e, request, response);
             }
-            
+            try {
+                if(request != null && request.isFormData()) {
+                    HttpFormData formData = request.getFormData();
+                    
+                    formData.removeCache();
+                }
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
         }
         
         public void onSentMessage(Session session, Object msg) throws Exception {
