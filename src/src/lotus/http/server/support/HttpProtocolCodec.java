@@ -50,7 +50,28 @@ public class HttpProtocolCodec implements ProtocolCodec{
                         final HttpRequest req = new HttpRequest(session, context.getCharset(), context);
                         final String sheaders = new String(bheaders, context.getCharset());
                         req.parseHeader(sheaders);
+
                         final int contentLength = Utils.StrtoInt(req.getHeader("content-length"));
+                        String contentType = req.getHeader("Content-Type");
+                        if(contentType != null && contentType.indexOf("multipart/form-data") != -1) {//是文件上传请求
+                            HttpFormData formData = new HttpFormData(req);
+                            while(in.hasRemaining()) {
+                                formData.write(in);
+                            }
+                            req.setFormData(formData);
+                            if(contentLength <= formData.getCacheFileLength()) {
+                                out.write(req);
+                                session.setAttr(STATUS, HttpStatus.HEAD);
+                                session.removeAttr(CONTENT_LENGTH);
+                                session.removeAttr(REQUEST);
+                                formData.close();
+                                return true;
+                            }
+                            session.setAttr(STATUS, HttpStatus.FORMDATA);
+                            session.setAttr(CONTENT_LENGTH, contentLength);
+                            session.setAttr(REQUEST, req);
+                            return false;
+                        }
                         if(contentLength > 0){
                             if(contentLength <= in.remaining()){/*已经把body也收完了*/
                                 final byte[] body = new byte[contentLength];
@@ -94,6 +115,27 @@ public class HttpProtocolCodec implements ProtocolCodec{
                 }else{
                     session.setAttr(STATUS, HttpStatus.HEAD);
                 }
+            }
+                break;
+            case FORMDATA:
+            {
+                final int contentLength = (Integer) session.getAttr(CONTENT_LENGTH, 0);
+                final HttpRequest req = (HttpRequest) session.getAttr(REQUEST);
+                HttpFormData formData = req.getFormData();
+                
+                while(in.hasRemaining()) {
+                    formData.write(in);
+                }
+                
+                if(contentLength <= formData.getCacheFileLength()) {
+                    formData.close();
+                    session.setAttr(STATUS, HttpStatus.HEAD);
+                    session.removeAttr(CONTENT_LENGTH);
+                    session.removeAttr(REQUEST);
+                    out.write(req);
+                    return true;
+                }
+                
             }
                 break;
         }

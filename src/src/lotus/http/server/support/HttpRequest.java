@@ -27,12 +27,25 @@ public class HttpRequest {
     private HashMap<String, Cookie> cookies         =   null;
     private boolean                 isWebSocket     =   false;
     private HttpServer              context         =   null;
+    private HttpFormData            formData        =   null;
     
     public HttpRequest(Session session, Charset charset, HttpServer context) {
         headers = new HashMap<String, String>();
         this.session = session;
         this.charset = charset;
         this.context = context;
+    }
+    
+    public boolean isFormData() {
+        return this.formData != null;
+    }
+    
+    public void setFormData(HttpFormData formData) {
+        this.formData = formData;
+    }
+    
+    public HttpFormData getFormData() {
+        return formData;
     }
     
     public HttpServer getContext(){
@@ -154,7 +167,7 @@ public class HttpRequest {
         return headers.get(key.toLowerCase());
     }
     
-    public String getParameter(String name){
+    public String getParameter(String name) {
         Matcher m = Pattern.compile("[&?]" + name + "=([^&]*)").matcher("&" + queryString);
         if(m.find()){
             String par = m.group(1);
