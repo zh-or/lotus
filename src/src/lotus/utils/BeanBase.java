@@ -15,6 +15,11 @@ import lotus.json.JSONObject;
  */
 public class BeanBase {
 	
+    
+    public BeanBase() {
+        
+    }
+    
 	/**
 	 * 
 	 * @param key
@@ -22,7 +27,11 @@ public class BeanBase {
 	 */
 	public  void _set(String key, Object val) {}
 
+	public JSONObject toJSON() throws Exception {
+	    return BeanBase.ObjToJson(this);
+	}
 
+	
 	/**
      * 
      * @param c
@@ -42,9 +51,12 @@ public class BeanBase {
         E e = obj.newInstance();
         Field[] fields = obj.getDeclaredFields();
         for (Field f : fields) {
+            String name = f.getName();
+            if(!json.has(name)) {
+                continue;
+            }
             f.setAccessible(true);
             Class<?> type = f.getType();
-            String name = f.getName();
             if (type == String.class)
                 f.set(e, json.getString(name));
             else if (type == boolean.class)
@@ -59,6 +71,12 @@ public class BeanBase {
         return e;
     }
 
+    /**
+     * 对象转json
+     * @param obj 如果有字段也是对象需要转换, 那么此字段的类型必须是继承自 BeanBase
+     * @return
+     * @throws Exception
+     */
     public static JSONObject ObjToJson(Object obj) throws Exception {
         JSONObject json = new JSONObject();
         Class<?> cla = obj.getClass();
@@ -118,10 +136,10 @@ public class BeanBase {
     }
     
     
-    public static <E> E SQLResToObj(Class<E> obj) {
+/*    public static <E> E SQLResToObj(Class<E> obj) {
         Field[] fields = obj.getDeclaredFields();
         
         
         return null;
-    }
+    }*/
 }

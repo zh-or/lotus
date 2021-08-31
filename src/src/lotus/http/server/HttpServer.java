@@ -27,6 +27,7 @@ public class HttpServer {
     private boolean                     enableWebSocket     =   false;
     private HttpHandler                 handler             =   null;
     private String                      uploadTmpDir        =   null;
+    private int                         requestMaxLimit     =   1024 * 1024 * 4;//4M
     
     public HttpServer() {
         server = new NioTcpServer();
@@ -37,6 +38,13 @@ public class HttpServer {
         server.setSessionIdleTime(20000);/*keep-alive*/
     }
     
+    public int getRequestMaxLimit() {
+        return requestMaxLimit;
+    }
+    
+    public void setRequestMaxLimit(int limit) {
+        requestMaxLimit = limit;
+    }
     
     public String getUploadTempDir() {
         return uploadTmpDir;

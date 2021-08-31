@@ -137,6 +137,10 @@ public class HttpResponse {
         write(json.toString());
         return this;
     }
+    public HttpResponse write(Object obj){
+        write(obj.toString());
+        return this;
+    }
     
     public HttpResponse write(String str){
     	byte[] data = str.getBytes(charset);

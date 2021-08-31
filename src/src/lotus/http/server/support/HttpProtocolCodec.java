@@ -52,6 +52,12 @@ public class HttpProtocolCodec implements ProtocolCodec{
                         req.parseHeader(sheaders);
 
                         final int contentLength = Utils.StrtoInt(req.getHeader("content-length"));
+                        
+                        if(contentLength > context.getRequestMaxLimit()) {
+                            out.write(req);
+                            throw new Exception("content to overflow len:" + contentLength + " max:" + context.getRequestMaxLimit());
+                        }
+                        
                         String contentType = req.getHeader("Content-Type");
                         if(contentType != null && contentType.indexOf("multipart/form-data") != -1) {//是文件上传请求
                             HttpFormData formData = new HttpFormData(req);
@@ -157,6 +163,7 @@ public class HttpProtocolCodec implements ProtocolCodec{
                 
                 try (FileChannel channel = FileChannel.open(file.toPath(), StandardOpenOption.READ);) {
                     long len = file.length();
+                    //先简单的吧文件映射到内存发送
                     MappedByteBuffer mapBuffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, len);
                     mapBuffer.position((int) len);
                     out.append(mapBuffer);

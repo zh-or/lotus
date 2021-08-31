@@ -18,7 +18,7 @@ public class Test_nio_server {
     static AtomicInteger i = new AtomicInteger(0);
     
     public static void main(String[] args) throws IOException {
-        log = Log.getInstance();
+        log = Log.getLogger();
         log.setProjectName("test");
         NioTcpServer server = new NioTcpServer();
         server.setProtocolCodec(new LengthProtocolCode());

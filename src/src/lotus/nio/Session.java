@@ -61,16 +61,16 @@ public abstract class Session {
         return createtime;
     }
     
-    public Object getAttr(Object key){
-    	return getAttr(key, null);
-    }
-    
     public abstract int getWriteMessageSize();
     
     public Object getAttr(Object key, Object defval){
     	Object val = attrs.get(key);
     	if(val == null) return defval;
     	return val;
+    }
+
+    public Object getAttr(Object key){
+        return getAttr(key, null);
     }
     
     public void setAttr(Object key, Object val){

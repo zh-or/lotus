@@ -1,10 +1,16 @@
 package lotus.log;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.TimeZone;
 
-public class Log implements ILog{
+public class Log {
+
+    public static final int L_E        = 0;
+    public static final int L_W        = 1;
+    public static final int L_I        = 2;
+    public static final int L_D        = 3;
+    public static final int L_T        = 4;
+
+    static final String lvl[]          =   {"[ERROR]", "[WARN] ", "[INFO] ", "[DEBUG]", "[TRACE]"};
+    
     public interface LogFilter{
         /**
          * @param lvl
@@ -14,39 +20,41 @@ public class Log implements ILog{
         public boolean log(int lvl, String logstr);
     }
     
-    private static String           PROJECT_NAME         =    "";
-    private static SimpleDateFormat format               =   new SimpleDateFormat("MM-dd HH:mm:ss");
-    private static boolean          enable_class         =   false;
-    private static boolean          trace_enabled        =   false;
-    private static boolean          debug_enable         =   false;
-    private static Log              log                  =   null;
-    private static Object           lock_obj             =   new Object();
-    private Class<?> 			    clazz				 =   null;
-    private String					clazzName			 =	 null;
+    private boolean          debug_enable         =   false;
+    private String			 clazzName			  =	  null;
+
+    private static Log      log                   =   null;
+    private static Object   lock_obj              =   new Object();
+    private LogFormat       logFormat             =   null;
     
-    private LogFilter   logfilter   =   null;
-    
-    
-    public Log(Class<?> clazz) {
-        this.clazz = clazz;
-        if(this.clazz != null) {
-        	this.clazzName = this.clazz.getName();
-        	enable_class = true;
+    private Log(Class<?> clazz) {
+        if(clazz != null) {
+        	this.clazzName = clazz.getName();
         }
+        
+        if(logFormat == null) {
+            logFormat = LogFormat.getLogFormat();
+        }
+        
+        debug_enable = logFormat.getDebugEnable();
     }
 
-    public static Log getInstance(){
+    public static Log getLogger(){
         
-        return getInstance(null);
+        return getLogger(null);
     }
     
-    public static Log getInstance(Class<?> clazz){
-        if(log == null){
+    public static Log getLogger(Class<?> clazz) {
+        
+        if(log == null) {
             synchronized (lock_obj) {
                 if(log == null){
-                    log = new Log(clazz);
+                    log = new Log(null);
                 }
             }
+        }
+        if(clazz != null) {
+            return new Log(clazz);
         }
         return log;
     }
@@ -59,110 +67,81 @@ public class Log implements ILog{
         log(l, String.format(str, args));
     }
     
-    private static final String NULL_STR = "";
     public void log(int l, String str){
-        String cname = NULL_STR;
-        if(enable_class){
-            
-            cname = "[" + clazzName + "]";
-        }
-        
-        String msg_ = format.format(new Date());
-        msg_ = String.format("%s %s%s%s %s", msg_, PROJECT_NAME, cname, lvl[l], str);
-        if(logfilter == null || logfilter.log(l, msg_)){
-            System.out.println(msg_);
-            System.out.flush();
-        }
+        logFormat.print(l, clazzName, str);
     }
     
     /**
      * 设置时区 
      * @param id GMT+8
      */
-    public static void setTimeZoneID(String id) {
-        format.setTimeZone(TimeZone.getTimeZone(id));
+    public void setTimeZoneID(String id) {
+        logFormat.setTimeZoneID(id);
     }
     
     public void setProjectName(String name){
-        PROJECT_NAME = "[" + name + "]";
+        logFormat.setProjectName(name);
     }
     
-    public boolean isTraceEnabled(){
-        return trace_enabled;
-    }
-
-    public void setTraceEnable(boolean isEnable){
-        trace_enabled = isEnable;
-    }
-
     public void setDebugEnable(boolean isEnable){
         debug_enable = isEnable;
-    }
-    
-    public void setEnableClassNameOut(boolean enable){
-        enable_class = enable;
-    }
-    
-    public void setLogFilter(LogFilter logfilter){
-        this.logfilter = logfilter;
+        logFormat.setDebugEnable(isEnable);
     }
 
-    @Override
+    public void setLogFilter(LogFilter logfilter){
+        logFormat.setLogFilter(logfilter);
+    }
+    
+    /**
+     * 设置日志文件输出目录
+     * @param dir
+     */
+    public void setLogFileDir(String dir) {
+        logFormat.setLogFileDir(dir);
+    }
+
     public void info(String str) {
         log(str);
     }
 
-    @Override
     public void info(String str, Object... args) {
-        log(ILog.L_I, str, args);
+        log(L_I, str, args);
     }
 
     
-    @Override
     public void warn(String str) {
-        log(ILog.L_W, str);
+        log(L_W, str);
     }
 
-    @Override
     public void warn(String str, Object... args) {
-        log(ILog.L_W, str, args);
+        log(L_W, str, args);
     }
 
-    @Override
     public void error(String str) {
-        log(ILog.L_E, str);
+        log(L_E, str);
     }
 
-    @Override
     public void error(String str, Object... args) {
-        log(ILog.L_E, str, args);
+        log(L_E, str, args);
     }
 
-    @Override
     public void debug(String str) {
         if(debug_enable){
-            log(ILog.L_D, str); 
+            log(L_D, str); 
         }
     }
 
-    @Override
     public void debug(String str, Object... args) {
         if(debug_enable){
-            log(ILog.L_D, str, args);
+            log(L_D, str, args);
         }
     }
 
-    @Override
     public void trace(String str) {
-        if(trace_enabled){
-            log(ILog.L_T, str);
-        }
+        log(L_T, str);
     }
 
-    @Override
     public void trace(String str, Object... args) {
-        if(trace_enabled){
-            log(ILog.L_T, str, args);
-        }
+        log(L_T, str, args);
     }
 }
