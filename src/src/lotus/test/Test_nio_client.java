@@ -14,7 +14,7 @@ import lotus.utils.Utils;
 public class Test_nio_client {
     static Log log = null;
     public static void main(String[] args) throws IOException {
-        log = Log.getInstance();
+        log = Log.getLogger();
         log.setProjectName("test");
         NioTcpClient client = new NioTcpClient();
         client.setProtocolCodec(new LineProtocolCodec('}'));

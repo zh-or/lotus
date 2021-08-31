@@ -38,7 +38,9 @@ public abstract class HttpBaseService {
         Method m = __funs.get(path);
         if(m != null) {
             try {
-                m.invoke(this, request, response);
+                if(filter(path, request, response)) {
+                    m.invoke(this, request, response);
+                }
             } catch(Exception e) {
                 __dispatcher.exception(e, request, response);
             }
@@ -47,4 +49,14 @@ public abstract class HttpBaseService {
         return false;
     }
     
+    /**
+     * 重写此方法 返回false可拦截调用
+     * @param path
+     * @param request
+     * @param response
+     * @return
+     */
+    public boolean filter(String path, HttpRequest request, HttpResponse response) {
+        return true;
+    }
 }

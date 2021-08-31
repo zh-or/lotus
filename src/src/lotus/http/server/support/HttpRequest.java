@@ -28,12 +28,32 @@ public class HttpRequest {
     private boolean                 isWebSocket     =   false;
     private HttpServer              context         =   null;
     private HttpFormData            formData        =   null;
+    private HashMap<String, Object> attrs           =   null;
     
     public HttpRequest(Session session, Charset charset, HttpServer context) {
         headers = new HashMap<String, String>();
+        attrs = new HashMap<String, Object>();
         this.session = session;
         this.charset = charset;
         this.context = context;
+    }
+    
+    public Object getAttr(String key, Object defval){
+        Object val = attrs.get(key);
+        if(val == null) return defval;
+        return val;
+    }
+
+    public Object getAttr(String key){
+        return getAttr(key, null);
+    }
+    
+    public void setAttr(String key, Object val){
+        attrs.put(key, val);
+    }
+    
+    public Object removeAttr(String key){
+        return attrs.remove(key);
     }
     
     public boolean isFormData() {
@@ -197,7 +217,7 @@ public class HttpRequest {
     }
     
     /**
-     * 检查是否包含参数key
+     * 检查是否包含参数key, 只能用于检查get方法, post的 url编码方法
      * @param pars 参数key数组
      * @return 如果有为空的则返回 false
      */

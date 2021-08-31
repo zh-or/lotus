@@ -18,7 +18,7 @@ import lotus.nio.Session;
 
 public class Test_http {
     static HttpServer httpServer;
-    static Log        log = Log.getInstance();
+    static Log        log = Log.getLogger();
     enum Test{
         A(1),
         B(2),

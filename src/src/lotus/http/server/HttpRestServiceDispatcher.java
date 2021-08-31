@@ -1,21 +1,33 @@
 package lotus.http.server;
 
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.concurrent.ConcurrentHashMap;
 
 import lotus.http.server.support.HttpMethod;
 import lotus.http.server.support.HttpRequest;
 import lotus.http.server.support.HttpResponse;
+import lotus.http.server.support.HttpRestServiceFilter;
 import lotus.http.server.support.HttpServicePath;
 
 
 public class HttpRestServiceDispatcher extends HttpHandler{
     private ConcurrentHashMap<String, HttpBaseService> services;
     private String baseFilePath;
+    private ArrayList<HttpRestServiceFilter> filters;
     
     public HttpRestServiceDispatcher() {
         services = new ConcurrentHashMap<String, HttpBaseService>();
+        filters = new ArrayList<HttpRestServiceFilter>();
         baseFilePath = "./web";
+    }
+    
+    public synchronized void addFilter(HttpRestServiceFilter filter) {
+        filters.add(filter);
+    }
+    
+    public synchronized void removeFilter(HttpRestServiceFilter filter) {
+        filters.remove(filter);
     }
     
     /**
@@ -42,6 +54,12 @@ public class HttpRestServiceDispatcher extends HttpHandler{
     
     @Override
     public void service(HttpMethod mothed, HttpRequest request, HttpResponse response) throws Exception {
+        for(HttpRestServiceFilter filter : filters) {
+            if(filter.filter(request, response)) {
+                return;
+            }
+        }
+        
         String path = request.getPath();
         try {
             Enumeration<String> keys = services.keys();
