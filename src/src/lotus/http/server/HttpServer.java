@@ -87,12 +87,6 @@ public class HttpServer {
     }
     
     /**
-     * 先添加先调用, 顺序查找handler
-     * @param path  <br> 
-     *   三种类型  :<br>
-     *      1. * 表示所有请求都监听<br>
-     *      2. *.xxx xxx表示后缀<br>
-     *      3. path 完全的路径, 此方式则需要在最前面添加 '/'<br>
      * @param handler
      */
     public synchronized void setHandler(HttpHandler handler){

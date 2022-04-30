@@ -12,6 +12,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import lotus.http.server.HttpServer;
+import lotus.json.JSONArray;
+import lotus.json.JSONException;
+import lotus.json.JSONObject;
 import lotus.nio.Session;
 import lotus.utils.Utils;
 
@@ -233,6 +236,18 @@ public class HttpRequest {
     
     public byte[] getBody(){
         return this.body;
+    }
+    
+    public String getBodyString() {
+        return new String(this.body, context.getCharset());
+    }
+    
+    public JSONObject getBodyJSONObject() throws JSONException {
+        return new JSONObject(getBodyString());
+    }
+    
+    public JSONArray getBodyJSONArray() throws JSONException {
+        return new JSONArray(getBodyString());
     }
     
     public SocketAddress getRemoteAddress(){

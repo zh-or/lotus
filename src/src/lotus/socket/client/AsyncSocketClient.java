@@ -57,7 +57,7 @@ public class AsyncSocketClient {
     }
     
     /**
-     * 设置心跳间隔, 若设置时间大于0, 当socket空闲时间到的时候则会像服务器发送 0x00 
+     * 设置心跳间隔, 若设置时间大于0, 当socket空闲时间到的时候则会向服务器发送 0x00 
      * @param time
      */
     public void setKeepLive(int time){

@@ -54,11 +54,11 @@ public class Format {
     
     static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     
-    public static String formatTime(long time){
+    public synchronized static String formatTime(long time){
         return sdf.format(new Date(time));
     }
     
-    public static String formatTime(Date date){
+    public synchronized static String formatTime(Date date){
         return sdf.format(date);
     }
     

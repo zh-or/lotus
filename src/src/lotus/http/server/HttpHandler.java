@@ -63,7 +63,18 @@ public abstract class HttpHandler {
     public void wsConnection(Session session, HttpRequest request) throws Exception{ }
     public void wsMessage(Session session,  HttpRequest request, WebSocketFrame frame) throws Exception{ }
     public void wsClose(Session session,  HttpRequest request) throws Exception{ }
-    
+
+    /**
+     * 当调用 defFileRequest 时触发此回调
+     * @param path
+     * @param request
+     * @param response
+     * @return 返回 true 表示拦截默认文件处理
+     * @throws Exception
+     */
+    public boolean requestFile(String path, HttpRequest request, HttpResponse response) throws Exception { 
+        return false;
+    }
     
     /**
      * 如果反射发生了错误 则会调用子类实现的此方法
@@ -88,6 +99,11 @@ public abstract class HttpHandler {
      */
     public boolean defFileRequest(String basePath, HttpRequest request, HttpResponse response) throws Exception {
         String reqPath  = request.getPath();
+        
+        if(this.requestFile(reqPath, request, response)) {
+            return true;
+        }
+        
         if("/".equals(reqPath)) {
             reqPath = "/index.html";
         }
@@ -115,7 +131,6 @@ public abstract class HttpHandler {
             response.sendFile(file);
         } else {
             try (FileInputStream fileIn = new FileInputStream(file);){
-                //编写文件下载
                 byte[] filedata = new byte[(int) file.length()];
                 fileIn.read(filedata);
                 response.write(filedata);

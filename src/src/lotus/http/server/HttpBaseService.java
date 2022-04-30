@@ -5,7 +5,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import lotus.http.server.support.HttpRequest;
 import lotus.http.server.support.HttpResponse;
-import lotus.http.server.support.HttpServiceMap;
+import lotus.http.server.support.HttpServicePath;
 
 
 public abstract class HttpBaseService {
@@ -18,7 +18,7 @@ public abstract class HttpBaseService {
         __funs = new ConcurrentHashMap<>(ms.length);
         
         for(Method m : ms){
-            HttpServiceMap map = m.getAnnotation(HttpServiceMap.class);
+            HttpServicePath map = m.getAnnotation(HttpServicePath.class);
             if(map != null){
                 __funs.put(map.path(), m);
             }
