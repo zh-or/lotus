@@ -43,6 +43,10 @@ public class Config {
 	        return val;
 	    }
 	    
+	    public int size() {
+	        return val.size();
+	    }
+	    
         @Override
         public String toString() {
             if(val.size() > 0){
@@ -62,14 +66,14 @@ public class Config {
 		this.file = f;
 	}
 	
-	public void read(){
+	public  void read(){
 	    read("UTF-8");
 	}
 	
 	/**
 	 * 读取配置文件
 	 */
-	public void read(String charset) {
+	public synchronized void read(String charset) {
 	    if(file == null || !file.exists()) {
 	        return;
 	    }
@@ -81,6 +85,10 @@ public class Config {
 			String line = null;
 			while (null != (line = bis.readLine())){
 			//	System.out.println("line:" + line);
+				if(line.length() <= 0) {
+				    //空行
+				    continue;
+				} 
 				if('[' == line.charAt(0) && ']' == line.charAt(line.length() - 1)){
 					child  = new HashMap<String, ArrStringValue>();
 					child.clear();
@@ -239,7 +247,7 @@ public class Config {
         }
 	}
 	
-	public void save(){
+	public synchronized void save(){
 		if(file == null) {
 		    return;
 		}

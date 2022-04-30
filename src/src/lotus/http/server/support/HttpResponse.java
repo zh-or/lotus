@@ -1,7 +1,6 @@
 package lotus.http.server.support;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
@@ -175,17 +174,16 @@ public class HttpResponse {
     
     /**
      * 此方法在一个请求中只能调用一次, 如需多次写入 请调用 write 方法,
-     * 小文件直接全部读出来一次发送会比较好, 此方法适用发送大文件(2G内).
+     * 小文件直接全部读出来一次发送会比较好, 此方法适用发送大文件.
      * 此方法可能会导致文件被锁住
      * @param file
      * @throws IOException 
      */
-    public void sendFile(File file) throws IOException {
+    public void sendFile(File file) throws Exception {
         if(!isSendHeader){
-            try(FileInputStream in = new FileInputStream(file)) {
-                setHeader("Content-Length", in.available() + "");
-                sendHeader();
-            }
+
+            setHeader("Content-Length", file.length() + "");
+            sendHeader();
         }
         session.write(
             new HttpMessageWrap(

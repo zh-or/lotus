@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.concurrent.ConcurrentHashMap;
 
+import lotus.http.server.support.HttpFileFilter;
 import lotus.http.server.support.HttpMethod;
 import lotus.http.server.support.HttpRequest;
 import lotus.http.server.support.HttpResponse;
@@ -15,6 +16,7 @@ public class HttpRestServiceDispatcher extends HttpHandler{
     private ConcurrentHashMap<String, HttpBaseService> services;
     private String baseFilePath;
     private ArrayList<HttpRestServiceFilter> filters;
+    private HttpFileFilter fileFilter = null;
     
     public HttpRestServiceDispatcher() {
         services = new ConcurrentHashMap<String, HttpBaseService>();
@@ -22,12 +24,24 @@ public class HttpRestServiceDispatcher extends HttpHandler{
         baseFilePath = "./web";
     }
     
-    public synchronized void addFilter(HttpRestServiceFilter filter) {
+    public synchronized void addServiceFilter(HttpRestServiceFilter filter) {
         filters.add(filter);
     }
     
-    public synchronized void removeFilter(HttpRestServiceFilter filter) {
+    public synchronized void removeServiceFilter(HttpRestServiceFilter filter) {
         filters.remove(filter);
+    }
+    
+    public void setFileFilter(HttpFileFilter filter) {
+        this.fileFilter = filter;
+    }
+    
+    @Override
+    public boolean requestFile(String path, HttpRequest request, HttpResponse response) throws Exception {
+        if(fileFilter != null && fileFilter.filter(path, request, response)) {
+            return true;
+        }
+        return false;
     }
     
     /**
