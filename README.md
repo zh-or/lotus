@@ -69,6 +69,7 @@ httpServer.setHandler(new HttpHandler() {
     }
   }
 });
+server.start(new InetSocketAddress(9000));
 ```
 ---
 注解用法
@@ -80,6 +81,7 @@ server.setReadBufferCacheSize(1024 * 4);
 HttpRestServiceDispatcher dispathcer = new HttpRestServiceDispatcher();
 dispathcer.addService(new UserService());
 server.setHandler(dispathcer);
+server.start(new InetSocketAddress(9000));
 ```
 
 UserService.java
