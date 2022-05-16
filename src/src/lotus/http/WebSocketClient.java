@@ -97,7 +97,7 @@ public class WebSocketClient {
                     this.socket = new Socket();
                 }
                 //socket.setTcpNoDelay(true);
-                socket.setKeepAlive(true);
+                this.socket.setKeepAlive(true);
                 this.socket.connect(new InetSocketAddress(uri.getHost(), port), connectionTimeOut);
                 break;
             case "https":
