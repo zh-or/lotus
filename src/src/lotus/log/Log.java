@@ -63,7 +63,7 @@ public class Log {
         log(L_I, str);
     }
     
-    public void log(int l, String str, Object ...args){
+    public void log(int l, String str, Object ...args) {
         log(l, String.format(str, args));
     }
     
