@@ -49,11 +49,11 @@ public class LogFormat {
         sdf.setTimeZone(TimeZone.getTimeZone(id));
     }
 
-    public void setProjectName(String name){
+    public void setProjectName(String name) {
         PROJECT_NAME = "[" + name + "]";
     }
 
-    public void setLogFilter(LogFilter logfilter){
+    public void setLogFilter(LogFilter logfilter) {
         this.logfilter = logfilter;
     }
 
@@ -61,7 +61,7 @@ public class LogFormat {
         return debug_enable;
     }
 
-    public void setDebugEnable(boolean isEnable){
+    public void setDebugEnable(boolean isEnable) {
         debug_enable = isEnable;
     }
 
