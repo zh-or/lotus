@@ -18,7 +18,7 @@ public class Test_http_aim extends HttpBaseService{
         HttpServer server = new HttpServer();
         server.setCharset(Charset.forName("utf-8"));
         server.setEventThreadPoolSize(10);
-        server.setReadBufferCacheSize(1024 * 4);
+        server.setCacheBufferSize(1024 * 4);
         HttpRestServiceDispatcher dispathcer = new HttpRestServiceDispatcher();
         dispathcer.addService(new Test_http_aim());
         server.setHandler(dispathcer);

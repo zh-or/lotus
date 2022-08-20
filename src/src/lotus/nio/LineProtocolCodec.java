@@ -6,14 +6,14 @@ import java.nio.ByteBuffer;
  * 示例解码器 一行一个包
  * @author OR
  */
-public class LineProtocolCodec implements ProtocolCodec{
+public class LineProtocolCodec implements ProtocolCodec {
 	private char line			=	'\n';
 
 	public LineProtocolCodec() {
 	    this('\n');
 	}
 
-	public LineProtocolCodec(char linechar){
+	public LineProtocolCodec(char linechar) {
 		this.line = linechar;
 	}
 	

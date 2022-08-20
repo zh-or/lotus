@@ -56,12 +56,13 @@ public class Test_http {
         httpServer = new HttpServer();
         httpServer.enableWebSocket(true);
         httpServer.setEventThreadPoolSize(10);
-        httpServer.setReadBufferCacheSize(1024 * 4);
+        httpServer.setCacheBufferSize(1024 * 4);
         httpServer.setHandler(new HttpHandler() {
             
             @Override
-            public void wsConnection(Session session, HttpRequest request) throws Exception {
+            public boolean wsConnection(Session session, HttpRequest request) throws Exception {
                 //log.info("wsConnection, request: %s", request.toString());
+                return true;
             }
             
             @Override

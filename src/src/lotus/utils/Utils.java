@@ -212,11 +212,15 @@ public class Utils {
     }
 
     public static String byte2hex(byte[] b) {
-        if (b == null || b.length <= 0)
+        return byte2hex(b, b.length);
+    }
+    
+    public static String byte2hex(byte[] b, int len) {
+        if (b == null || b.length <= 0 || len <= 0)
             return "null";
         StringBuilder sb = new StringBuilder();
         String stmp = "";
-        for (int n = 0; n < b.length; n++) {
+        for (int n = 0; n < len; n++) {
             stmp = (Integer.toHexString(b[n] & 0xFF));
             if (stmp.length() == 1) {
                 sb.append("0");

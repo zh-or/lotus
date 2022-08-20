@@ -137,6 +137,10 @@ public abstract class Session {
         }
     }
     
+    public NioContext getContext() {
+        return context;
+    }
+    
     public Runnable pullEventRunnable(){
         return eventlist.poll();
     }
