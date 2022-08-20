@@ -75,6 +75,13 @@ public class NioTcpSession extends Session{
 	    key.interestOps(key.interestOps() & (~value));
 	}
 	
+	public void removeAllOpts() {
+	    removeAttr(SelectionKey.OP_ACCEPT);
+	    removeAttr(SelectionKey.OP_CONNECT);
+	    removeAttr(SelectionKey.OP_READ);
+	    removeAttr(SelectionKey.OP_WRITE);
+	}
+	
 	public Object getMessageLock(){
 	    return msglock;
 	}

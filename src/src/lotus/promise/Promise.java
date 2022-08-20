@@ -1,4 +1,4 @@
-
+package lotus.promise;
 
 public class Promise {
 

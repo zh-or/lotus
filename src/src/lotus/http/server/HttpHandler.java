@@ -60,7 +60,16 @@ public abstract class HttpHandler {
     public void put(HttpRequest request, HttpResponse response) throws Exception{}
     public void trace(HttpRequest request, HttpResponse response) throws Exception{}
 
-    public void wsConnection(Session session, HttpRequest request) throws Exception{ }
+    /**
+     * 
+     * @param session
+     * @param request
+     * @return 返回 true 表示不拦截, 返回 false 表示拦截该请求并断开该链接
+     * @throws Exception
+     */
+    public boolean wsConnection(Session session, HttpRequest request) throws Exception{ 
+        return true;
+    }
     public void wsMessage(Session session,  HttpRequest request, WebSocketFrame frame) throws Exception{ }
     public void wsClose(Session session,  HttpRequest request) throws Exception{ }
 

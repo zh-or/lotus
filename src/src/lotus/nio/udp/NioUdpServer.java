@@ -40,8 +40,8 @@ public class NioUdpServer extends NioContext{
         
         dc = DatagramChannel.open();
         dc.configureBlocking(false);
-        dc.socket().setReceiveBufferSize(buff_read_cache_size);
-        dc.socket().setSendBufferSize(buff_read_cache_size);
+        dc.socket().setReceiveBufferSize(buff_cache_size);
+        dc.socket().setSendBufferSize(buff_cache_size);
         
         ioProcess = new NioUdpIOProcess[selector_thread_total];
         

@@ -8,7 +8,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import lotus.nio.NioContext;
 import lotus.nio.Session;
 
-public class NioTcpClient extends NioContext{
+public class NioTcpClient extends NioContext {
     public static final int         SELECT_TIMEOUT      =   200;
     
     private NioTcpIoProcess         ioprocess[]         =   null;

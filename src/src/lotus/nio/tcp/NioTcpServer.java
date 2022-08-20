@@ -38,11 +38,12 @@ public class NioTcpServer extends NioContext{
         this.bufferlist = new LinkedBlockingQueue<ByteBuffer>(buffer_list_length);
         
         ssc = ServerSocketChannel.open();
-        ssc.socket().setReceiveBufferSize(buff_read_cache_size);
+        //不用设置此值, 看起来操作系统会自动优化
+        //ssc.socket().setReceiveBufferSize(buff_cache_size);
         ssc.configureBlocking(false);
         ioprocess = new NioTcpIoProcess[selector_thread_total];
         
-        for(int i = 0; i < selector_thread_total; i++){
+        for(int i = 0; i < selector_thread_total; i++) {
             ioprocess[i] = new NioTcpIoProcess(this);
             new Thread(ioprocess[i], "lotus nio tcp server selector thread - " + i).start();
         }
@@ -118,8 +119,9 @@ public class NioTcpServer extends NioContext{
                                 if(so_time_out > 0) {
                                     client.socket().setSoTimeout(so_time_out);
                                 }
-                                client.socket().setReceiveBufferSize(buff_read_cache_size);
-                                client.socket().setSendBufferSize(buff_read_cache_size);
+                                //不用设置此值, 看起来操作系统会自动优化
+                                //client.socket().setReceiveBufferSize(buff_cache_size);
+                                //client.socket().setSendBufferSize(buff_cache_size);
                                 client.finishConnect();
                                 rliplock.lock();/*排队*/
                                 try {

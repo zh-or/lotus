@@ -3,7 +3,6 @@ package lotus.test;
 import java.util.Calendar;
 import java.util.TimeZone;
 
-import javax.rmi.CORBA.Util;
 
 import lotus.utils.Utils;
 

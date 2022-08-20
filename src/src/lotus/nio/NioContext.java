@@ -14,7 +14,7 @@ public abstract class NioContext {
     protected int                   session_idle_time               =   0;
 
     protected int                   so_time_out                     =   1000 * 10;
-    protected int                   buff_read_cache_size            =   1024;/*读缓冲区大小*/
+    protected int                   buff_cache_size                 =   1024;/*读缓冲区大小*/
     protected int                   buffer_list_length              =   0;/*缓存链表最大长度*/
     protected int                   event_pool_thread_size          =   0;
     protected boolean               use_direct_buffer               =   false;//使用
@@ -95,12 +95,12 @@ public abstract class NioContext {
     }
     
     public NioContext setSessionCacheBufferSize(int size){
-        this.buff_read_cache_size = size;
+        this.buff_cache_size = size;
         return this;
     }
     
     public int getSessionCacheBufferSize(){
-        return this.buff_read_cache_size;
+        return this.buff_cache_size;
     }
     
     public boolean isUseDirectBuffer() {
@@ -151,13 +151,13 @@ public abstract class NioContext {
     }
     
     public ByteBuffer getByteBufferFormCache() {
-        return getByteBufferFormCache(buff_read_cache_size);
+        return getByteBufferFormCache(buff_cache_size);
     }
     
     public ByteBuffer getByteBufferFormCache(int size) {
         ByteBuffer buffer = null;
-        if(size <= buff_read_cache_size) {
-            size = buff_read_cache_size;
+        if(size <= buff_cache_size) {
+            size = buff_cache_size;
             buffer = bufferlist.poll();
         }
         
@@ -172,7 +172,7 @@ public abstract class NioContext {
     }
     
     public void putByteBufferToCache(ByteBuffer buffer){
-        if(buffer != null && (buffer.capacity() == buff_read_cache_size) && (bufferlist.size() < buffer_list_length)){
+        if(buffer != null && (buffer.capacity() == buff_cache_size) && (bufferlist.size() < buffer_list_length)){
             buffer.clear();
             bufferlist.add(buffer);
         }else{/*丢弃被扩容过的buffer*/

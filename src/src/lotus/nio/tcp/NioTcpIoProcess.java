@@ -32,7 +32,8 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
     }
     
     public NioTcpSession putChannel(SocketChannel channel, long id, boolean event) throws Exception {
-        if(channel == null || selector == null) throw new Exception("null");
+        if(channel == null || selector == null) 
+            throw new Exception("null");
         NioTcpSession session = new NioTcpSession(context, channel, this, id);
         SelectionKey key = null;
         if(event){
@@ -125,8 +126,6 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
                         
                         try {
                             ishavepack = session.getProtocoCodec().decode(session, readcache, msgout);
-                          
-
                         } catch (Exception e) {
                             session.pushEventRunnable(new IoEventRunnable(e, IoEventType.SESSION_EXCEPTION, session, context));
                         }

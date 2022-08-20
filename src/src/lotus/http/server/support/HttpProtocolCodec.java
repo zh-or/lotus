@@ -24,12 +24,13 @@ public class HttpProtocolCodec implements ProtocolCodec{
     }
     
     @Override
-    public boolean decode(Session session, ByteBuffer in, ProtocolDecoderOutput out)  throws Exception{
+    public boolean decode(Session session, ByteBuffer in, ProtocolDecoderOutput out)  throws Exception {
         HttpStatus status = (HttpStatus) session.getAttr(STATUS);
         if(status == null){
             session.setAttr(STATUS, HttpStatus.HEAD);
             status = (HttpStatus) session.getAttr(STATUS);
         }
+     
         switch (status) {
             case HEAD:
             {
@@ -54,7 +55,10 @@ public class HttpProtocolCodec implements ProtocolCodec{
                         final int contentLength = Utils.StrtoInt(req.getHeader("content-length"));
                         
                         if(contentLength > context.getRequestMaxLimit()) {
-                            out.write(req);
+                            HttpResponse res = HttpResponse.defaultResponse(session, req);
+                            res.setHeader("Connection", "close");
+                            out.write(res);
+                            session.closeOnFlush();
                             throw new Exception("content to overflow len:" + contentLength + " max:" + context.getRequestMaxLimit());
                         }
                         

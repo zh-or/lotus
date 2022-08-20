@@ -4,19 +4,34 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 
 import lotus.http.WebSocketFrame;
+import lotus.http.server.HttpServer;
 import lotus.nio.LotusIOBuffer;
 import lotus.nio.ProtocolCodec;
 import lotus.nio.ProtocolDecoderOutput;
 import lotus.nio.Session;
 
 public class WebSocketProtocolCodec implements ProtocolCodec{
-
+    private HttpServer   context                =   null;
+    
+    public WebSocketProtocolCodec(HttpServer context) {
+        this.context = context;
+    }
+    
     /*
      * 参考实现
      * https://tools.ietf.org/html/rfc6455#page-31
      */    
     @Override
-    public boolean decode(Session session, ByteBuffer in, ProtocolDecoderOutput out) throws Exception {
+    public boolean decode(Session session, ByteBuffer netIn, ProtocolDecoderOutput out) throws Exception {
+        ByteBuffer in;
+        SSLState state = (SSLState) session.getAttr(SSLState.SSL_STATE_KEY);
+        if(context.isEnableSSL() && state != null) {
+            in = session.getWriteCacheBuffer(netIn.capacity());
+            state.unwrap(netIn, in);
+        } else {
+            in = netIn;
+        }
+        
         int  remaining = in.remaining();
         long packlen   = 0;//所需包最小长度
         int  headLen   = 2;
@@ -79,10 +94,31 @@ public class WebSocketProtocolCodec implements ProtocolCodec{
 
     @Override
     public boolean encode(Session session, Object msg, LotusIOBuffer out) throws Exception {
+        SSLState state = (SSLState) session.getAttr(SSLState.SSL_STATE_KEY);
+        
+        
         if(msg instanceof HttpMessageWrap) {
-            out.append((ByteBuffer) ((HttpMessageWrap) msg).data);
+            ByteBuffer outBuffer = (ByteBuffer) ((HttpMessageWrap) msg).data;
+            if(context.isEnableSSL() && state != null) {
+                ByteBuffer netOutBuffer = session.getWriteCacheBuffer(outBuffer.capacity());
+                state.wrap(outBuffer, netOutBuffer);
+                out.append(netOutBuffer);
+                session.putWriteCacheBuffer(outBuffer);
+            } else {
+
+                out.append(outBuffer);
+            }
+            
             return true;
         }
+
+        LotusIOBuffer tmpOut;
+        if(context.isEnableSSL() && state != null) {
+            tmpOut = new LotusIOBuffer(session.getContext());
+        } else {
+            tmpOut = out;
+        }
+        
         
         WebSocketFrame frame   = (WebSocketFrame) msg;
         int            datalen = (frame.body != null ? frame.body.length : 0);
@@ -98,43 +134,53 @@ public class WebSocketProtocolCodec implements ProtocolCodec{
         
         if(datalen < 126) {
             b2 = (byte) (b2 | datalen);
-            out.append(b1);
-            out.append(b2);
+            tmpOut.append(b1);
+            tmpOut.append(b2);
         }else if(datalen < 65535) {
             b2 = (byte) (b2 | 126);
             //发送2b长度
-            out.append(b1);
-            out.append(b2);
-            out.append((byte) (datalen >>> 8));
-            out.append((byte) (datalen & 0xff));
+            tmpOut.append(b1);
+            tmpOut.append(b2);
+            tmpOut.append((byte) (datalen >>> 8));
+            tmpOut.append((byte) (datalen & 0xff));
         }else {
             b2 = (byte) (b2 | 127);
             //发送8b长度
-            out.append(b1);
-            out.append(b2);
-            out.append((byte) (datalen & 0xff));
-            out.append((byte) ((datalen >>> 8) & 0xff));
-            out.append((byte) ((datalen >>> 16) & 0xff));
-            out.append((byte) ((datalen >>> 24) & 0xff));
-            out.append((byte) ((datalen >>> 32) & 0xff));
-            out.append((byte) ((datalen >>> 40) & 0xff));
-            out.append((byte) ((datalen >>> 48) & 0xff));
-            out.append((byte) ((datalen >>> 56) & 0xff));
+            tmpOut.append(b1);
+            tmpOut.append(b2);
+            tmpOut.append((byte) (datalen & 0xff));
+            tmpOut.append((byte) ((datalen >>> 8) & 0xff));
+            tmpOut.append((byte) ((datalen >>> 16) & 0xff));
+            tmpOut.append((byte) ((datalen >>> 24) & 0xff));
+            tmpOut.append((byte) ((datalen >>> 32) & 0xff));
+            tmpOut.append((byte) ((datalen >>> 40) & 0xff));
+            tmpOut.append((byte) ((datalen >>> 48) & 0xff));
+            tmpOut.append((byte) ((datalen >>> 56) & 0xff));
         }
         if(frame.mask != null) {
-            out.append(frame.mask);
+            tmpOut.append(frame.mask);
         }
         
         if(datalen > 0) {
             if(frame.masked) {
                 int pLen = frame.body.length;
-                for(int i = 0; i < pLen; i++){
+                for(int i = 0; i < pLen; i++) {
                     frame.body[i] = (byte) (frame.body[i] ^ frame.mask[i % 4]);
                 }
             }
-            out.append(frame.body);
+            tmpOut.append(frame.body);
         }
-     
+        if(context.isEnableSSL() && state != null) {
+            ByteBuffer[] bufs = tmpOut.getAllBuffer();
+            ByteBuffer outBuf;
+            for(ByteBuffer buf : bufs) {
+                outBuf = session.getWriteCacheBuffer(buf.capacity());
+                buf.flip();
+                state.wrap(buf, outBuf);
+                out.append(outBuf);
+            }
+            tmpOut.free();
+        } 
         return true;
     }
 
