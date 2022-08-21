@@ -72,7 +72,7 @@ public class HttpServer {
      */
     
     /**
-     * 
+     * 启用ssl后不要当静态文件服务器
      * @param keystore
      * @param password
      * @param protocol jdk8(SSL,SSLv2,SSLv3,TLS,TLSv1,TLSv1.1,TLSv1.2) the standard name of the requested protocol.

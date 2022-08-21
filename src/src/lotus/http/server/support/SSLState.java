@@ -71,7 +71,7 @@ public class SSLState {
     public SelfHandhakeState doHandshake(ByteBuffer netIn) throws SSLException {
 
         HandshakeStatus status = engine.getHandshakeStatus();
-        
+        System.out.println("status ->" + status.toString());
         switch(status) {
             case NEED_TASK:
                 Runnable run;
@@ -108,14 +108,20 @@ public class SSLState {
                 
                 break;
             case NEED_UNWRAP:
+            case NEED_UNWRAP_AGAIN://jdk8+新增
             {
                 if(netIn != null) {
                     netInBuffer.put(netIn);
                 }
                 netInBuffer.flip();
+                String  before = netInBuffer.toString();
+                System.out.println("netInBuffer->" + before );
                 SSLEngineResult res = engine.unwrap(netInBuffer, appInBuffer);
+                
+                //压缩数据
                 netInBuffer.compact();
                 Status state = res.getStatus();
+                System.out.println("netInBuffer->" + before + "->" + netInBuffer.toString() + " ->" + state.toString());
                 if(state == Status.BUFFER_UNDERFLOW) {
                     return SelfHandhakeState.NEED_DATA;
                     
