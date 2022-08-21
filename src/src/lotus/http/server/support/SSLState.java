@@ -13,6 +13,7 @@ import javax.net.ssl.SSLSession;
 
 import lotus.http.server.HttpServer;
 import lotus.nio.tcp.NioTcpSession;
+import lotus.utils.Utils;
 
 public class SSLState {
     public final static String     SSL_STATE_KEY          =   "___SSL_STATE_KEY___";
@@ -87,7 +88,7 @@ public class SSLState {
                 SSLEngineResult res = engine.wrap(appInBuffer, netOutBuffer);
                 appInBuffer.compact();
                 Status state = res.getStatus();
-                if(state == Status.BUFFER_OVERFLOW || state == Status.BUFFER_OVERFLOW) {
+                if(state == Status.BUFFER_UNDERFLOW || state == Status.BUFFER_OVERFLOW) {
                     throw new SSLException("NEED_WRAP -> BUFFER_UNDERFLOW | BUFFER_OVERFLOW:" + state);
                    
                 } else if(state == Status.OK) {
@@ -108,7 +109,7 @@ public class SSLState {
                 
                 break;
             case NEED_UNWRAP:
-            case NEED_UNWRAP_AGAIN://jdk8+新增
+            //case NEED_UNWRAP_AGAIN://jdk8+新增
             {
                 if(netIn != null) {
                     netInBuffer.put(netIn);
@@ -116,12 +117,23 @@ public class SSLState {
                 netInBuffer.flip();
                 String  before = netInBuffer.toString();
                 System.out.println("netInBuffer->" + before );
+                if(netInBuffer.remaining() == 7) {
+                    netInBuffer.mark();
+                    byte[] tmp = new byte[7];
+                    netInBuffer.get(tmp);
+                    String hex = Utils.byte2hex(tmp);
+                    System.out.println("hex:" + hex);
+                    netInBuffer.reset();
+                }
                 SSLEngineResult res = engine.unwrap(netInBuffer, appInBuffer);
-                
+                int remaining = netInBuffer.remaining();
                 //压缩数据
                 netInBuffer.compact();
                 Status state = res.getStatus();
-                System.out.println("netInBuffer->" + before + "->" + netInBuffer.toString() + " ->" + state.toString());
+                System.out.println("netInBuffer->" + before + "->" + netInBuffer.toString() + " remaining:" + remaining + " ->" + state.toString());
+                
+               
+                
                 if(state == Status.BUFFER_UNDERFLOW) {
                     return SelfHandhakeState.NEED_DATA;
                     

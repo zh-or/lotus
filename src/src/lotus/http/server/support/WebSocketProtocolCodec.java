@@ -98,9 +98,14 @@ public class WebSocketProtocolCodec implements ProtocolCodec{
         
         
         if(msg instanceof HttpMessageWrap) {
-            ByteBuffer outBuffer = (ByteBuffer) ((HttpMessageWrap) msg).data;
+            //http升级到websocket时, 返回http头
+            HttpMessageWrap httpMsgWrap = (HttpMessageWrap) msg;
+            
+            ByteBuffer outBuffer = (ByteBuffer) httpMsgWrap.data;
+           
             if(context.isEnableSSL() && state != null) {
                 ByteBuffer netOutBuffer = session.getWriteCacheBuffer(outBuffer.capacity());
+                outBuffer.flip();
                 state.wrap(outBuffer, netOutBuffer);
                 out.append(netOutBuffer);
                 session.putWriteCacheBuffer(outBuffer);
