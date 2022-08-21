@@ -50,7 +50,8 @@ public class HttpsProtocolCodec implements ProtocolCodec{
                     outBuffer = session.getWriteCacheBuffer(in.capacity());
                     state.unwrap(in, outBuffer);
                 } else {
-                    SelfHandhakeState res = state.doHandshake(in);
+                    ByteBuffer surplus = session.getWriteCacheBuffer(in.capacity());
+                    SelfHandhakeState res = state.doHandshake(in, surplus);
                     switch(res) {
                         case NEED_DATA:
                             //数据不够
@@ -58,6 +59,14 @@ public class HttpsProtocolCodec implements ProtocolCodec{
                         case NEED_SEND:
                             return true;
                         case FINISHED:
+                            surplus.flip();
+                            if(surplus.hasRemaining()) {
+                                //握手完成, 但是还有数据
+                                System.out.println("xxxx->" + surplus.toString());
+                                outBuffer = session.getWriteCacheBuffer(surplus.capacity());
+                                state.unwrap(surplus, outBuffer);
+                                break;
+                            }
                             return true;
                     }
                 }
@@ -68,7 +77,9 @@ public class HttpsProtocolCodec implements ProtocolCodec{
         } else {
             outBuffer = in;
         }
-        return httpProtocolCodec.decode(session, outBuffer, out);
+        boolean r = httpProtocolCodec.decode(session, outBuffer, out);
+        System.out.println("http ok");
+        return r;
     }
 
    

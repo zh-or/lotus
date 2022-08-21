@@ -69,7 +69,7 @@ public class SSLState {
         return status == HandshakeStatus.FINISHED || status == HandshakeStatus.NOT_HANDSHAKING;
     }
     
-    public SelfHandhakeState doHandshake(ByteBuffer netIn) throws SSLException {
+    public SelfHandhakeState doHandshake(ByteBuffer netIn, ByteBuffer surplus) throws SSLException {
 
         HandshakeStatus status = engine.getHandshakeStatus();
         System.out.println("status ->" + status.toString());
@@ -79,7 +79,7 @@ public class SSLState {
                 while((run = engine.getDelegatedTask()) != null) {
                     run.run();
                 }
-                return doHandshake(netIn);
+                return doHandshake(netIn, surplus);
                 
             case NEED_WRAP:
             {
@@ -99,7 +99,7 @@ public class SSLState {
                     netOutBuffer.clear();
                     HandshakeStatus tmpStatus = engine.getHandshakeStatus();
                     if(tmpStatus != HandshakeStatus.NEED_UNWRAP) {
-                        return doHandshake(null);
+                        return doHandshake(null, surplus);
                     }
                     return SelfHandhakeState.NEED_SEND;
                 } else if(state == Status.CLOSED) {
@@ -117,14 +117,7 @@ public class SSLState {
                 netInBuffer.flip();
                 String  before = netInBuffer.toString();
                 System.out.println("netInBuffer->" + before );
-                if(netInBuffer.remaining() == 7) {
-                    netInBuffer.mark();
-                    byte[] tmp = new byte[7];
-                    netInBuffer.get(tmp);
-                    String hex = Utils.byte2hex(tmp);
-                    System.out.println("hex:" + hex);
-                    netInBuffer.reset();
-                }
+            
                 SSLEngineResult res = engine.unwrap(netInBuffer, appInBuffer);
                 int remaining = netInBuffer.remaining();
                 //压缩数据
@@ -132,7 +125,6 @@ public class SSLState {
                 Status state = res.getStatus();
                 System.out.println("netInBuffer->" + before + "->" + netInBuffer.toString() + " remaining:" + remaining + " ->" + state.toString());
                 
-               
                 
                 if(state == Status.BUFFER_UNDERFLOW) {
                     return SelfHandhakeState.NEED_DATA;
@@ -141,7 +133,7 @@ public class SSLState {
                     throw new SSLException("BUFFER_OVERFLOW");
                     
                 } else if(state == Status.OK) {
-                    return doHandshake(null);
+                    return doHandshake(null, surplus);
                     
                 } else if(state == Status.CLOSED) {
                     throw new SSLException("CLOSED:" + status);
@@ -149,6 +141,11 @@ public class SSLState {
                 break;
             }
             case NOT_HANDSHAKING:
+                System.out.println("NOT_HANDSHAKING ->" + netInBuffer.toString());
+                netInBuffer.flip();
+                while(netInBuffer.hasRemaining()) {
+                    surplus.put(netInBuffer.get());
+                }
             case FINISHED:
                 if(appInBuffer != null) {
                     session.putWriteCacheBuffer(appInBuffer);
