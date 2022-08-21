@@ -233,7 +233,10 @@ public class HttpServer {
             }
             WebSocketFrame frame    = (WebSocketFrame) msg;
             HttpRequest    request  = (HttpRequest) session.getAttr(WS_HTTP_REQ);
-
+            if(frame.opcode == WebSocketFrame.OPCODE_CLOSE) {
+                session.closeNow();
+                return;
+            }
             handler.wsMessage(session, request, frame);
         };
 
