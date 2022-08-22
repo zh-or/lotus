@@ -18,14 +18,14 @@ import javax.annotation.processing.FilerException;
 import lotus.utils.Utils;
 
 public class HttpFormData {
-    private int         CACHE_BUFFER_SIZE   =   1024 * 4;
-    private byte[]      HTTP_LINE_CHAR      =   "\r\n".getBytes();
-    private byte[]      HTTP_DB_LINE_CHAR   =   "\r\n\r\n".getBytes();
-    private HttpRequest request;
-    private File        cacheFile;
-    private FileChannel fileChannel;
-    private boolean     isDecode = false;
-    private File        cacheDir;
+    private int                     CACHE_BUFFER_SIZE   =   1024 * 4;
+    private byte[]                  HTTP_LINE_CHAR      =   "\r\n".getBytes();
+    private byte[]                  HTTP_DB_LINE_CHAR   =   "\r\n\r\n".getBytes();
+    private HttpRequest             request;
+    private File                    cacheFile;
+    private FileChannel             fileChannel;
+    private boolean                 isDecode = false;
+    private File                    cacheDir;
     private HashMap<String, Object> params;
     
     public HttpFormData(HttpRequest request) throws IOException {
@@ -92,12 +92,12 @@ public class HttpFormData {
             return;
         }
         long dataFileLen = cacheFile.length();
-        int readLen = -1, 
-                tmp = 0,
-                cachePos = 0,
-                linePos = -1,
-                fileNum = 1,
-                state = 0;//0 
+        int readLen  = -1, 
+            tmp      = 0,
+            cachePos = 0,
+            linePos  = -1,
+            fileNum  = 1,
+            state    = 0;//0 
         
         String boundary = null,
                meta = null,
@@ -214,7 +214,6 @@ public class HttpFormData {
                                         } else {
                                             params.put(name, tmpFile);
                                         }
-                                        
                                     } else {
                                         params.put(name, new String(content, 0, contentPos));
                                         contentPos = 0;
