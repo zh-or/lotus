@@ -2,6 +2,9 @@ package lotus.http.server.support;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
@@ -13,7 +16,6 @@ import javax.net.ssl.SSLSession;
 
 import lotus.http.server.HttpServer;
 import lotus.nio.tcp.NioTcpSession;
-import lotus.utils.Utils;
 
 public class SSLState {
     public final static String     SSL_STATE_KEY          =   "___SSL_STATE_KEY___";
@@ -40,7 +42,16 @@ public class SSLState {
         SSLContext ssl = server.getSSLContext();
         InetSocketAddress address = (InetSocketAddress) session.getRemoteAddress();
         engine = ssl.createSSLEngine(address.getHostString(), address.getPort());
-        
+        /*
+         * See https://github.com/TooTallNate/Java-WebSocket/issues/466
+         *
+         * We remove TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 from the enabled ciphers since it is just available when you patch your java installation directly.
+         * E.g. firefox requests this cipher and this causes some dcs/instable connections
+         */
+        List<String> ciphers = new ArrayList<>(Arrays.asList(engine.getEnabledCipherSuites()));
+        ciphers.remove("TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256");
+        engine.setEnabledCipherSuites(ciphers.toArray(new String[ciphers.size()]));
+                
         boolean isNeedClientAuth = server.isNeedClientAuth();
         
         engine.setUseClientMode(false);
