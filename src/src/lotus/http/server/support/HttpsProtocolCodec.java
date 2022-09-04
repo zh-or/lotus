@@ -9,6 +9,7 @@ import lotus.nio.ProtocolCodec;
 import lotus.nio.ProtocolDecoderOutput;
 import lotus.nio.Session;
 import lotus.nio.tcp.NioTcpSession;
+import lotus.utils.Utils;
 
 public class HttpsProtocolCodec implements ProtocolCodec{
     // 19 -- 25
@@ -22,21 +23,49 @@ public class HttpsProtocolCodec implements ProtocolCodec{
         httpProtocolCodec = context.getHttpProtocolCodec();
     }
     
+    /***
+     * 处理握手
+     * @param session
+     * @return 如果握手完成后有多余的数据则返回, 会流转到decode处理
+     * @throws Exception 触发异常则会关闭此连接
+     */
+    public ByteBuffer doHandshake(NioTcpSession session) throws Exception {
+        /*
+         * https://www.cnblogs.com/LittleHann/p/3733469.html?utm_source=tuicool&utm_medium=referral
+         * tls/ssl 协议起始字节
+         * 1) CHANGE_CIPHER_SPEC        20     0x14
+         * 2) ALERT                     21     0x15
+         * 3) HANDSHAKE                 22     0x16
+         * 4) APPLICATION_DATA          23     0x17
+         * */
+        ByteBuffer tmpBuf = session.getWriteCacheBuffer(0);
+        int n = session.read(tmpBuf);
+        if(n < 0) {
+            //已关闭
+            return null;
+        }
+        tmpBuf.flip();
+        tmpBuf.mark();
+        byte begin = tmpBuf.get();
+        if(begin > 19 && begin < 25) {//是否https
+            
+        }
+        tmpBuf.reset();
+        return tmpBuf;
+    }
+    
+    
     @Override
     public boolean decode(Session session, ByteBuffer in, ProtocolDecoderOutput out) throws Exception {
 
         ByteBuffer outBuffer = null;
         if(context.isEnableSSL() && in.remaining() > 0) {
             
-            /*
-             * https://www.cnblogs.com/LittleHann/p/3733469.html?utm_source=tuicool&utm_medium=referral
-             * tls/ssl 协议起始字节
-             * 1) CHANGE_CIPHER_SPEC        20     0x14
-             * 2) ALERT                     21     0x15
-             * 3) HANDSHAKE                 22     0x16
-             * 4) APPLICATION_DATA          23     0x17
-             * */
+           
+            in.mark();
+            System.out.println("data:" + Utils.byte2hex(in.array(), in.limit()));
 
+            in.reset();
             in.mark();
             byte begin = in.get();
             in.reset();
