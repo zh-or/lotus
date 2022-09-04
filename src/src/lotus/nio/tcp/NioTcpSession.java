@@ -2,6 +2,7 @@ package lotus.nio.tcp;
 
 import java.io.IOException;
 import java.net.SocketAddress;
+import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -65,6 +66,26 @@ public class NioTcpSession extends Session{
 	        addInterestOps(SelectionKey.OP_WRITE);/*注册写事件*/
 	        key.selector().wakeup();
 	    }
+	}
+	
+	/**
+	 * 直接把buffer写入channel
+	 * @param buf
+	 * @return
+	 * @throws IOException
+	 */
+	public int write(ByteBuffer buf) throws IOException {
+	    return channel.write(buf);
+	}
+	
+	/**
+	 * 直接从channel内读取buffer
+	 * @param buf
+	 * @return
+	 * @throws IOException
+	 */
+	public int read(ByteBuffer buf) throws IOException {
+	    return channel.read(buf);
 	}
 	
 	public void addInterestOps(int value){
@@ -141,6 +162,10 @@ public class NioTcpSession extends Session{
 	
 	public SocketChannel getChannel(){
 		return channel;
+	}
+	
+	public boolean isBlocking() {
+	    return channel.isBlocking();
 	}
 	
 	public boolean isSentClose(){

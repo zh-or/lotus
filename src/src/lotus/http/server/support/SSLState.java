@@ -41,7 +41,7 @@ public class SSLState {
         this.session = session;
         SSLContext ssl = server.getSSLContext();
         InetSocketAddress address = (InetSocketAddress) session.getRemoteAddress();
-        engine = ssl.createSSLEngine(address.getHostString(), address.getPort());
+        engine = ssl.createSSLEngine(address.getHostName(), address.getPort());
         /*
          * See https://github.com/TooTallNate/Java-WebSocket/issues/466
          *
@@ -72,6 +72,8 @@ public class SSLState {
         netInBuffer.clear();
         netOutBuffer.clear();
         engine.beginHandshake();
+        //发个空数据
+        session.write(new HttpMessageWrap(HttpMessageWrap.HTTP_MESSAGE_HTTPS_HANDHAKE, netOutBuffer));
     }
     
     
@@ -95,6 +97,7 @@ public class SSLState {
             case NEED_WRAP:
             {
                 //netOutBuffer.clear();
+                appInBuffer.clear();
                 appInBuffer.flip();
                 SSLEngineResult res = engine.wrap(appInBuffer, netOutBuffer);
                 appInBuffer.compact();
@@ -120,7 +123,7 @@ public class SSLState {
                 
                 break;
             case NEED_UNWRAP:
-            //case NEED_UNWRAP_AGAIN://jdk8+新增
+            case NEED_UNWRAP_AGAIN://jdk8+新增
             {
                 if(netIn != null) {
                     netInBuffer.put(netIn);
@@ -128,7 +131,7 @@ public class SSLState {
                 netInBuffer.flip();
                 String  before = netInBuffer.toString();
                 System.out.println("netInBuffer->" + before );
-            
+                System.out.println("appInBuffer ->" + appInBuffer);
                 SSLEngineResult res = engine.unwrap(netInBuffer, appInBuffer);
                 int remaining = netInBuffer.remaining();
                 //压缩数据
@@ -144,6 +147,7 @@ public class SSLState {
                     throw new SSLException("BUFFER_OVERFLOW");
                     
                 } else if(state == Status.OK) {
+                    //return SelfHandhakeState.NEED_DATA;
                     return doHandshake(null, surplus);
                     
                 } else if(state == Status.CLOSED) {
@@ -165,6 +169,7 @@ public class SSLState {
                 session.putWriteCacheBuffer(netInBuffer);
                 netInBuffer = null;
                 return SelfHandhakeState.FINISHED;
+            
         }
         
         return SelfHandhakeState.FINISHED;

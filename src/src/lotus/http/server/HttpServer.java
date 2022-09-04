@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
@@ -31,6 +32,7 @@ import lotus.http.server.support.WebSocketProtocolCodec;
 import lotus.nio.IoHandler;
 import lotus.nio.Session;
 import lotus.nio.tcp.NioTcpServer;
+import lotus.nio.tcp.NioTcpSession;
 
 /*
  * 一个简单的http服务器
@@ -47,8 +49,10 @@ public class HttpServer {
     private boolean                     enableSSL           =   false;
     private SSLContext                  sslContext          =   null;
     private HttpProtocolCodec           httpProtocolCodec   =   null;
+    private HttpsProtocolCodec          httpsProtocolCodec  =   null;
     private boolean                     isNeedClientAuth    =   false;
     private int                         oldBufferSize       =   0;
+    private boolean                     tcpNoDelay          =   true;
     
     public HttpServer() {
         server = new NioTcpServer();
@@ -65,8 +69,8 @@ public class HttpServer {
     }
     
     /**
-     * java8最高只支持tls1.2
-     * 如果要支持 tls1.3 需要加另外的库
+     * java1.8最高只支持tls1.2
+     * 如果要jdk1.8支持 tls1.3 需要加另外的库
      * https://github.com/openjsse/openjsse
      * https://blog.csdn.net/devzyh/article/details/122074632
      */
@@ -103,8 +107,8 @@ public class HttpServer {
                 kmf.getKeyManagers(),
                 new TrustManager[] { new HttpServerX509TrustManager(this) }, 
                 new java.security.SecureRandom());
-        
-        server.setProtocolCodec(new HttpsProtocolCodec(this));
+        httpsProtocolCodec = new HttpsProtocolCodec(this);
+        server.setProtocolCodec(httpsProtocolCodec);
         isNeedClientAuth = needClientAuth;
         enableSSL = true;
     }
@@ -115,6 +119,16 @@ public class HttpServer {
     
     public HttpProtocolCodec getHttpProtocolCodec() {
         return httpProtocolCodec;
+    }
+    
+    public boolean isTcpNoDelay() {
+        return tcpNoDelay;
+    }
+    
+    public void setTcpNoDelay(boolean noDelay) {
+        tcpNoDelay = noDelay;
+
+        //chan.socket().setTcpNoDelay(true);
     }
     
     public SSLContext getSSLContext() {
@@ -234,7 +248,7 @@ public class HttpServer {
             WebSocketFrame frame    = (WebSocketFrame) msg;
             HttpRequest    request  = (HttpRequest) session.getAttr(WS_HTTP_REQ);
             if(frame.opcode == WebSocketFrame.OPCODE_CLOSE) {
-                session.closeNow();
+                //session.closeNow();
                 return;
             }
             handler.wsMessage(session, request, frame);
@@ -258,7 +272,7 @@ public class HttpServer {
                     ssl.free();
                     session.removeAttr(SSLState.SSL_STATE_KEY);
                 }
-                session.closeNow();
+                //session.closeNow();
                 
             } catch(Exception e2) {
                 e2.printStackTrace();
@@ -267,6 +281,23 @@ public class HttpServer {
     };
 
     private IoHandler ioHandler = new IoHandler() {
+        
+        public boolean onBeforeConnection(Session session) throws Exception {
+            if(enableSSL) {
+                NioTcpSession tcpSession = (NioTcpSession) session;
+                //处理https握手
+                try {
+                    //如果返回了buf则表示https握手数据有剩余的此时会在IoProcess执行和读事件一样的代码
+                    ByteBuffer buf = httpsProtocolCodec.doHandshake(tcpSession);
+                    session.updateReadCacheBuffer(buf);
+                } catch(Exception e) {
+                    e.printStackTrace();
+                    return false;
+                }
+                
+            }
+            return true;
+        };
         
         public void onConnection(Session session) throws Exception {
             
@@ -366,7 +397,7 @@ public class HttpServer {
                     ssl.free();
                     session.removeAttr(SSLState.SSL_STATE_KEY);
                 }
-                session.closeNow();
+                //session.closeNow();
                 
             } catch(Exception e2) {
                 e2.printStackTrace();
