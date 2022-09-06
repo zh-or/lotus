@@ -46,6 +46,11 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
                         channel.close();
                         return;
                     }
+                    
+                    ByteBuffer readcache = session.getReadCacheBuffer();
+
+                    handleReadData(readcache, session);
+                    
                     channel.configureBlocking(false);
                     if(event) {
                         /*call on connection*/
@@ -104,7 +109,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
             return;
         }
         Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
-       
+        
         while(keys.hasNext()){
             if(!isrun) break;
             
@@ -122,7 +127,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
                     continue;
                 }
                 ByteBuffer readcache = session.getReadCacheBuffer();
-                if(key.isReadable() || (readcache != null && readcache.hasRemaining())) {/*call decode */
+                if(key.isReadable()) {/*call decode */
 //                    long s = System.currentTimeMillis();
                     int len = session.getChannel().read(readcache);
                     if(len < 0){/*EOF*/
@@ -135,51 +140,8 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
                         //capacity 容量
                         //limit 也就是缓冲区可以利用（进行读写）的范围的最大值
                         //position 当前读写位置
+                        handleReadData(readcache, session);
                         
-                        readcache.flip();
-                        ProtocolDecoderOutput msgout = session.getProtocolDecoderOutput();
-                        boolean ishavepack = false;
-                        
-                        try {
-                            ishavepack = session.getProtocoCodec().decode(session, readcache, msgout);
-                        } catch (Exception e) {
-                            session.pushEventRunnable(new IoEventRunnable(e, IoEventType.SESSION_EXCEPTION, session, context));
-                        }
-
-                        remaining = readcache.remaining();
-                        limit     = readcache.limit();
-                        if(remaining <= 0){//用完了回收掉
-                            context.putByteBufferToCache(readcache);
-                            session.updateReadCacheBuffer(null);
-                        }else{
-                            //copyData(readcache);
-                            if(remaining >= readcache.capacity()){/*已经读满了, 缓存不够. 就不写环形缓冲队列了 :(*/
-                                readcache.rewind();//重置 position 位置为 0 并忽略 mark
-                                capacity = readcache.capacity();
-                                if(capacity > tmp_buffer.length){//扩过容且缓存不够
-                                    tmp_buffer = null;
-                                    tmp_buffer = new byte[capacity];
-                                }
-                                readcache.get(tmp_buffer, 0, limit);
-                                int newLen = readcache.capacity() * 2;;
-                                context.putByteBufferToCache(readcache);/*回收了*/
-                                ByteBuffer newreadcache = context.getByteBufferFormCache(newLen);
-                                //session.resetCapacity(tmpdata, limit);/*直接扩容 缓存大小设置好点, 就不会有这些蛋疼的问题了*/
-                                /*扩容后这便是一个新的obj了, 故手动更新*/
-                                newreadcache.put(tmp_buffer, 0, limit);
-                                session.updateReadCacheBuffer(newreadcache);/*update*/
-                            }else{
-                                /*readcache.position(readcache.limit());
-                                readcache.limit(readcache.capacity());*/
-                                readcache.compact();//把未读的数据复制到缓冲区起始位置 此时 position 为数据结尾
-                                session.updateReadCacheBuffer(readcache);/*update*/
-                            }
-                        }
-                        
-                        if(ishavepack){
-                            session.pushEventRunnable(new IoEventRunnable(msgout.read(), IoEventType.SESSION_RECVMSG, session, context));
-                            msgout.write(null);
-                        }
                         //selector.wakeup();
                     }
                 }
@@ -286,6 +248,50 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
         }
     }
     
+    private void handleReadData(ByteBuffer readcache, Session session) {
+        readcache.flip();
+        ProtocolDecoderOutput msgout = session.getProtocolDecoderOutput();
+        boolean ishavepack = false;
+        
+        try {
+            ishavepack = session.getProtocoCodec().decode(session, readcache, msgout);
+        } catch (Exception e) {
+            session.pushEventRunnable(new IoEventRunnable(e, IoEventType.SESSION_EXCEPTION, session, context));
+        }
+
+        remaining = readcache.remaining();
+        limit     = readcache.limit();
+        if(remaining <= 0){//用完了回收掉
+            context.putByteBufferToCache(readcache);
+            session.updateReadCacheBuffer(null);
+        }else{
+            //copyData(readcache);
+            if(remaining >= readcache.capacity()){/*已经读满了, 缓存不够. 就不写环形缓冲队列了 :(*/
+                readcache.rewind();//重置 position 位置为 0 并忽略 mark
+                capacity = readcache.capacity();
+                if(capacity > tmp_buffer.length){//扩过容且缓存不够
+                    tmp_buffer = null;
+                    tmp_buffer = new byte[capacity];
+                }
+                readcache.get(tmp_buffer, 0, limit);
+                int newLen = readcache.capacity() * 2;;
+                context.putByteBufferToCache(readcache);/*回收了*/
+                ByteBuffer newreadcache = context.getByteBufferFormCache(newLen);
+                /*扩容后这便是一个新的obj了, 故手动更新*/
+                newreadcache.put(tmp_buffer, 0, limit);
+                session.updateReadCacheBuffer(newreadcache);/*update*/
+            }else{
+                readcache.compact();//把未读的数据复制到缓冲区起始位置 此时 position 为数据结尾
+                session.updateReadCacheBuffer(readcache);/*update*/
+            }
+        }
+        
+        if(ishavepack){
+            session.pushEventRunnable(new IoEventRunnable(msgout.read(), IoEventType.SESSION_RECVMSG, session, context));
+            msgout.write(null);
+        }
+    }
+     
     public void cancelKey(SelectionKey key){
         if(key == null) return;
         try {

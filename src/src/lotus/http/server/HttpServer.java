@@ -261,7 +261,7 @@ public class HttpServer {
         };
 
         public void onIdle(Session session) throws Exception {
-            session.close();
+            session.closeNow();
         };
         
 
