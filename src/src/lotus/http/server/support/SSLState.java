@@ -18,8 +18,8 @@ import lotus.http.server.HttpServer;
 import lotus.nio.tcp.NioTcpSession;
 
 public class SSLState {
-    public final static String     SSL_STATE_KEY          =   "___SSL_STATE_KEY___";
-
+    public final static  String     SSL_STATE_KEY          =   "___SSL_STATE_KEY___";
+    private static final ByteBuffer emptyBuff              =   ByteBuffer.allocate(0);
     private HttpServer      server;
     private SSLEngine       engine;
     private NioTcpSession   session;
@@ -29,12 +29,6 @@ public class SSLState {
     
     private int             appBufferSize;
     private int             netBufferSize;
-    
-    public enum SelfHandhakeState {
-        NEED_DATA,
-        NEED_SEND,
-        FINISHED
-    }
     
     public SSLState(HttpServer server, NioTcpSession session) throws SSLException {
         this.server = server;
@@ -62,7 +56,7 @@ public class SSLState {
         netBufferSize = sslSession.getPacketBufferSize();
         
         //不知道为什么要加50, 因为jdk文档是这样写的
-        this.server.reSizeCacheBuffer(appBufferSize + 50);
+        server.reSizeCacheBuffer(appBufferSize + 50);
         
         appInBuffer = session.getWriteCacheBuffer(appBufferSize);
         netInBuffer = session.getWriteCacheBuffer(netBufferSize);
@@ -72,8 +66,6 @@ public class SSLState {
         netInBuffer.clear();
         netOutBuffer.clear();
         engine.beginHandshake();
-        //发个空数据
-        session.write(new HttpMessageWrap(HttpMessageWrap.HTTP_MESSAGE_HTTPS_HANDHAKE, netOutBuffer));
     }
     
     
@@ -82,8 +74,13 @@ public class SSLState {
         return status == HandshakeStatus.FINISHED || status == HandshakeStatus.NOT_HANDSHAKING;
     }
     
-    public SelfHandhakeState doHandshake(ByteBuffer netIn, ByteBuffer surplus) throws SSLException {
+    /***
+     * @return 返回剩余数据
+     */
+    public ByteBuffer doHandshake(ByteBuffer buf) throws SSLException {
 
+        //发个空数据
+        session.write(emptyBuff);
         HandshakeStatus status = engine.getHandshakeStatus();
         System.out.println("status ->" + status.toString());
         switch(status) {
@@ -207,4 +204,12 @@ public class SSLState {
         }
     }
     
+
+    public int getAppBufferSize() {
+        return appBufferSize;
+    }
+
+    public int getNetBufferSize() {
+        return netBufferSize;
+    }
 }
