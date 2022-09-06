@@ -12,12 +12,13 @@ import java.util.concurrent.Executors;
 import lotus.socket.common.ClientCallback;
 import lotus.socket.common.EventRunnable;
 import lotus.utils.Utils;
+import java.lang.AutoCloseable;
 
 /**
  * 异步socket
  * @author OR
  */
-public class AsyncSocketClient {
+public class AsyncSocketClient implements AutoCloseable {
 	private Socket              socket                   = null;
     private ClientCallback      callback                 = null;
     private ExecutorService     sendpool                 = null;
@@ -119,7 +120,8 @@ public class AsyncSocketClient {
         });
 	}
 	
-	public void close(){
+    @Override
+	public void close() {
 	    if(closed) return;
 	    closed = true;
 	    

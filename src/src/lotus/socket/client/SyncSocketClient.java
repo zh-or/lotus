@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.lang.AutoCloseable;
 
 import lotus.utils.Utils;
 
@@ -11,7 +12,7 @@ import lotus.utils.Utils;
  * 同步socket
  * @author OR
  */
-public class SyncSocketClient {
+public class SyncSocketClient implements AutoCloseable {
 	private Socket              socket                   = null;
     private Object              attr                     = null;//辅助参数
     private int                 RECV_BUFF_SIZE           = 1024 * 2;
@@ -105,7 +106,8 @@ public class SyncSocketClient {
         return null;/*这里不close是因为有可能是读超时了*/
 	}
 	
-	public void close(){
+    @Override
+	public void close() {
 	    if(socket != null){
 	        try {
 	            socket.close();
