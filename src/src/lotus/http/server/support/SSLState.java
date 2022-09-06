@@ -1,5 +1,6 @@
 package lotus.http.server.support;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -76,100 +77,76 @@ public class SSLState {
     
     /***
      * @return 返回剩余数据
+     * @throws Exception 
      */
-    public ByteBuffer doHandshake(ByteBuffer buf) throws SSLException {
-
-        //发个空数据
-        session.write(emptyBuff);
+    public ByteBuffer doHandshake(ByteBuffer buf) throws Exception {
         HandshakeStatus status = engine.getHandshakeStatus();
-        System.out.println("status ->" + status.toString());
-        switch(status) {
-            case NEED_TASK:
-                Runnable run;
-                while((run = engine.getDelegatedTask()) != null) {
-                    run.run();
-                }
-                return doHandshake(netIn, surplus);
-                
-            case NEED_WRAP:
-            {
-                //netOutBuffer.clear();
-                appInBuffer.clear();
-                appInBuffer.flip();
-                SSLEngineResult res = engine.wrap(appInBuffer, netOutBuffer);
-                appInBuffer.compact();
-                Status state = res.getStatus();
-                if(state == Status.BUFFER_UNDERFLOW || state == Status.BUFFER_OVERFLOW) {
-                    throw new SSLException("NEED_WRAP -> BUFFER_UNDERFLOW | BUFFER_OVERFLOW:" + state);
-                   
-                } else if(state == Status.OK) {
-                    //netOutBuffer.flip();
-                    
-                    session.write(new HttpMessageWrap(HttpMessageWrap.HTTP_MESSAGE_HTTPS_HANDHAKE, netOutBuffer));
-                    netOutBuffer = session.getWriteCacheBuffer(netBufferSize);
-                    netOutBuffer.clear();
-                    HandshakeStatus tmpStatus = engine.getHandshakeStatus();
-                    if(tmpStatus != HandshakeStatus.NEED_UNWRAP) {
-                        return doHandshake(null, surplus);
-                    }
-                    return SelfHandhakeState.NEED_SEND;
-                } else if(state == Status.CLOSED) {
-                    throw new SSLException("CLOSED:" + status);
-                }
-            }
-                
-                break;
-            case NEED_UNWRAP:
-            case NEED_UNWRAP_AGAIN://jdk8+新增
-            {
-                if(netIn != null) {
-                    netInBuffer.put(netIn);
-                }
-                netInBuffer.flip();
-                String  before = netInBuffer.toString();
-                System.out.println("netInBuffer->" + before );
-                System.out.println("appInBuffer ->" + appInBuffer);
-                SSLEngineResult res = engine.unwrap(netInBuffer, appInBuffer);
-                int remaining = netInBuffer.remaining();
-                //压缩数据
-                netInBuffer.compact();
-                Status state = res.getStatus();
-                System.out.println("netInBuffer->" + before + "->" + netInBuffer.toString() + " remaining:" + remaining + " ->" + state.toString());
-                
-                
-                if(state == Status.BUFFER_UNDERFLOW) {
-                    return SelfHandhakeState.NEED_DATA;
-                    
-                } else if(state == Status.BUFFER_OVERFLOW) {
-                    throw new SSLException("BUFFER_OVERFLOW");
-                    
-                } else if(state == Status.OK) {
-                    //return SelfHandhakeState.NEED_DATA;
-                    return doHandshake(null, surplus);
-                    
-                } else if(state == Status.CLOSED) {
-                    throw new SSLException("CLOSED:" + status);
-                }
-                break;
-            }
-            case NOT_HANDSHAKING:
-                System.out.println("NOT_HANDSHAKING ->" + netInBuffer.toString());
-                netInBuffer.flip();
-                while(netInBuffer.hasRemaining()) {
-                    surplus.put(netInBuffer.get());
-                }
-            case FINISHED:
-                if(appInBuffer != null) {
-                    session.putWriteCacheBuffer(appInBuffer);
-                    appInBuffer = null;
-                }
-                session.putWriteCacheBuffer(netInBuffer);
-                netInBuffer = null;
-                return SelfHandhakeState.FINISHED;
-            
+        if(status == HandshakeStatus.NOT_HANDSHAKING) {
+            return buf;
         }
+        netInBuffer.put(buf);
+        //发个空数据
+        session.write(emptyBuff);// initializes res
         
-        return SelfHandhakeState.FINISHED;
+        do {
+            System.out.println("status:" + status);
+            switch(status) {
+                case NEED_TASK:
+                    Runnable run;
+                    while((run = engine.getDelegatedTask()) != null) {
+                        run.run();
+                    }
+                    break;
+                case NEED_UNWRAP:
+                case NEED_UNWRAP_AGAIN:
+                    do {
+                        netInBuffer.flip();
+                        SSLEngineResult res = engine.unwrap(netInBuffer, appInBuffer);
+                        Status tStatus = res.getStatus();
+                        netInBuffer.compact();
+                        if(tStatus == Status.OK) {
+                            //appInBuffer.rewind();
+                            //session.write(appInBuffer);
+                            System.out.println("unwrap ok:" + netInBuffer);
+                            break;
+                        } else if(tStatus == Status.BUFFER_UNDERFLOW) {
+                            session.read(netInBuffer);
+                        } else if(tStatus == Status.BUFFER_OVERFLOW) {
+                            throw new SSLException("unwrap BUFFER_OVERFLOW");
+                        } else if(tStatus == Status.CLOSED) {
+                            throw new SSLClosedException();
+                        }
+                        
+                    } while(true);
+                    break;
+                case NEED_WRAP:
+                    do {
+                        appInBuffer.clear();
+                        netOutBuffer.clear();
+                        SSLEngineResult res = engine.wrap(appInBuffer, netOutBuffer);
+                        Status tStatus = res.getStatus();
+                        if(tStatus == Status.OK) {
+                            netOutBuffer.flip();
+                            session.write(netOutBuffer);
+                            break;
+                        } else if(tStatus == Status.BUFFER_UNDERFLOW || tStatus == Status.BUFFER_OVERFLOW) {
+                            throw new SSLException("BUFFER_UNDERFLOW || BUFFER_OVERFLOW");
+                        } else if(tStatus == Status.CLOSED) {
+                            throw new SSLClosedException();
+                        }
+                    } while(true);
+                    
+                    
+                    break;
+                case FINISHED:
+                    System.out.println("握手完成1:" + netInBuffer);
+                case NOT_HANDSHAKING:
+                    System.out.println("握手完成2:" + netInBuffer);
+                    //netInBuffer.flip();
+                    return netInBuffer;
+            }
+            status = engine.getHandshakeStatus();
+        } while(true);
     }
     
     public void unwrap(ByteBuffer in, ByteBuffer out) throws SSLException, SSLClosedException {
