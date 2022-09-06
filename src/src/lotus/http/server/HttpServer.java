@@ -233,12 +233,18 @@ public class HttpServer {
     private IoHandler wsIoHandler = new  IoHandler() {
 
         public void onClose(Session session) throws Exception {
+            SSLState ssl = (SSLState) session.getAttr(SSLState.SSL_STATE_KEY);
+            if(ssl != null) {
+                ssl.free();
+                session.removeAttr(SSLState.SSL_STATE_KEY);
+            }
             if(handler == null) {
                 return;
             }
             HttpRequest request  = (HttpRequest) session.getAttr(WS_HTTP_REQ);
 
             handler.wsClose(session, request);
+           
         };
 
         public void onRecvMessage(Session session, Object msg) throws Exception {
@@ -255,7 +261,7 @@ public class HttpServer {
         };
 
         public void onIdle(Session session) throws Exception {
-            /*这里可以做成多久没有操作 就关闭该 ws 通道*/
+            session.close();
         };
         
 
@@ -267,11 +273,7 @@ public class HttpServer {
                 } else {
                     handler.exception(e, null, null);
                 }
-                SSLState ssl = (SSLState) session.getAttr(SSLState.SSL_STATE_KEY);
-                if(ssl != null) {
-                    ssl.free();
-                    session.removeAttr(SSLState.SSL_STATE_KEY);
-                }
+                
                 //session.closeNow();
                 
             } catch(Exception e2) {
@@ -289,7 +291,9 @@ public class HttpServer {
                 try {
                     //如果返回了buf则表示https握手数据有剩余的此时会在IoProcess执行和读事件一样的代码
                     ByteBuffer buf = httpsProtocolCodec.doHandshake(tcpSession);
-                    session.updateReadCacheBuffer(buf);
+                    if(buf != null) {
+                        session.updateReadCacheBuffer(buf);
+                    }
                 } catch(Exception e) {
                     e.printStackTrace();
                     return false;
