@@ -1,5 +1,3 @@
-## https参考
-https://github.dev/TooTallNate/Java-WebSocket
 
 ## 自己造的轮子
 ## 包含工具库
@@ -38,6 +36,7 @@ server.start(new InetSocketAddress(9000));
 原生使用
 ```
 HttpServer httpServer = new HttpServer();
+httpServer.setCharset(Charset.forName("utf-8"));
 httpServer.enableWebSocket(true);//启用websocket支持
 httpServer.setEventThreadPoolSize(10);
 httpServer.setReadBufferCacheSize(1024 * 4);
@@ -100,5 +99,11 @@ public class UserService extends HttpBaseService {
     }
 }
 ```
+启用HTTPS支持
+```
+server.setKeyStoreAndEnableSSL("./system/test.keystore", "123456789");
+```
+
+
 [![996.icu](https://img.shields.io/badge/link-996.icu-red.svg)](https://996.icu)
 [![LICENSE](https://img.shields.io/badge/license-Anti%20996-blue.svg)](https://github.com/996icu/996.ICU/blob/master/LICENSE)

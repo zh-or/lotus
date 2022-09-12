@@ -70,6 +70,14 @@ public abstract class HttpHandler {
     public boolean wsConnection(Session session, HttpRequest request) throws Exception{ 
         return true;
     }
+    
+    /**
+     * 注意此方法不会收到客户端发过来的 OP_CLOSE 消息, 内部已经处理了此消息
+     * @param session
+     * @param request
+     * @param frame
+     * @throws Exception
+     */
     public void wsMessage(Session session,  HttpRequest request, WebSocketFrame frame) throws Exception{ }
     public void wsClose(Session session,  HttpRequest request) throws Exception{ }
 

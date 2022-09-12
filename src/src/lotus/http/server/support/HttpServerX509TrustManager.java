@@ -7,7 +7,7 @@ import javax.net.ssl.X509TrustManager;
 
 import lotus.http.server.HttpServer;
 
-public class HttpServerX509TrustManager implements X509TrustManager{
+public class HttpServerX509TrustManager implements X509TrustManager {
     private HttpServer context;
     
     public HttpServerX509TrustManager(HttpServer context) {

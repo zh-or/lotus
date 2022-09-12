@@ -93,6 +93,10 @@ public abstract class Session {
         return deout;
     }
 
+    public boolean hasReadCache() {
+        return readcache != null;
+    }
+    
     /**
      * 这个buffer用来缓存已经从io中读取到的数据
      * @return
@@ -148,7 +152,7 @@ public abstract class Session {
     /**
      * 立即关闭该链接
      */
-    public synchronized void closeNow(){
+    public synchronized void closeNow() {
         if(closed) return ;
         closed = true;
         pushEventRunnable(new IoEventRunnable(null, IoEventType.SESSION_CLOSE, this, context));
@@ -193,7 +197,7 @@ public abstract class Session {
         }
     }
     
-    public Object get(){
+    public Object get() {
         return notifiRecvMsg;
     }
     

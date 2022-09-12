@@ -24,6 +24,7 @@ public class NioTcpServer extends NioContext{
     private final ReentrantLock rliplock    =   new ReentrantLock();
 	private AcceptThread        acceptrhread=   null;
 	private long                idcount     =   0l;
+	private boolean             tcpNoDelay  =   false;
 	
     public NioTcpServer(){
 		super();
@@ -64,7 +65,14 @@ public class NioTcpServer extends NioContext{
         
         ssc.bind(addr);
     }
-
+    
+    public boolean isTcpNoDelay() {
+        return tcpNoDelay;
+    }
+    
+    public void setTcpNoDelay(boolean isNoDelay) {
+        tcpNoDelay = isNoDelay;
+    }
 	
 	public void close() {
 		try {
@@ -121,12 +129,17 @@ public class NioTcpServer extends NioContext{
                                 //不用设置此值, 看起来操作系统会自动优化
                                 //client.socket().setReceiveBufferSize(buff_cache_size);
                                 //client.socket().setSendBufferSize(buff_cache_size);
-                                client.finishConnect();
+                                if(client.isConnectionPending()) {
+                                    client.finishConnect();
+                                }
                                 rliplock.lock();/*排队*/
                                 try {
                                     iipBound ++;/**/
-                                    if(iipBound >= ioprocess.length){
+                                    if(iipBound >= ioprocess.length) {
                                         iipBound = 0;
+                                    }
+                                    if(tcpNoDelay) {
+                                        client.socket().setTcpNoDelay(true);
                                     }
                                     ioprocess[iipBound].putChannel(client, ++idcount);
                                 } catch (Exception e) {
