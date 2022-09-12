@@ -27,7 +27,7 @@ import lotus.utils.Utils;
 
 public class HTTP {
     
-    public static boolean downloadFile(String url, String savepath, String cookie){
+    public static boolean downloadFile(String url, String savepath, String cookie) {
         InputStream is = null;
         FileOutputStream fout = null;
         try {

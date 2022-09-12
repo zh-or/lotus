@@ -167,13 +167,13 @@ public class HttpProtocolCodec implements ProtocolCodec{
                 
                 try (FileChannel channel = FileChannel.open(file.toPath(), StandardOpenOption.READ);) {
                     long len = file.length();
-                    //先简单的吧文件映射到内存发送
+                    //把文件映射到内存发送
                     MappedByteBuffer mapBuffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, len);
                     mapBuffer.position((int) len);
                     out.append(mapBuffer);
                     channel.close();
                     return true;
-                } 
+                }
 
         }
         return true;

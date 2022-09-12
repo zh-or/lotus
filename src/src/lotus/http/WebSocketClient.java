@@ -22,9 +22,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
@@ -37,7 +35,7 @@ import lotus.utils.Utils;
  *
  */
 public class WebSocketClient {
-    public interface Handler{
+    public interface Handler {
 
         public void onConn(WebSocketClient ws);
         
@@ -457,9 +455,4 @@ public class WebSocketClient {
         }
     }
  
-    private static class TrustAnyHostnameVerifier implements HostnameVerifier {
-            public boolean verify(String hostname, SSLSession session) {
-                return true;
-            }
-    }
 }

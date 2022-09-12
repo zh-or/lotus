@@ -47,7 +47,7 @@ public class LogWriter {
 
     private int nowDay = -1;
 
-    public void reInitLogFile(){
+    public void reInitLogFile() {
         Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT+8"));
         int tmpDay = cal.get(Calendar.DAY_OF_YEAR);
         if(nowDay != tmpDay) {
