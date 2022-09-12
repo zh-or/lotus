@@ -181,7 +181,6 @@ public class HttpResponse {
      */
     public void sendFile(File file) throws Exception {
         if(!isSendHeader){
-
             setHeader("Content-Length", file.length() + "");
             sendHeader();
         }

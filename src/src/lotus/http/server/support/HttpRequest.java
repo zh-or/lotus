@@ -105,7 +105,7 @@ public class HttpRequest {
         return this.charset;
     }
     
-    public void parseHeader(String sheaders){
+    public void parseHeader(String sheaders) {
         final String[] headerFields = sheaders.split("\r\n");
         if(headerFields != null && headerFields.length > 1){
             final String requestLine = headerFields[0];

@@ -1,6 +1,7 @@
 package lotus.nio;
 
 import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 import java.util.ArrayList;
 
 public class LotusIOBuffer {
@@ -74,7 +75,10 @@ public class LotusIOBuffer {
     
     public void free() {
         for(ByteBuffer buff : buffers) {
-            context.putByteBufferToCache(buff);
+            //不缓存此类型
+            if(!(buff instanceof MappedByteBuffer)) {
+                context.putByteBufferToCache(buff);
+            }
         }
         this.buffers.clear();
         this.curBuffer = null;
