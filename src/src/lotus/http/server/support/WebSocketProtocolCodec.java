@@ -27,7 +27,11 @@ public class WebSocketProtocolCodec implements ProtocolCodec{
         SSLState state = (SSLState) session.getAttr(SSLState.SSL_STATE_KEY);
         if(context.isEnableSSL() && state != null) {
             in = session.getWriteCacheBuffer(netIn.capacity());
-            state.unwrap(netIn, in);
+            if(!state.unwrap(netIn, in)) {
+                session.putWriteCacheBuffer(in);
+                return false;
+            }
+            in.flip();
         } else {
             in = netIn;
         }

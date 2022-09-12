@@ -291,9 +291,13 @@ public class HttpRequest {
             }
         } catch (Exception e) {
         }
-        return ip;  
+        return ip;
     }
 
+    public Session getSession() {
+        return session;
+    }
+    
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();

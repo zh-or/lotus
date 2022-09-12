@@ -27,7 +27,7 @@ public class HttpResponse {
     
     public static HttpResponse defaultResponse(Session session, HttpRequest request) {
     	HttpResponse response = new HttpResponse(session, request.isWebSocketConnection() ? ResponseStatus.INFORMATIONAL_SWITCHING_PROTOCOLS : ResponseStatus.SUCCESS_OK);
-    	response.setHeader("Server", "simple http server by lotus");
+    	response.setHeader("Server", "lotus");
     	Date time = new Date();
     	response.setHeader("Expires", time.toString());
     	response.setHeader("Date", time.toString());

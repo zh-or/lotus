@@ -47,11 +47,12 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
                         return;
                     }
                     
-                    ByteBuffer readcache = session.getReadCacheBuffer();
-
-                    handleReadData(readcache, session);
-                    
                     channel.configureBlocking(false);
+
+                    if(session.hasReadCache()) {
+                        ByteBuffer readcache = session.getReadCacheBuffer();
+                        handleReadData(readcache, session);
+                    }
                     if(event) {
                         /*call on connection*/
                         /*register 时会等待 selector.select() 所以此处先唤醒selector以免锁冲突 */
@@ -68,6 +69,8 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
                         session.setKey(key);
                         selector.wakeup();
                     }
+                    
+
                 } catch(Exception e) {
                     e.printStackTrace();
                 }
@@ -79,22 +82,21 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
     @Override
     public void run() {
         
-        while(isrun && selector != null){
+        while(isrun && selector != null) {
             try {
-                if(isessiontimeout != 0){
+                handleIoEvent();
+
+                if(isessiontimeout != 0) {
                     try {
                         handleTimeOut();
                     } catch (Exception e) {}
                 }
-                handleIoEvent();
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            
         }
     }
    
-
 	/*缓存buff的状态*/
 	private volatile int remaining = 0;
 	private volatile int capacity  = 0;
@@ -122,13 +124,13 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
             }
             
             try {
-                if(!key.isValid()){
+                if(!key.isValid()) {
                     session.closeNow();
                     continue;
                 }
-                ByteBuffer readcache = session.getReadCacheBuffer();
                 if(key.isReadable()) {/*call decode */
 //                    long s = System.currentTimeMillis();
+                    ByteBuffer readcache = session.getReadCacheBuffer();
                     int len = session.getChannel().read(readcache);
                     if(len < 0){/*EOF*/
                         session.closeNow();
@@ -140,77 +142,18 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
                         //capacity 容量
                         //limit 也就是缓冲区可以利用（进行读写）的范围的最大值
                         //position 当前读写位置
+                        readcache.flip();
                         handleReadData(readcache, session);
-                        
                         //selector.wakeup();
                     }
                 }
                 
-                if(key.isWritable()){/*call encode*/
-
-                    Object msg = session.poolMessage();
-                    if(msg != null){
-                        
-                        boolean repSend = false;
-                        do {
-                            LotusIOBuffer out = new LotusIOBuffer(context);
-                            try {
-                                //编码解码器放session更好
-                                repSend = !session.getProtocoCodec().encode(session, msg, out);
-                                ByteBuffer[] buffers = out.getAllBuffer();
-                                for(ByteBuffer buff : buffers) {
-                                    buff.flip();
-                                    while(buff.hasRemaining()) {/*这里最好不要写入超过8k的数据*/
-                                        session.getChannel().write(buff);
-                                    }
-                                }
-                                session.setLastActive(System.currentTimeMillis());
-                                out.free();
-                                out = null;
-                            } catch (Exception e) {
-                                session.pushEventRunnable(new IoEventRunnable(e, IoEventType.SESSION_EXCEPTION, session, context));
-                            }
-                            session.setLastActive(System.currentTimeMillis());
-                        } while(repSend);
-                        
-                        /*call message sent*/
-                        session.pushEventRunnable(new IoEventRunnable(msg, IoEventType.SESSION_SENT, session, context));
-                    }else{
-                        Object msglock = session.getMessageLock();
-                        synchronized (msglock) {
-                            if(session.getWriteMessageSize() <= 0){
-                                session.removeInterestOps(SelectionKey.OP_WRITE);
-                            }
-                        }
-                        
-                        if(session.isSentClose()){
-                            session.closeNow();
-                        }
-                    }
+                if(key.isWritable()) {/*call encode*/
+                    handleWriteData(session);
                 }
                 
-                
-                if(key.isConnectable()){
-
-                    synchronized (session) {
-                        session.notifyAll();
-                    }
-                    //Finishes the process of connecting a socket channel. 
-                    //fuck the doc
-                    try {
-                        if(((SocketChannel) key.channel()).finishConnect() == false){
-                            /*连接失败???*/
-                            key.cancel();
-                            continue;
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                    
-                    
-                    session.removeInterestOps(SelectionKey.OP_CONNECT);//取消连接成功事件
-                    session.addInterestOps(SelectionKey.OP_READ);//注册读事件
-                    session.pushEventRunnable(new IoEventRunnable(null, IoEventType.SESSION_CONNECTION, session, context));
+                if(key.isConnectable()) {
+                    handleConnection(key, session);
                 }
             } catch (Exception e) {
                 //e.printStackTrace();
@@ -223,8 +166,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
         }
     }    
 
-    
-    private void handleTimeOut(){
+    private void handleTimeOut() {
         Iterator<SelectionKey> keys = selector.keys().iterator();
         final long nowtime = System.currentTimeMillis();
         while(keys.hasNext()){
@@ -249,7 +191,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
     }
     
     private void handleReadData(ByteBuffer readcache, Session session) {
-        readcache.flip();
+        //System.out.println("readCache:" + session.getId() + " data:" + readcache);
         ProtocolDecoderOutput msgout = session.getProtocolDecoderOutput();
         boolean ishavepack = false;
         
@@ -292,7 +234,70 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
         }
     }
      
-    public void cancelKey(SelectionKey key){
+    private void handleWriteData(NioTcpSession session) {
+        Object msg = session.poolMessage();
+        if(msg != null){
+            
+            boolean repSend = false;
+            do {
+                LotusIOBuffer out = new LotusIOBuffer(context);
+                try {
+                    //编码解码器放session更好
+                    repSend = !session.getProtocoCodec().encode(session, msg, out);
+                    ByteBuffer[] buffers = out.getAllBuffer();
+                    for(ByteBuffer buff : buffers) {
+                        buff.flip();
+                        while(buff.hasRemaining()) {/*这里最好不要写入超过8k的数据*/
+                            session.getChannel().write(buff);
+                        }
+                    }
+                    session.setLastActive(System.currentTimeMillis());
+                    out.free();
+                    out = null;
+                } catch (Exception e) {
+                    session.pushEventRunnable(new IoEventRunnable(e, IoEventType.SESSION_EXCEPTION, session, context));
+                }
+                session.setLastActive(System.currentTimeMillis());
+            } while(repSend);
+            
+            /*call message sent*/
+            session.pushEventRunnable(new IoEventRunnable(msg, IoEventType.SESSION_SENT, session, context));
+        }else{
+            Object msglock = session.getMessageLock();
+            synchronized (msglock) {
+                if(session.getWriteMessageSize() <= 0){
+                    session.removeInterestOps(SelectionKey.OP_WRITE);
+                }
+            }
+            
+            if(session.isSentClose()){
+                session.closeNow();
+            }
+        }    
+    }
+    
+    private void handleConnection(SelectionKey key, NioTcpSession session) {
+        synchronized (session) {
+            session.notifyAll();
+        }
+        //Finishes the process of connecting a socket channel. 
+        //fuck the doc
+        try {
+            if(((SocketChannel) key.channel()).finishConnect() == false){
+                /*连接失败???*/
+                cancelKey(key);
+                return;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        session.removeInterestOps(SelectionKey.OP_CONNECT);//取消连接成功事件
+        session.addInterestOps(SelectionKey.OP_READ);//注册读事件
+        session.pushEventRunnable(new IoEventRunnable(null, IoEventType.SESSION_CONNECTION, session, context));
+    }
+    
+    public void cancelKey(SelectionKey key) {
         if(key == null) return;
         try {
             Session session = (Session) key.attachment();
@@ -302,7 +307,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
         } catch (Exception e) {}
     }
 
-    public void close(){
+    public void close() {
         isrun = false;
         selector.wakeup();
         try {

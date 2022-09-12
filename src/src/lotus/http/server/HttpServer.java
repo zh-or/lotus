@@ -17,6 +17,7 @@ import java.security.cert.CertificateException;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 
 import lotus.http.WebSocketFrame;
 import lotus.http.server.support.HttpFormData;
@@ -52,16 +53,17 @@ public class HttpServer {
     private HttpsProtocolCodec          httpsProtocolCodec  =   null;
     private boolean                     isNeedClientAuth    =   false;
     private int                         oldBufferSize       =   0;
-    private boolean                     tcpNoDelay          =   true;
     
     public HttpServer() {
         server = new NioTcpServer();
+        
         server.setHandler(ioHandler);
         uploadTmpDir = System.getProperty("java.io.tmpdir") + File.separator;
         charset = Charset.forName("utf-8");
         httpProtocolCodec = new HttpProtocolCodec(this);
         server.setProtocolCodec(httpProtocolCodec);
-        server.setSessionIdleTime(20000);/*keep-alive*/
+        //连接空闲时关闭
+        setTimeOut(1000 * 20);
     }
     
     public void setKeyStoreAndEnableSSL(String keystore, String password) throws Exception {
@@ -103,10 +105,13 @@ public class HttpServer {
         KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
         kmf.init(ks, passphrase);
         sslContext = SSLContext.getInstance(protocol);
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
+        tmf.init(ks);
+        
         sslContext.init(
                 kmf.getKeyManagers(),
                 new TrustManager[] { new HttpServerX509TrustManager(this) }, 
-                new java.security.SecureRandom());
+                null);
         httpsProtocolCodec = new HttpsProtocolCodec(this);
         server.setProtocolCodec(httpsProtocolCodec);
         isNeedClientAuth = needClientAuth;
@@ -122,13 +127,11 @@ public class HttpServer {
     }
     
     public boolean isTcpNoDelay() {
-        return tcpNoDelay;
+        return server.isTcpNoDelay();
     }
     
     public void setTcpNoDelay(boolean noDelay) {
-        tcpNoDelay = noDelay;
-
-        //chan.socket().setTcpNoDelay(true);
+        server.setTcpNoDelay(noDelay);
     }
     
     public SSLContext getSSLContext() {
@@ -229,22 +232,24 @@ public class HttpServer {
         return this.charset;
     }
 
+    private void freeSSLEngine(Session session) {
+        SSLState ssl = (SSLState) session.getAttr(SSLState.SSL_STATE_KEY);
+        if(ssl != null) {
+            ssl.close();
+            session.removeAttr(SSLState.SSL_STATE_KEY);
+        }
+    }
 
     private IoHandler wsIoHandler = new  IoHandler() {
 
         public void onClose(Session session) throws Exception {
-            SSLState ssl = (SSLState) session.getAttr(SSLState.SSL_STATE_KEY);
-            if(ssl != null) {
-                ssl.free();
-                session.removeAttr(SSLState.SSL_STATE_KEY);
-            }
+            freeSSLEngine(session);
             if(handler == null) {
                 return;
             }
             HttpRequest request  = (HttpRequest) session.getAttr(WS_HTTP_REQ);
 
             handler.wsClose(session, request);
-           
         };
 
         public void onRecvMessage(Session session, Object msg) throws Exception {
@@ -254,7 +259,8 @@ public class HttpServer {
             WebSocketFrame frame    = (WebSocketFrame) msg;
             HttpRequest    request  = (HttpRequest) session.getAttr(WS_HTTP_REQ);
             if(frame.opcode == WebSocketFrame.OPCODE_CLOSE) {
-                //session.closeNow();
+                session.write(WebSocketFrame.close());
+                session.closeOnFlush();
                 return;
             }
             handler.wsMessage(session, request, frame);
@@ -268,11 +274,8 @@ public class HttpServer {
         @Override
         public void onException(Session session, Throwable e) {
             try {
-                if(e instanceof SSLClosedException) {
-                    
-                } else {
-                    handler.exception(e, null, null);
-                }
+
+                handler.exception(e, null, null);
                 
                 //session.closeNow();
                 
@@ -295,7 +298,9 @@ public class HttpServer {
                         session.updateReadCacheBuffer(buf);
                     }
                 } catch(Exception e) {
-                    e.printStackTrace();
+                    freeSSLEngine(session);
+                    session.closeNow();
+                    //System.out.println("exception:" + session.getId() + " msg:" + e.getMessage());
                     return false;
                 }
                 
@@ -342,7 +347,7 @@ public class HttpServer {
                 if(handler != null) {
                     handler.service(request.getMothed(), request, response);
                     response.flush();
-                    if("close".equals(request.getHeader("connection"))){
+                    if("close".equals(request.getHeader("connection"))) {
                         /*简单判断
                          * keep-alive 则不关闭
                          * */
@@ -371,11 +376,7 @@ public class HttpServer {
         }
         
         public void onClose(Session session) throws Exception {
-            SSLState ssl = (SSLState) session.getAttr(SSLState.SSL_STATE_KEY);
-            if(ssl != null) {
-                ssl.free();
-                session.removeAttr(SSLState.SSL_STATE_KEY);
-            }
+            freeSSLEngine(session);
         };
         
         public void onSentMessage(Session session, Object msg) throws Exception {
@@ -396,12 +397,7 @@ public class HttpServer {
                 } else {
                     handler.exception(e, null, null);
                 }
-                SSLState ssl = (SSLState) session.getAttr(SSLState.SSL_STATE_KEY);
-                if(ssl != null) {
-                    ssl.free();
-                    session.removeAttr(SSLState.SSL_STATE_KEY);
-                }
-                //session.closeNow();
+                session.closeNow();
                 
             } catch(Exception e2) {
                 e2.printStackTrace();

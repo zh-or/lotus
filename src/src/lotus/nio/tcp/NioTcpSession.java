@@ -177,7 +177,6 @@ public class NioTcpSession extends Session{
 	    if(closed) return;
         super.closeNow();
         ioprocess.cancelKey(key);
-
 	}
 
 	@Override

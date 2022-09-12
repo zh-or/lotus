@@ -51,7 +51,7 @@ public class HttpsProtocolCodec implements ProtocolCodec{
             session.setAttr(SSLState.SSL_STATE_KEY, state);
             //握手可能有剩余app数据
             ByteBuffer handshakeRes = state.doHandshake(tmpBuf);
-            session.putWriteCacheBuffer(tmpBuf);
+            
             return handshakeRes;
         }
         tmpBuf.reset();
@@ -66,7 +66,11 @@ public class HttpsProtocolCodec implements ProtocolCodec{
         ByteBuffer outBuffer = null;
         if(state != null) {
             outBuffer = session.getWriteCacheBuffer(state.getAppBufferSize());
-            state.unwrap(in, outBuffer);
+            if(!state.unwrap(in, outBuffer)) {
+                session.putWriteCacheBuffer(outBuffer);
+                return false;
+            }
+            outBuffer.flip();
         } else {
             //使用的http协议
             outBuffer = in;
@@ -74,7 +78,6 @@ public class HttpsProtocolCodec implements ProtocolCodec{
         return httpProtocolCodec.decode(session, outBuffer, out);
 
     }
-
    
     
     @Override
