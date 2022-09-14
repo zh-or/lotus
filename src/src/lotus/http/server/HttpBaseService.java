@@ -17,7 +17,7 @@ public abstract class HttpBaseService {
         Method[] ms = this.getClass().getDeclaredMethods();
         __funs = new ConcurrentHashMap<>(ms.length);
         
-        for(Method m : ms){
+        for(Method m : ms) {
             HttpServicePath map = m.getAnnotation(HttpServicePath.class);
             if(map != null){
                 __funs.put(map.path(), m);

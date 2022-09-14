@@ -22,7 +22,7 @@ public class HttpRestServiceDispatcher extends HttpHandler{
     public HttpRestServiceDispatcher() {
         services = new ConcurrentHashMap<String, HttpBaseService>();
         filters = new ArrayList<HttpRestServiceFilter>();
-        baseFilePath = "./web";
+        baseFilePath = "./";
     }
     
     public synchronized void addServiceFilter(HttpRestServiceFilter filter) {

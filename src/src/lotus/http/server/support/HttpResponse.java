@@ -97,7 +97,7 @@ public class HttpResponse {
      * 发送302跳转
      * @param path
      */
-    public void sendRedirect(String path){
+    public void sendRedirect(String path) {
         this.status = ResponseStatus.REDIRECTION_FOUND;
         headers.put("Location", path);
     //    headers.put("Connection", "close");
@@ -108,7 +108,7 @@ public class HttpResponse {
         return headers.containsKey(name);
     }
     
-    public HttpResponse openSync(){
+    public HttpResponse openSync() {
         isOpenSync = true;
     	//headers.put("Content-Encoding", "gzip");
     	headers.put("Transfer-Encoding", "chunked");
@@ -148,6 +148,7 @@ public class HttpResponse {
     }
     
     public HttpResponse write(byte[] b) {
+        //需要替换为LotusIOBuffer
         int len = b.length;
         String hexlen = Integer.toHexString(len);
         if(isOpenSync) {
