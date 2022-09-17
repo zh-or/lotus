@@ -5,7 +5,6 @@ public class HttpMessageWrap {
     public static final int HTTP_MESSAGE_TYPE_HEADER        = 0;
     public static final int HTTP_MESSAGE_TYPE_BUFFER        = 1;
     public static final int HTTP_MESSAGE_TYPE_FILE          = 2;
-    public static final int HTTP_MESSAGE_HTTPS_HANDHAKE     = 3;
     public static final int HTTP_MESSAGE_WEBSOCKET_FRAME    = 4;
     
     public int type;

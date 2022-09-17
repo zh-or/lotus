@@ -158,8 +158,10 @@ public class HttpProtocolCodec implements ProtocolCodec{
         HttpMessageWrap wrap = (HttpMessageWrap) msg;
         switch(wrap.type) {
             case HttpMessageWrap.HTTP_MESSAGE_TYPE_HEADER:
-            case HttpMessageWrap.HTTP_MESSAGE_TYPE_BUFFER:
                 out.append((ByteBuffer) wrap.data);
+                return true;
+            case HttpMessageWrap.HTTP_MESSAGE_TYPE_BUFFER:
+                out.copyFromBuffer((LotusIOBuffer) wrap.data);
                 return true;
 
             case HttpMessageWrap.HTTP_MESSAGE_TYPE_FILE:

@@ -8,6 +8,7 @@ import java.util.List;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLEngineResult;
 import javax.net.ssl.SSLEngineResult.HandshakeStatus;
 import javax.net.ssl.SSLEngineResult.Status;
 import javax.net.ssl.SSLException;
@@ -159,12 +160,16 @@ public class SSLState {
     }
     
 
-    public void wrap(ByteBuffer in, ByteBuffer out) throws Exception {
-        Status status = engine.wrap(in, out).getStatus();
-        
-        if(status != Status.OK) {
-            throw new Exception("wrap error:" + status + " in:" + in + " out:" + out);
+    public Status wrap(ByteBuffer in, ByteBuffer out) throws Exception {
+        SSLEngineResult res = engine.wrap(in, out);
+        Status status = res.getStatus();
+        if(status == Status.BUFFER_OVERFLOW) {
+            System.out.println("overflow");
         }
+        if(status == Status.CLOSED) {
+            throw new Exception(" wrap error:" + status + " in:" + in + " out:" + out);
+        }
+        return status;
     }
     
     public void close() {
