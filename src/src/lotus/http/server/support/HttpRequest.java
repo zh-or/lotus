@@ -29,6 +29,7 @@ public class HttpRequest {
     private Charset                 charset         =   null;
     private HashMap<String, Cookie> cookies         =   null;
     private boolean                 isWebSocket     =   false;
+    private boolean                 isHTTPSReq      =   false;
     private HttpServer              context         =   null;
     private HttpFormData            formData        =   null;
     private HashMap<String, Object> attrs           =   null;
@@ -39,6 +40,7 @@ public class HttpRequest {
         this.session = session;
         this.charset = charset;
         this.context = context;
+        isHTTPSReq = context.isEnableSSL() && session.getAttr(SSLState.SSL_STATE_KEY) != null;
     }
     
     public Object getAttr(String key, Object defval){
@@ -97,7 +99,11 @@ public class HttpRequest {
         return isWebSocket;
     }
     
-    public void setCharacterEncoding(String charset){
+    public boolean isHTTPSConnection() {
+        return isHTTPSReq;
+    }
+    
+    public void setCharacterEncoding(String charset) {
         this.charset = Charset.forName(charset);
     }
     

@@ -14,39 +14,59 @@ public class LotusIOBuffer {
         this.context = context;
         allocBuffer();
     }
+    
+    /**
+     * 从LotusIOBuffer复制
+     * @param buffer 复制完成后此参数的buffer将被清空
+     */
+    public void copyFromBuffer(LotusIOBuffer buffer) {
+        for(ByteBuffer buf: buffer.buffers) {
+            append(buf);
+        }
+        buffer.buffers.clear();
+        buffer.curBuffer = null;
+    }
 
     public ByteBuffer getCurrenBuffer() {
         return curBuffer;
     }
     
     public ByteBuffer[] getAllBuffer() {
-        ByteBuffer[] tBuffers = new ByteBuffer[this.buffers.size()];
-        return this.buffers.toArray(tBuffers);
+        ByteBuffer[] tBuffers = new ByteBuffer[buffers.size()];
+        return buffers.toArray(tBuffers);
     }
     
-    private void allocBuffer() {
-        this.curBuffer = context.getByteBufferFormCache();
-        this.buffers.add(curBuffer);
+    public int getDataLength() {
+        int len = 0;
+        for(ByteBuffer buf : buffers) {
+            len += (buf.capacity() - buf.remaining());
+        }
+        return len;
+    }
+    
+    public void allocBuffer() {
+        curBuffer = context.getByteBufferFormCache();
+        buffers.add(curBuffer);
     }
     
     public void append(ByteBuffer buff) {
-        if(this.curBuffer.position() > 0) {
-            this.buffers.add(curBuffer);
+        if(curBuffer.position() > 0) {
+            buffers.add(curBuffer);
         } else {
-            this.context.putByteBufferToCache(this.curBuffer);
+            context.putByteBufferToCache(curBuffer);
         }
-        this.buffers.set(this.buffers.size() - 1, buff);
-        this.curBuffer = buff;
+        buffers.set(buffers.size() - 1, buff);
+        curBuffer = buff;
     }
 
     public void append(byte[] src) {
-        this.append(src, 0, src.length);
+        append(src, 0, src.length);
     }
     
     public void append(byte[] src, int offset, int length) {
         int lossLen = length, putLen, remaining;
         do {
-            remaining = this.curBuffer.remaining();
+            remaining = curBuffer.remaining();
             
             if(lossLen > remaining) {
                 putLen = remaining;
@@ -54,7 +74,7 @@ public class LotusIOBuffer {
                 putLen = lossLen;
             }
             lossLen = lossLen - putLen;
-            this.curBuffer.put(src, offset, putLen);
+            curBuffer.put(src, offset, putLen);
             if(lossLen > 0) {
                 offset = offset + putLen;
                 allocBuffer();
@@ -63,14 +83,14 @@ public class LotusIOBuffer {
     }
     
     public void append(byte b) {
-        if(this.curBuffer.remaining() < 1) {
-            this.allocBuffer();
+        if(curBuffer.remaining() < 1) {
+            allocBuffer();
         }
-        this.curBuffer.put(b);
+        curBuffer.put(b);
     }
     
     public boolean hasData() { 
-        return this.curBuffer.position() > 0 || this.buffers.size() > 1;
+        return curBuffer.position() > 0 || buffers.size() > 1;
     }
     
     public void free() {
@@ -80,7 +100,7 @@ public class LotusIOBuffer {
                 context.putByteBufferToCache(buff);
             }
         }
-        this.buffers.clear();
-        this.curBuffer = null;
+        buffers.clear();
+        curBuffer = null;
     }
 }

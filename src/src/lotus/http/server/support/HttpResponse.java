@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 
 import lotus.json.JSONObject;
+import lotus.nio.LotusIOBuffer;
 import lotus.nio.Session;
 import lotus.utils.Base64;
 import lotus.utils.Utils;
@@ -17,16 +18,17 @@ import lotus.utils.Utils;
 
 public class HttpResponse {
 	
-	private ByteBuffer					buff                =   null;
+	private LotusIOBuffer				buff                =   null;
     private Session                     session             =   null;
     private ResponseStatus              status              =   null;
     private HashMap<String, String>     headers             =   null;
     private boolean				        isSendHeader        =   false;
     private boolean                     isOpenSync          =   false;
     private Charset                     charset             =   null;
+    private HttpRequest                 request             =   null;
     
     public static HttpResponse defaultResponse(Session session, HttpRequest request) {
-    	HttpResponse response = new HttpResponse(session, request.isWebSocketConnection() ? ResponseStatus.INFORMATIONAL_SWITCHING_PROTOCOLS : ResponseStatus.SUCCESS_OK);
+    	HttpResponse response = new HttpResponse(session, request);
     	response.setHeader("Server", "lotus");
     	Date time = new Date();
     	response.setHeader("Expires", time.toString());
@@ -38,6 +40,7 @@ public class HttpResponse {
         response.setCharacterEncoding(request.getCharacterEncoding());
         
         if(request.isWebSocketConnection() && request.getContext().isOpenWebSocket()) {
+            response.setStatus(ResponseStatus.INFORMATIONAL_SWITCHING_PROTOCOLS);
             response.setHeader("Upgrade", request.getHeader("Upgrade"));
             response.setHeader("Connection", "Upgrade");
             String sec = request.getHeader("Sec-WebSocket-Key") + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
@@ -53,7 +56,12 @@ public class HttpResponse {
     	return response;
     }
     
-    public static String filename2type(String pathname){
+    /**
+     * 默认编码为utf-8
+     * @param pathname
+     * @return
+     */
+    public static String filename2type(String pathname) {
         if(pathname.indexOf(".js") != -1 ){
             return "application/javascript; charset=utf-8";
         }
@@ -71,26 +79,23 @@ public class HttpResponse {
         }
         return "";
     }
-    
-    public HttpResponse(Session session) {
-       this(session, ResponseStatus.SUCCESS_OK);
-    }
 
-    public HttpResponse(Session session, ResponseStatus status) {
+    public HttpResponse(Session session, HttpRequest request) {
         this.session = session;
-        this.status = status;
-        this.headers = new HashMap<String, String>();
-        this.isSendHeader = false;
-        this.buff = session.getWriteCacheBuffer(0);
-        this.headers.put("Content-Type", "text/html");
+        this.request = request;
+        status = ResponseStatus.SUCCESS_OK;
+        headers = new HashMap<String, String>();
+        isSendHeader = false;
+        buff = new LotusIOBuffer(session.getContext());
+        headers.put("Content-Type", "text/html");
     }
     
-    public void setCharacterEncoding(Charset charset){
-        this.charset = charset;
+    public void setCharacterEncoding(Charset newCharset){
+        charset = newCharset;
     }
     
-    public void setStatus(ResponseStatus status){
-        this.status = status;
+    public void setStatus(ResponseStatus newStatus){
+        status = newStatus;
     }
     
     /**
@@ -155,42 +160,32 @@ public class HttpResponse {
             len += 4;
             len += hexlen.length();
         }
-    	if(buff.remaining() < len){/*需要扩容*/
-    	    int newSize = buff.position() + len;
-    		ByteBuffer newBuff = session.getWriteCacheBuffer(newSize);
-    		newBuff.put(buff.array(), 0, buff.position());
-    		session.putWriteCacheBuffer(buff);
-    		buff = newBuff;
-    	}
+    	
     	if(isOpenSync) {
-    	    buff.put(hexlen.getBytes());
-    	    buff.put("\r\n".getBytes());
+    	    buff.append(hexlen.getBytes());
+    	    buff.append("\r\n".getBytes());
     	}
-    	buff.put(b);
+    	buff.append(b);
     	if(isOpenSync) {
-            buff.put("\r\n".getBytes());
+            buff.append("\r\n".getBytes());
     	}
     	return this;
     }
     
     /**
      * 此方法在一个请求中只能调用一次, 如需多次写入 请调用 write 方法,
-     * 小文件直接全部读出来一次发送会比较好, 此方法适用发送大文件.
-     * 此方法可能会导致文件被锁住
+     * 小文件直接全部读出来一次发送会比较好, 此方法适用发送大文件(http时)
+     * 此方法可能会导致文件被锁住,
      * @param file
      * @throws IOException 
      */
     public void sendFile(File file) throws Exception {
-        if(!isSendHeader){
+        
+        if(!isSendHeader) {
             setHeader("Content-Length", file.length() + "");
             sendHeader();
         }
-        session.write(
-            new HttpMessageWrap(
-                HttpMessageWrap.HTTP_MESSAGE_TYPE_FILE, 
-                file
-            )
-        );
+        session.write(new HttpMessageWrap(HttpMessageWrap.HTTP_MESSAGE_TYPE_FILE, file));
     }
     
     public void syncEnd() {
@@ -215,31 +210,32 @@ public class HttpResponse {
     	byte[] bytes = sb.toString().getBytes(charset);
     	ByteBuffer buffer = session.getWriteCacheBuffer(bytes.length);
     	buffer.put(bytes);
-    	session.write(
-                new HttpMessageWrap(
-                        HttpMessageWrap.HTTP_MESSAGE_TYPE_HEADER, 
-                        buffer
-                    )
-                );
+    	session.write(new HttpMessageWrap(HttpMessageWrap.HTTP_MESSAGE_TYPE_HEADER, buffer));
     	isSendHeader = true;
     	return this;
     }
     
     public HttpResponse flush() {
-    	if(!isSendHeader){
-    		setHeader("Content-Length", buff.capacity() - buff.remaining() + "");
+        int len = buff.getDataLength();
+    	if(!isSendHeader) {
+    		setHeader("Content-Length", len + "");
     		sendHeader();
     	}
-    	if(buff.limit() > 0){
-            session.write(
-                    new HttpMessageWrap(
-                            HttpMessageWrap.HTTP_MESSAGE_TYPE_BUFFER, 
-                            buff
-                        )
-                    );
+    	if(len > 0){
+            session.write(new HttpMessageWrap(HttpMessageWrap.HTTP_MESSAGE_TYPE_BUFFER, buff));
+            buff = new LotusIOBuffer(session.getContext());
     		//buff.clear();
     	}
     	return this;
+    }
+    
+    public void free() {
+        buff.free();
+        buff = null;
+    }
+    
+    public HttpRequest getRequest() {
+        return request;
     }
     
     public void close(){

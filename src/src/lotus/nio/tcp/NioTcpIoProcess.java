@@ -247,8 +247,8 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
                     ByteBuffer[] buffers = out.getAllBuffer();
                     for(ByteBuffer buff : buffers) {
                         buff.flip();
-                        while(buff.hasRemaining()) {/*这里最好不要写入超过8k的数据*/
-                            session.getChannel().write(buff);
+                        while(buff.hasRemaining()) {
+                            session.write(buff);
                         }
                     }
                     session.setLastActive(System.currentTimeMillis());

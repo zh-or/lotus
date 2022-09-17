@@ -345,7 +345,7 @@ public class HttpServer {
                     handler.service(request.getMothed(), request, response);
                     response.flush();
                     if("close".equals(request.getHeader("connection"))) {
-                        /*简单判断
+                        /*
                          * keep-alive 则不关闭
                          * */
                         session.closeOnFlush();
@@ -358,9 +358,11 @@ public class HttpServer {
                     response.flush();
                     session.closeOnFlush();
                 }
-            }catch(Throwable e){
+            }catch(Throwable e) {
+                response.setStatus(ResponseStatus.SERVER_ERROR_INTERNAL_SERVER_ERROR);
                 handler.exception(e, request, response);
             }
+            response.free();
             try {
                 if(request != null && request.isFormData()) {
                     HttpFormData formData = request.getFormData();
