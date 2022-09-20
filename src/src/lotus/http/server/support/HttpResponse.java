@@ -153,7 +153,6 @@ public class HttpResponse {
     }
     
     public HttpResponse write(byte[] b) {
-        //需要替换为LotusIOBuffer
         int len = b.length;
         String hexlen = Integer.toHexString(len);
         if(isOpenSync) {
@@ -172,6 +171,25 @@ public class HttpResponse {
     	return this;
     }
     
+    public HttpResponse write(ByteBuffer b) {
+        int len = b.position();
+        String hexlen = Integer.toHexString(len);
+        if(isOpenSync) {
+            len += 4;
+            len += hexlen.length();
+        }
+    	
+    	if(isOpenSync) {
+    	    buff.append(hexlen.getBytes());
+    	    buff.append("\r\n".getBytes());
+    	}
+    	buff.append(b);
+    	if(isOpenSync) {
+            buff.append("\r\n".getBytes());
+    	}
+    	return this;
+    }
+
     /**
      * 此方法在一个请求中只能调用一次, 如需多次写入 请调用 write 方法,
      * 小文件直接全部读出来一次发送会比较好, 此方法适用发送大文件(http时)
