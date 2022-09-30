@@ -73,11 +73,11 @@ public class HttpRequest {
         return formData;
     }
     
-    public HttpServer getContext(){
+    public HttpServer getContext() {
         return context;
     }
     
-    public HttpMethod getMothed(){
+    public HttpMethod getMothed() {
         return mothed;
     }
     
@@ -88,8 +88,8 @@ public class HttpRequest {
         return path;
     }
     
-    public String getFullPath(){
-        if(queryString != null){
+    public String getFullPath() {
+        if(queryString != null) {
             return path + queryString;
         }
         return path;
@@ -107,7 +107,7 @@ public class HttpRequest {
         this.charset = Charset.forName(charset);
     }
     
-    public Charset getCharacterEncoding(){
+    public Charset getCharacterEncoding() {
         return this.charset;
     }
     
@@ -189,7 +189,7 @@ public class HttpRequest {
     
     /**
      * key已全部转换为小写
-     * @param key
+     * @param key 会自动将此参数的字符串转换为小写字符
      * @return
      */
     public String getHeader(String key){
