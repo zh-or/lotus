@@ -312,8 +312,6 @@ public class HttpServer {
         @Override
         public void onRecvMessage(Session session, Object msg)throws Exception {
             
-            //https握手兼容的不优雅的处理方式
-            //握手时需要给客户端发数据
             if(msg == null) {
                 return;
             }
@@ -368,6 +366,7 @@ public class HttpServer {
                     HttpFormData formData = request.getFormData();
                     
                     formData.removeCache();
+                    formData.close();
                 }
             } catch(Exception e) {
                 e.printStackTrace();
