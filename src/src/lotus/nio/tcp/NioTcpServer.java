@@ -26,7 +26,7 @@ public class NioTcpServer extends NioContext{
 	private long                idcount     =   0l;
 	private boolean             tcpNoDelay  =   false;
 	
-    public NioTcpServer(){
+    public NioTcpServer() {
 		super();
 	}
 

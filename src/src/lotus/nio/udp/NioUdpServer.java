@@ -2,14 +2,8 @@ package lotus.nio.udp;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.SocketOption;
-import java.net.SocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.SocketChannel;
-import java.util.Iterator;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
@@ -17,7 +11,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import lotus.nio.IoHandler;
 import lotus.nio.NioContext;
-import lotus.utils.Utils;
 
 public class NioUdpServer extends NioContext{
     private DatagramChannel dc              =   null;

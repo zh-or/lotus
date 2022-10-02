@@ -13,7 +13,7 @@ import lotus.utils.Utils;
  * 用来检测消息超时的类
  * @author OR
  */
-public class MessageQueue implements Runnable{
+public class MessageQueue implements Runnable {
     
     private ArrayList<IMQBase>                  msg_sent;
     private ReentrantLock                       lock_msg_sent;
@@ -29,7 +29,7 @@ public class MessageQueue implements Runnable{
      * @param tcallback 消息超时时回调
      * @param capacity 回执队列大小
      */
-    public MessageQueue(MessageTimeOut tcallback, int capacity){
+    public MessageQueue(MessageTimeOut tcallback, int capacity) {
         this.tcallback          = tcallback;
         this.lock_msg_sent      = new ReentrantLock();
         this.msg_sent           = new ArrayList<IMQBase>();

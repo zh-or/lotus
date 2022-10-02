@@ -132,6 +132,7 @@ public abstract class HttpHandler {
             // 404
             return false;
         }
+        
         String web = request.getHeader("if-modified-since");
         String self = new Date(Files.getLastModifiedTime(file.toPath(), LinkOption.NOFOLLOW_LINKS).toMillis()).toString();
         response.setHeader("Cathe-Control", "max-age=315360000");
