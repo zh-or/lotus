@@ -34,7 +34,7 @@ public class HttpResponse {
     	response.setHeader("Expires", time.toString());
     	response.setHeader("Date", time.toString());
     	String connection = request.getHeader("connection");
-    	if(connection != null){
+    	if(connection != null) {
     		response.setHeader("Connection", connection);
     	}
         response.setCharacterEncoding(request.getCharacterEncoding());

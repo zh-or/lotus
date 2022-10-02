@@ -164,7 +164,7 @@ public class SSLState {
         SSLEngineResult res = engine.wrap(in, out);
         Status status = res.getStatus();
         if(status == Status.BUFFER_OVERFLOW) {
-            System.out.println("overflow");
+            throw new Exception(" wrap error:" + status + " in:" + in + " out:" + out);
         }
         if(status == Status.CLOSED) {
             throw new Exception(" wrap error:" + status + " in:" + in + " out:" + out);
