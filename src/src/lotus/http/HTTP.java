@@ -15,6 +15,7 @@ import java.net.URLEncoder;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
+import java.util.zip.GZIPInputStream;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -257,11 +258,11 @@ public class HTTP {
         return "";
 	}
 	
-	public static String get(String url, String cookie){
+	public static String get(String url, String cookie) throws Exception{
 	    return get(url, cookie, null);
 	}
 	
-	public static String get(String url, String cookie, Proxy proxy){
+	public static String get(String url, String cookie, Proxy proxy) throws Exception{
 		InputStream is = null;
 		ByteArrayOutputStream outStream = null;
 		URLConnection connection = null;
@@ -288,6 +289,7 @@ public class HTTP {
             }
 	        
 	        connection.setDoInput(true);
+	        connection.setRequestProperty("Accept-Encoding", "identity");
 	        connection.setRequestProperty("Charset", "UTF-8");
             if(!Utils.CheckNull(cookie)) connection.setRequestProperty("Cookie", cookie);
             connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36");
@@ -296,6 +298,12 @@ public class HTTP {
 	      
 	        is = connection.getInputStream();
 	        if (is != null) {
+	            
+	            String encoding = connection.getHeaderField("content-encoding");
+	            if(!Utils.CheckNull(encoding) && encoding.indexOf("gzip") != -1) {
+	                is = new GZIPInputStream(is);
+	            }
+	            
 	            outStream = new ByteArrayOutputStream();
 	            byte[] buffer = new byte[1024];
 	            int len = 0;
@@ -305,9 +313,7 @@ public class HTTP {
 	            is.close();
 	            return new String(outStream.toByteArray(), "UTF-8");
 	        }
-		} catch (Exception e) {
-			e.printStackTrace();
-		}finally{
+		} finally{
 			try {
 				if(is != null) is.close();
 				if(outStream != null) outStream.close();
