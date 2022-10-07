@@ -275,8 +275,6 @@ public class HTTP {
             }else{
                 connection = console.openConnection();
             }
-            connection.setConnectTimeout(60 * 1000);
-            connection.setReadTimeout(60 * 1000);
 	        if(connection instanceof HttpsURLConnection){
     			SSLContext sc = SSLContext.getInstance("SSL");
     	        sc.init(null, new TrustManager[] { new TrustAnyTrustManager() },  new java.security.SecureRandom());
@@ -287,10 +285,13 @@ public class HTTP {
 	        }else{
                 ((HttpURLConnection) connection).setRequestMethod("GET");
             }
+            connection.setConnectTimeout(60 * 1000);
+            connection.setReadTimeout(60 * 1000);
 	        
 	        connection.setDoInput(true);
 	        connection.setRequestProperty("Accept-Encoding", "identity");
 	        connection.setRequestProperty("Charset", "UTF-8");
+	        connection.setRequestProperty("Connection", "close");
             if(!Utils.CheckNull(cookie)) connection.setRequestProperty("Cookie", cookie);
             connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36");
 	        connection.setUseCaches(false);
