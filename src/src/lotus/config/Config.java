@@ -103,7 +103,7 @@ public class Config {
 					cname = cname.trim();
 					cvalue = cvalue.trim();
 					ArrStringValue v = child.get(cname);
-					if(v != null){//如果这个那么已经存在
+					if(v != null){//如果这个已经存在
 					    v.put(cvalue);
 					}else{
 					    child.put(cname, new ArrStringValue().put(cvalue));
@@ -121,8 +121,6 @@ public class Config {
 			} catch (Exception e2) {
 			}
 		}
-		
-		
 	}
 	
 	public String[] keys() {
