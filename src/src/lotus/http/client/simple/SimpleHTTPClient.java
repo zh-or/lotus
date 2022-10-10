@@ -27,7 +27,7 @@ import javax.rmi.CORBA.Util;
 import lotus.utils.Utils;
 
 public class SimpleHTTPClient {
-    
+    public String CRLF = "\r\n";
     public enum Method {
         GET("GET"),
         POST("POST"),
@@ -117,6 +117,7 @@ public class SimpleHTTPClient {
     public byte[] sendRequest(Method m, String contentType, byte[] bodys) throws Exception {
         connection();
         socket.setSoTimeout(readTimeout);
+        //发送请求
         try(OutputStream out = socket.getOutputStream()) {
             String query = link.getQuery();
             if(Utils.CheckNull(query)) {
@@ -125,30 +126,33 @@ public class SimpleHTTPClient {
                 query = "?" + query;
             }
             String path = String.format(
-                    "%s %s%s HTTP/1.1\r\n", 
+                    "%s %s%s HTTP/1.1%s", 
                     m.toString(),
                     link.getPath(),
-                    query
+                    query,
+                    CRLF
                     );
             
             write(out, path);
             Iterator<Entry<String, String>> it = header.entrySet().iterator();
             while(it.hasNext()) {
                 Entry<String, String> kv = it.next();
-                write(out, kv.getKey() + ": " + kv.getValue() + "\r\n");
+                write(out, kv.getKey() + ": " + kv.getValue() + CRLF);
             }
             
             if(!Utils.CheckNull(contentType)) {
-
-                write(out, "Content-Type: " + contentType + "\r\n");
+                write(out, "Content-Type: " + contentType + CRLF);
             }
             
             if(bodys != null && bodys.length > 0) {
-                write(out, "Content-Length: " + bodys.length + "\r\n\r\n");
+                write(out, "Content-Length: " + bodys.length + CRLF + CRLF);
                 write(out, bodys);
+            } else {
+                write(out, CRLF);
             }
             out.flush();
         }
+        //读取返回
         byte[] body = null;
         HashMap<String, String> resHeader = new HashMap<String, String>();
         try(BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
@@ -164,16 +168,34 @@ public class SimpleHTTPClient {
                 }
                 
             } while(true);
-            //https://blog.csdn.net/itcwg/article/details/112805584
-            String contentLen = resHeader.get("content-length");
-            int len = -1;
-            if(!Utils.CheckNull(contentLen)) {
-                len = Integer.valueOf(contentLen);
-            }
             
-            if(len > 0) {
-                body = new byte[len];
+            //是否压缩等读取返回数据
+            //https://github.dev/germania/httpclient
+            String transferEncoding = resHeader.get("transfer-encoding");
+            if(!Utils.CheckNull(transferEncoding)) {
+                transferEncoding = transferEncoding.trim();
+                if("chunked".equalsIgnoreCase(transferEncoding)) {
+
+                } else {
+                    throw new IOException("不支持的 Transfer-Encoding:" + transferEncoding);
+                }
+            } else {
+                String contentEncoding = resHeader.getHeaderField("content-encoding");
+	            if(!Utils.CheckNull(contentEncoding) && contentEncoding.indexOf("gzip") != -1) {
+	                //is = new GZIPInputStream(is);
+	            }
+                //https://blog.csdn.net/itcwg/article/details/112805584
+                String contentLen = resHeader.get("content-length");
+                int len = -1;
+                if(!Utils.CheckNull(contentLen)) {
+                    len = Integer.valueOf(contentLen);
+                }
+
+                if(len > 0) {
+                    body = new byte[len];
+                }
             }
+
             
         }
         
@@ -245,12 +267,12 @@ public class SimpleHTTPClient {
     
     private static class TrustAnyTrustManager implements X509TrustManager {
         
-        public void checkClientTrusted(X509Certificate[] chain, String authType)
-                throws CertificateException {
+        public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+            
         }
  
-        public void checkServerTrusted(X509Certificate[] chain, String authType)
-                throws CertificateException {
+        public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+
         }
  
         public X509Certificate[] getAcceptedIssuers() {

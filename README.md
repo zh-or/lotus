@@ -1,11 +1,20 @@
 
 ## 自己造的轮子
+1. 现有框架都太重了, 一堆依赖
+2. 自己能很方便的增加功能
+
 ## 包含工具库
 1. 高并发轻量级NIO框架
 2. 轻量级HTTP服务器(基于NIO)
 3. 轻量级WebSocket客户端
 4. Android JSON库copy
 5. Android SparseArray库copy
+
+## todo
+1. `HTTPClient`实现
+2. `HttpServer`的`Keep-Alive`实现完善
+3. `HttpServer`异常处理完善
+4. `HttpServer` 的`HTTP Pipelining` 实现 (不是必须)
 
 ### NIO服务器
 ```
