@@ -8,6 +8,7 @@ import lotus.http.server.support.HttpFileFilter;
 import lotus.http.server.support.HttpMethod;
 import lotus.http.server.support.HttpRequest;
 import lotus.http.server.support.HttpResponse;
+import lotus.http.server.support.HttpRestErrorHandler;
 import lotus.http.server.support.HttpRestServiceFilter;
 import lotus.http.server.support.HttpServicePath;
 
@@ -18,11 +19,16 @@ public class HttpRestServiceDispatcher extends HttpHandler{
     private String baseFilePath;
     private ArrayList<HttpRestServiceFilter> filters;
     private HttpFileFilter fileFilter = null;
+    private HttpRestErrorHandler errorHandler = null;
     
     public HttpRestServiceDispatcher() {
         services = new ConcurrentHashMap<String, HttpBaseService>();
         filters = new ArrayList<HttpRestServiceFilter>();
         baseFilePath = "./";
+    }
+    
+    public synchronized void setErrorHandler(HttpRestErrorHandler handler) {
+        errorHandler = handler;
     }
     
     public synchronized void addServiceFilter(HttpRestServiceFilter filter) {
@@ -78,8 +84,8 @@ public class HttpRestServiceDispatcher extends HttpHandler{
         String path = request.getPath();
         try {
             Enumeration<String> keys = services.keys();
-            String key;
-            while((key = keys.nextElement()) != null) {
+            while(keys.hasMoreElements()) {
+                String key = keys.nextElement();
                 if(path.startsWith(key)) {
                     HttpBaseService service = services.get(key);
                     if(service != null) {
@@ -91,8 +97,12 @@ public class HttpRestServiceDispatcher extends HttpHandler{
                 }
             }
             
-        } catch(Exception e) {
-            //exception(e, request, response);
+        } catch(Throwable e) {
+            if(errorHandler != null) {
+                errorHandler.exception(e, request, response);
+                return;
+            }
+            exception(e, request, response);
         }
         defFileRequest(baseFilePath, request, response);
     }
