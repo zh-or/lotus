@@ -145,6 +145,7 @@ public abstract class HttpHandler {
         }
         boolean useSendFile = file.length() > 1024 * 1024;
         response.setHeader("Content-Type", HttpResponse.filename2type(filePath));
+        response.setStatus(ResponseStatus.SUCCESS_OK);
         if(useSendFile) {
             response.sendFile(file);
         } else {

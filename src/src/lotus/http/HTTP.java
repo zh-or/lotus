@@ -263,11 +263,14 @@ public class HTTP {
 	}
 	
 	public static String get(String url, String cookie, Proxy proxy) throws Exception{
-		InputStream is = null;
+	    int timeout = 60 * 1000;
+	    InputStream is = null;
 		ByteArrayOutputStream outStream = null;
 		URLConnection connection = null;
 		try {
-	 
+		    Object waitObject = new Object();
+		    
+		    
 	        URL console = new URL(url);
 	        connection = null;
             if(proxy != null){
@@ -278,6 +281,10 @@ public class HTTP {
 	        if(connection instanceof HttpsURLConnection){
     			SSLContext sc = SSLContext.getInstance("SSL");
     	        sc.init(null, new TrustManager[] { new TrustAnyTrustManager() },  new java.security.SecureRandom());
+    	        
+    	        //注意 HttpsURLConnection 是个非标准实现, setReadTimeout 是无效的, 可能会导致永远不会返回
+    	        //是个垃圾
+    	        
 	            HttpsURLConnection conn = (HttpsURLConnection) connection;
 	            conn.setSSLSocketFactory(sc.getSocketFactory());
 	            conn.setHostnameVerifier(new TrustAnyHostnameVerifier());
@@ -285,8 +292,8 @@ public class HTTP {
 	        }else{
                 ((HttpURLConnection) connection).setRequestMethod("GET");
             }
-            connection.setConnectTimeout(60 * 1000);
-            connection.setReadTimeout(60 * 1000);
+            connection.setConnectTimeout(timeout);
+            connection.setReadTimeout(timeout);
 	        
 	        connection.setDoInput(true);
 	        connection.setRequestProperty("Accept-Encoding", "identity");
@@ -296,9 +303,12 @@ public class HTTP {
             connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36");
 	        connection.setUseCaches(false);
 	        connection.connect();
-	      
+	        
 	        is = connection.getInputStream();
 	        if (is != null) {
+
+	            fuckHttpsUrlConnection(waitObject, is, timeout);
+	            
 	            
 	            String encoding = connection.getHeaderField("content-encoding");
 	            if(!Utils.CheckNull(encoding) && encoding.indexOf("gzip") != -1) {
@@ -324,6 +334,21 @@ public class HTTP {
         return "";
 	}
 	
+	
+	private static void fuckHttpsUrlConnection(Object waitObject, InputStream is, int timeout) {
+	    new Thread(() -> {
+            synchronized (waitObject) {
+                try {
+                    waitObject.wait(timeout);
+                } catch (Exception e) {}
+                if(is != null) {
+                    try {
+                        is.close();
+                    } catch (Exception e) {}
+                }
+            }
+        }, "fuck HttpsURLConnection timeout thread").start();
+	}
 	
 	private static class TrustAnyTrustManager implements X509TrustManager {
 		 

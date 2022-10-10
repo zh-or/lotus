@@ -31,7 +31,15 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
         return putChannel(channel, id, true);
     }
     
-    public NioTcpSession putChannel(final SocketChannel channel, long id, final boolean event) throws Exception {
+    /**
+     * 
+     * @param channel
+     * @param id
+     * @param connectionFinished 是否已完成连接
+     * @return
+     * @throws Exception
+     */
+    public NioTcpSession putChannel(final SocketChannel channel, long id, final boolean connectionFinished) throws Exception {
         if(channel == null || selector == null) {
             throw new Exception("null");
         }
@@ -42,18 +50,9 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
             public void run() {
                 try {
                     SelectionKey key = null;
-                    if(!session.getEventHandler().onBeforeConnection(session)) {
-                        channel.close();
-                        return;
-                    }
                     
-                    channel.configureBlocking(false);
-
-                    if(session.hasReadCache()) {
-                        ByteBuffer readcache = session.getReadCacheBuffer();
-                        handleReadData(readcache, session);
-                    }
-                    if(event) {
+                    if(connectionFinished) {
+                        callOnBeforeConnection(channel, session);
                         /*call on connection*/
                         /*register 时会等待 selector.select() 所以此处先唤醒selector以免锁冲突 */
                         selector.wakeup();
@@ -62,7 +61,9 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
                         session.setKey(key);
                         selector.wakeup();
                         session.pushEventRunnable(new IoEventRunnable(null, IoEventType.SESSION_CONNECTION, session, context));
-                    }else{
+                    } else {
+                        //这里有需要处理 onBefore 事件
+                        
                         /*register 时会等待 selector.select() 所以此处先唤醒selector以免锁冲突 */
                         selector.wakeup();
                         key = channel.register(selector, SelectionKey.OP_CONNECT, session);
@@ -77,6 +78,20 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
             }
         });
         return session;
+    }
+    
+    private void callOnBeforeConnection(SocketChannel channel, Session session) throws Exception {
+        if(!session.getEventHandler().onBeforeConnection(session)) {
+            channel.close();
+            return;
+        }
+        
+        channel.configureBlocking(false);
+
+        if(session.hasReadCache()) {
+            ByteBuffer readcache = session.getReadCacheBuffer();
+            handleReadData(readcache, session);
+        }
     }
     
     @Override
