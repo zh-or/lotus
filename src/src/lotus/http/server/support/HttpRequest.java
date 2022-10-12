@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import lotus.http.Cookie;
 import lotus.http.server.HttpServer;
 import lotus.json.JSONArray;
 import lotus.json.JSONException;
