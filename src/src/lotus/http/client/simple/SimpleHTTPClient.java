@@ -1,10 +1,9 @@
 package lotus.http.client.simple;
 
-import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
@@ -18,6 +17,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.ZipInputStream;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -54,11 +54,13 @@ public class SimpleHTTPClient {
     private InputStream     in                  = null;
     private OutputStream    out                 = null;
     private HashMap<String, String> header      = null;
+    private HashMap<String, String> resHeader   = null;
     private ByteArrayOutputStream   body        = null;
     
     
     private SimpleHTTPClient(URI link, Proxy proxy) {
         header = new HashMap<>();
+        resHeader = new HashMap<>();
         body = new ByteArrayOutputStream(4096);
         this.link = link;
         this.proxy = proxy;
@@ -158,65 +160,103 @@ public class SimpleHTTPClient {
         }
         out.flush();
         //读取返回
-        HashMap<String, String> resHeader = new HashMap<String, String>();
-        try(BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+        resHeader.clear();
+        do {
+            String line = readLine();
+            if(Utils.CheckNull(line)) {
+                break;
+            }
+            String[] kv = line.split(": ");
+            if(kv.length == 2) {
+                resHeader.put(kv[0].toLowerCase(), kv[1]);
+            }
             
-            do {
-                String line = br.readLine();
-                if(Utils.CheckNull(line)) {
-                    break;
-                }
-                String[] kv = line.split(": ");
-                if(kv.length == 2) {
-                    resHeader.put(kv[0].toLowerCase(), kv[1]);
-                }
-                
-            } while(true);
-            
-            //是否压缩等读取返回数据
-            //https://github.dev/germania/httpclient
-            String transferEncoding = resHeader.get("transfer-encoding");
-            if(!Utils.CheckNull(transferEncoding)) {
-                transferEncoding = transferEncoding.trim();
-                if("chunked".equalsIgnoreCase(transferEncoding)) {
-                    int hex;
-                    String strHex;
-                    do {
-                        
-                        strHex = br.readLine().trim();
-                        hex = Integer.parseInt(strHex, 16);
-                        
-                        readToCache(hex);
-                        
-                        if(hex > 0) {
-                            br.readLine();
-                        }
-                        
-                    } while(hex > 0);
-                } else {
-                    throw new IOException("不支持的 Transfer-Encoding:" + transferEncoding);
-                }
+        } while(true);
+        
+        //是否压缩等读取返回数据
+        //https://github.dev/germania/httpclient
+        String transferEncoding = resHeader.get("transfer-encoding");
+        if(!Utils.CheckNull(transferEncoding)) {
+            transferEncoding = transferEncoding.trim();
+            if("chunked".equalsIgnoreCase(transferEncoding)) {
+                int hex;
+                String strHex;
+                do {
+                    
+                    strHex = readLine().trim();
+                    hex = Integer.parseInt(strHex, 16);
+                    
+                    readToCache(hex);
+                    
+                    if(hex > 0) {
+                        readLine();
+                    }
+                    
+                } while(hex > 0);
             } else {
-                String contentEncoding = resHeader.get("content-encoding");
-	            if(!Utils.CheckNull(contentEncoding) && contentEncoding.indexOf("gzip") != -1) {
-	                in = new GZIPInputStream(in);
-	            }
-                //https://blog.csdn.net/itcwg/article/details/112805584
-                String contentLen = resHeader.get("content-length");
-                int len = -1;
-                if(!Utils.CheckNull(contentLen)) {
-                    len = Integer.valueOf(contentLen);
-                }
-
-                if(len > 0) {
-                    readToCache(len);
-                }
+                throw new IOException("不支持的 Transfer-Encoding:" + transferEncoding);
+            }
+        } else {
+            
+            //https://blog.csdn.net/itcwg/article/details/112805584
+            String contentLen = resHeader.get("content-length");
+            int len = -1;
+            if(!Utils.CheckNull(contentLen)) {
+                len = Integer.valueOf(contentLen);
+            }
+            System.out.println("content-len:" + len);
+            if(len > 0) {
+                readToCache(len);
             }
         }
-        
-        return body.toByteArray();
+        System.out.println("body len:" + body.size());
+        return getBody();
     }
     
+    public byte[] getBody() throws IOException {
+        byte[] bodyData = body.toByteArray();
+        String contentEncoding = resHeader.get("content-encoding");
+        InputStream zipIn = null;
+        try {
+            
+            if(!Utils.CheckNull(contentEncoding) && contentEncoding.indexOf("gzip") != -1) {
+                zipIn = new GZIPInputStream(new ByteArrayInputStream(bodyData));
+            } else if(!Utils.CheckNull(contentEncoding) && contentEncoding.indexOf("deflate") != -1) {
+                zipIn = new ZipInputStream(new ByteArrayInputStream(bodyData));
+            } else {
+                return bodyData;
+            }
+            ByteArrayOutputStream decodeBody = new ByteArrayOutputStream();
+            int b;
+            while((b = zipIn.read()) != -1) {
+                decodeBody.write(b);
+            }
+            return decodeBody.toByteArray();
+        } finally {
+            if(zipIn != null) {
+                zipIn.close();
+            }
+        }
+    }
+    
+    private String readLine() throws IOException {
+        StringBuffer sb = new StringBuffer(64);
+        char before = 0;
+        do {
+            char b = (char) (in.read() & 0xff);
+            if(b == '\n' && before == '\r') {
+                break;
+            }
+            before = b;
+            if(b == '\r') {
+                continue;
+            }
+            sb.append(b);
+            
+        } while(true);
+        
+        return sb.toString();
+    }
     
     private void readToCache(int len) throws IOException {
         int t = -1;
