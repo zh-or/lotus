@@ -50,6 +50,7 @@ public class NioTcpClient extends NioContext {
         try {
             sc = SocketChannel.open();
             sc.configureBlocking(false);
+            
             boolean isconnect = sc.connect(address);
             //sc.finishConnect();/*检测是否已连接完成*/
             rliplock.lock();
@@ -67,6 +68,7 @@ public class NioTcpClient extends NioContext {
             if(idcount >= Long.MAX_VALUE){
                 idcount = 0l;
             }
+            
             // && sc.finishConnect() == false //调用了这个方法就不会触发 SelectionKey.OP_CONNECT
             if(timeout > 0 && session != null){
                 try {
