@@ -17,6 +17,7 @@ import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
+import java.util.zip.GZIPInputStream;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -112,8 +113,6 @@ public class SimpleHTTPClient {
         socket.setKeepAlive(true);
         socket.connect(new InetSocketAddress(link.getHost(), port), connectionTimeout);
         
-        in = socket.getInputStream();
-        out = socket.getOutputStream();
         
         return this;
     }
@@ -122,6 +121,8 @@ public class SimpleHTTPClient {
     public byte[] sendRequest(Method m, String contentType, byte[] bodys) throws Exception {
         body.reset();
         connection();
+        in = socket.getInputStream();
+        out = socket.getOutputStream();
         socket.setSoTimeout(readTimeout);
         //发送请求
         String query = link.getQuery();
@@ -157,7 +158,6 @@ public class SimpleHTTPClient {
         }
         out.flush();
         //读取返回
-        byte[] body = null;
         HashMap<String, String> resHeader = new HashMap<String, String>();
         try(BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
             
@@ -179,14 +179,27 @@ public class SimpleHTTPClient {
             if(!Utils.CheckNull(transferEncoding)) {
                 transferEncoding = transferEncoding.trim();
                 if("chunked".equalsIgnoreCase(transferEncoding)) {
-
+                    int hex;
+                    String strHex;
+                    do {
+                        
+                        strHex = br.readLine().trim();
+                        hex = Integer.parseInt(strHex, 16);
+                        
+                        readToCache(hex);
+                        
+                        if(hex > 0) {
+                            br.readLine();
+                        }
+                        
+                    } while(hex > 0);
                 } else {
                     throw new IOException("不支持的 Transfer-Encoding:" + transferEncoding);
                 }
             } else {
                 String contentEncoding = resHeader.get("content-encoding");
 	            if(!Utils.CheckNull(contentEncoding) && contentEncoding.indexOf("gzip") != -1) {
-	                //is = new GZIPInputStream(is);
+	                in = new GZIPInputStream(in);
 	            }
                 //https://blog.csdn.net/itcwg/article/details/112805584
                 String contentLen = resHeader.get("content-length");
@@ -196,18 +209,14 @@ public class SimpleHTTPClient {
                 }
 
                 if(len > 0) {
-                    body = new byte[len];
+                    readToCache(len);
                 }
             }
         }
         
-        return body;
+        return body.toByteArray();
     }
     
-    public byte[] readBody() {
-        
-        return null;
-    }
     
     private void readToCache(int len) throws IOException {
         int t = -1;
@@ -268,12 +277,12 @@ public class SimpleHTTPClient {
         return client;
     }
     
-    public static byte[] get(String url, int timeout) throws URISyntaxException {
+    public static byte[] get(String url, int timeout) throws Exception {
         
         SimpleHTTPClient client = create(url, null);
         client.connectionTimeout = timeout;
         client.readTimeout = timeout;
-        return client.readBody();
+        return client.sendRequest(Method.GET, "", null);
     }
     
     
