@@ -1,11 +1,10 @@
-package lotus.http.server.support;
+package lotus.http;
 
 public class Cookie {
     public String path;
     public String key;
     public String value;
     public long time;
-    
     
     
     public Cookie(String key, String value) {
@@ -22,15 +21,12 @@ public class Cookie {
         this.value = value;
     }
 
-
-
     public Cookie(String path, String key, String value, long time) {
         this.path = path;
         this.key = key;
         this.value = value;
         this.time = time;
     }
-
 
 
     @Override
@@ -48,5 +44,9 @@ public class Cookie {
             cookie = new Cookie(key, val);
         }
         return cookie;
+    }
+    
+    public String toRaw() {
+        return key + "=" + value;
     }
 }
