@@ -61,6 +61,7 @@ public class HttpClient implements Closeable{
     private HashMap<String, String> resHeader   = null;
     private HashMap<String, Cookie> cookies     = null;
     private ByteArrayOutputStream   body        = null;
+    private boolean enableFuckingSocketTimeout = false;
     
     
     private HttpClient(URI link, Proxy proxy) {
@@ -167,7 +168,17 @@ public class HttpClient implements Closeable{
         return this;
     }
     
+    /**
+     * 极端情况下可能会出现设置了超时时间也会卡死的情况, 在这种情况下只有另开一个线程处理超时
+     */
+    public void setEnableFuckingSocketTimeout() {
+        enableFuckingSocketTimeout = true;
+    }
+
     private void fuckTimeout(CountDownLatch obj, int timeout) {
+        if(!enableFuckingSocketTimeout) {
+            return;
+        }
         new Thread(() -> {
             synchronized(obj) {
                 try {
