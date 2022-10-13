@@ -17,6 +17,8 @@ import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipInputStream;
 
@@ -165,10 +167,26 @@ public class HttpClient implements Closeable{
         return this;
     }
     
+    private void fuckTimeout(CountDownLatch obj, int timeout) {
+        new Thread(() -> {
+            synchronized(obj) {
+                try {
+                    obj.await(timeout, TimeUnit.MILLISECONDS);
+                } catch(Exception e) {}
+                if(obj.getCount() > 0) {
+                    close();
+                }
+            }
+        }, "fuck socket timeout thread -" + obj.hashCode()).start();
+
+    }
     
     public byte[] sendRequest(Method m, String contentType, byte[] bodys) throws Exception {
         body.reset();
+        CountDownLatch countdown = new CountDownLatch(2);
+        fuckTimeout(countdown, readTimeout + connectionTimeout);
         connection();
+        countdown.countDown();
         socket.setSoTimeout(readTimeout);
         //发送请求
         String query = link.getRawQuery();
@@ -253,6 +271,7 @@ public class HttpClient implements Closeable{
                 readToCache(len);
             }
         }
+        countdown.countDown();
         //System.out.println("body len:" + body.size());
         return getBody();
     }
