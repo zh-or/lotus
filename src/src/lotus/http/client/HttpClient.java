@@ -27,6 +27,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 import lotus.http.Cookie;
+import lotus.log.Log;
 import lotus.utils.Utils;
 
 public class HttpClient implements Closeable{
@@ -160,12 +161,19 @@ public class HttpClient implements Closeable{
         }
         socket.setTcpNoDelay(true);
         socket.setKeepAlive(true);
+        debug("connection " + link.getHost());
         socket.connect(new InetSocketAddress(link.getHost(), port), connectionTimeout);
         
         in = socket.getInputStream();
         out = socket.getOutputStream();
         
         return this;
+    }
+    
+    private void debug(String str) {
+        
+        //Log log = Log.getLogger();
+        //log.debug("[HTTP - %d] %s", this.hashCode(), str);
     }
     
     /**
@@ -185,6 +193,7 @@ public class HttpClient implements Closeable{
                     obj.await(timeout, TimeUnit.MILLISECONDS);
                 } catch(Exception e) {}
                 if(obj.getCount() > 0) {
+                    debug("fuck time out count:" + obj.getCount() + " " + link.getHost());
                     close();
                 }
             }
@@ -199,6 +208,8 @@ public class HttpClient implements Closeable{
         connection();
         countdown.countDown();
         socket.setSoTimeout(readTimeout);
+
+        debug("write data " + link.getHost());
         //发送请求
         String query = link.getRawQuery();
         if(Utils.CheckNull(query)) {
@@ -231,7 +242,11 @@ public class HttpClient implements Closeable{
         } else {
             write(CRLF);
         }
+
+        debug("write data flush " + link.getHost());
         out.flush();
+
+        debug("read data " + link.getHost());
         //读取返回
         resHeader.clear();
         do {
@@ -283,6 +298,8 @@ public class HttpClient implements Closeable{
             }
         }
         countdown.countDown();
+
+        debug("end " + link.getHost());
         //System.out.println("body len:" + body.size());
         return getBody();
     }
