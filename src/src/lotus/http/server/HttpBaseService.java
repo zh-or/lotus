@@ -41,7 +41,7 @@ public abstract class HttpBaseService {
                 if(filter(path, request, response)) {
                     m.invoke(this, request, response);
                 }
-            } catch(Exception e) {
+            } catch(Throwable e) {
                 __dispatcher.exception(e, request, response);
             }
             return true;

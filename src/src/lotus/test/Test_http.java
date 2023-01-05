@@ -27,7 +27,7 @@ public class Test_http {
         Test(int num){this.type = num;}
     }
     public static void main(String[] args) throws IOException, URISyntaxException {
-        URI uri = new URI("ws://a.com/xx?b=1");
+        URI uri = new URI("ws://a.com/xx#123?b=1");
 
         System.out.println(uri.getScheme());
         System.out.println(uri.getHost());
@@ -52,7 +52,7 @@ public class Test_http {
                 buff.remaining(),
                 buff.capacity() - buff.remaining()
                 ));
-        //System.exit(0);
+        System.exit(0);
         httpServer = new HttpServer();
         httpServer.enableWebSocket(true);
         httpServer.setEventThreadPoolSize(10);

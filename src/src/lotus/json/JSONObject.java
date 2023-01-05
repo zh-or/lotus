@@ -633,6 +633,10 @@ public class JSONObject {
         return  nameValuePairs.entrySet();
     }
 
+    public Map<String, Object> toMap() {
+        return nameValuePairs;
+    }
+    
     /**
      * 返回的json字符串按key排序
      * @return

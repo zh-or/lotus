@@ -96,12 +96,11 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
     
     @Override
     public void run() {
-        
         while(isrun && selector != null) {
             try {
                 handleIoEvent();
 
-                if(isessiontimeout != 0) {
+                if(context.getSessionIdleTimeOut() != 0) {
                     try {
                         handleTimeOut();
                     } catch (Exception e) {}
@@ -196,7 +195,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
                 continue;
             }
             NioTcpSession session = (NioTcpSession) key.attachment();
-            if(session != null && nowtime - session.getLastActive() > isessiontimeout){
+            if(session != null && nowtime - session.getLastActive() > context.getSessionIdleTimeOut()) {
                 /*call on idle */
                 session.pushEventRunnable(new IoEventRunnable(null, IoEventType.SESSION_IDLE, session, context));
                 session.setLastActive(System.currentTimeMillis());
@@ -251,7 +250,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
      
     private void handleWriteData(NioTcpSession session) {
         Object msg = session.poolMessage();
-        if(msg != null){
+        if(msg != null) {
             
             boolean repSend = false;
             do {
@@ -266,7 +265,6 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
                             session.write(buff);
                         }
                     }
-                    session.setLastActive(System.currentTimeMillis());
                     out.free();
                     out = null;
                 } catch (Exception e) {

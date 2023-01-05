@@ -4,6 +4,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.SocketAddress;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
+import java.security.InvalidParameterException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -246,6 +247,9 @@ public class HttpRequest {
     }
     
     public String getBodyString() {
+        if(this.body == null || this.body.length <= 0) {
+            throw new InvalidParameterException("没有收到body");
+        }
         return new String(this.body, context.getCharset());
     }
     

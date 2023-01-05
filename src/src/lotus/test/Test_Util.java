@@ -20,8 +20,8 @@ public class Test_Util {
 //        cal.add(Calendar.DAY_OF_YEAR, 520);
 //        System.out.println("" + cal.get(Calendar.YEAR) + " " + cal.get(Calendar.MONTH) + " " + cal.get(Calendar.DAY_OF_MONTH));
 //        
-        /*System.out.println(Util.strHash("awa"));
-        JSONObject json = new JSONObject();
+        System.out.println(Utils.strHash("https://blog.csdn.net/olizxq/article/details/82313489"));
+        /*JSONObject json = new JSONObject();
         JSONArray arr = new JSONArray();
         arr.put(new JSONArray().put(1).put(2));
         arr.put(new JSONArray().put(2).put(2));
