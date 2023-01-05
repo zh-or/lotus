@@ -98,12 +98,18 @@ public class HttpRestServiceDispatcher extends HttpHandler{
             }
             
         } catch(Throwable e) {
-            if(errorHandler != null) {
-                errorHandler.exception(e, request, response);
-                return;
-            }
             exception(e, request, response);
         }
         defFileRequest(baseFilePath, request, response);
+    }
+    
+    @Override
+    public void exception(Throwable e, HttpRequest request, HttpResponse response) {
+
+        if(errorHandler != null) {
+            errorHandler.exception(e, request, response);
+            return;
+        }
+        e.printStackTrace();
     }
 }

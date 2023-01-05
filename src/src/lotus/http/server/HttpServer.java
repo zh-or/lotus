@@ -264,7 +264,8 @@ public class HttpServer {
         };
 
         public void onIdle(Session session) throws Exception {
-            session.closeNow();
+            HttpRequest request = (HttpRequest) session.getAttr(WS_HTTP_REQ);
+            handler.wsIdle(session, request);
         };
         
 

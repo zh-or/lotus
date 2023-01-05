@@ -80,7 +80,9 @@ public abstract class HttpHandler {
      */
     public void wsMessage(Session session,  HttpRequest request, WebSocketFrame frame) throws Exception{ }
     public void wsClose(Session session,  HttpRequest request) throws Exception{ }
-
+    public void wsIdle(Session session,  HttpRequest request) throws Exception {
+        session.closeNow();
+    }
     /**
      * 当调用 defFileRequest 时触发此回调
      * @param path
