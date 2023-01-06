@@ -10,10 +10,11 @@ import lotus.nio.IoEventRunnable.IoEventType;
 public abstract class Session {
     protected ConcurrentHashMap<Object, Object> attrs           =   null;
     protected NioContext                        context     	=   null;
-    protected long					            lastactive		=	0l;
+    protected long                              lastActive      =	0l;
     protected volatile ByteBuffer               readcache       =   null;
-    protected LinkedBlockingQueue<Runnable>     eventlist       =   null;
-    protected volatile boolean                  runingevent     =   false;
+    protected LinkedBlockingQueue<Runnable>     eventList       =   null;
+    protected volatile boolean                  runingEvent     =   false;
+    private   Object                            runingEventObj  =   new Object();
     protected ProtocolDecoderOutput             deout           =   null;
     protected long                              id              =   0l;
     protected final Object                      recvPackwait    =   new Object();
@@ -23,7 +24,7 @@ public abstract class Session {
     protected Object                            notifiRecvMsg   = null;
     protected ProtocolCodec                     codec           = null;
     protected IoHandler                         handler         = null;
-    
+
     public Session (NioContext context, long id){
         this.context = context;
         this.attrs = new ConcurrentHashMap<Object, Object>();
@@ -32,37 +33,37 @@ public abstract class Session {
         this.codec = context.getProtocoCodec();
         this.handler = context.getEventHandler();
         setLastActive(System.currentTimeMillis());
-        eventlist = new LinkedBlockingQueue<Runnable>();
+        eventList = new LinkedBlockingQueue<Runnable>();
         deout = new ProtocolDecoderOutput();
-       
+
     }
-    
+
     public IoHandler getEventHandler(){
         return handler;
     }
-    
+
     public void setIoHandler(IoHandler handler){
         this.handler = handler;
     }
-    
+
     public void setProtocolCodec(ProtocolCodec codec){
         this.codec = codec;
     }
-    
+
     public ProtocolCodec getProtocoCodec(){
         return codec;
     }
-    
+
     public long getId(){
         return id;
     }
-    
+
     public long getCreateTime(){
         return createtime;
     }
-    
+
     public abstract int getWriteMessageSize();
-    
+
     public Object getAttr(Object key, Object defval){
     	Object val = attrs.get(key);
     	if(val == null) return defval;
@@ -72,23 +73,23 @@ public abstract class Session {
     public Object getAttr(Object key){
         return getAttr(key, null);
     }
-    
+
     public void setAttr(Object key, Object val){
     	attrs.put(key, val);
     }
-    
+
     public Object removeAttr(Object key){
         return attrs.remove(key);
     }
-    
+
     public void setLastActive(long t){
-    	this.lastactive = t;
+    	lastActive = t;
     }
-    
+
     public long getLastActive(){
-    	return this.lastactive;
+    	return lastActive;
     }
-    
+
     public ProtocolDecoderOutput getProtocolDecoderOutput(){
         return deout;
     }
@@ -96,22 +97,22 @@ public abstract class Session {
     public boolean hasReadCache() {
         return readcache != null;
     }
-    
+
     /**
      * 这个buffer用来缓存已经从io中读取到的数据
      * @return
      */
     public ByteBuffer getReadCacheBuffer() {
-        if(readcache == null){
+        if(readcache == null) {
             return context.getByteBufferFormCache();
         }
     	return readcache;
     }
-    
+
     public void updateReadCacheBuffer(ByteBuffer buffer) {
         this.readcache = buffer;
     }
-    
+
     /**
      * 从缓存中获取buffer
      * @param len 大于预设大小则会分配新buffer
@@ -120,35 +121,35 @@ public abstract class Session {
     public ByteBuffer getWriteCacheBuffer(int len) {
         return context.getByteBufferFormCache(len);
     }
-    
+
     public void putWriteCacheBuffer(ByteBuffer buff){
         context.putByteBufferToCache(buff);
     }
-    
-    public boolean IsRuningEvent(){
-        return runingevent;
-    }
-    
-    public void RuningEvent(boolean is){
-        this.runingevent = is;
-    }
-    
-    public void pushEventRunnable(Runnable run){
-        if(!IsRuningEvent()){
-            context.ExecuteEvent(run);
-        }else{
-            eventlist.add(run);
+
+    public void RuningEvent(boolean is) {
+        synchronized (runingEventObj) {
+            runingEvent = is;
         }
     }
-    
+
+    public void pushEventRunnable(Runnable run){
+        synchronized (runingEventObj) {
+            if(!runingEvent){
+                context.ExecuteEvent(run);
+            }else{
+                eventList.add(run);
+            }
+        }
+    }
+
     public NioContext getContext() {
         return context;
     }
-    
+
     public Runnable pullEventRunnable(){
-        return eventlist.poll();
+        return eventList.poll();
     }
-    
+
     /**
      * 立即关闭该链接
      */
@@ -161,16 +162,16 @@ public abstract class Session {
             readcache = null;
         }
     }
-    
+
     public boolean isClosed(){
         return closed;
     }
-    
+
     public boolean isWaitForRecvPack(){
         return isWaitForRecvPack;
     }
 
-    public void _wait(int timeout){
+    public void _wait(int timeout) {
         synchronized (recvPackwait) {
             isWaitForRecvPack = true;
             try {
@@ -181,7 +182,7 @@ public abstract class Session {
             isWaitForRecvPack = false;
         }
     }
-    
+
     @Override
     public boolean equals(Object obj) {
         if(obj != null && obj instanceof Session) {
@@ -189,23 +190,23 @@ public abstract class Session {
         }
         return false;
     }
-    
+
     public void _notify(){
         synchronized (recvPackwait) {
             isWaitForRecvPack = false;
             recvPackwait.notify();
         }
     }
-    
+
     public Object get() {
         return notifiRecvMsg;
     }
-    
+
     public void set(Object msg){
         this.notifiRecvMsg = msg;
     }
-    
-    public void _notifyAll(){
+
+    public void _notifyAll() {
         synchronized (recvPackwait) {
             isWaitForRecvPack = false;
             recvPackwait.notifyAll();
@@ -218,7 +219,7 @@ public abstract class Session {
      * 数据发送完毕后关闭
      */
     public abstract void closeOnFlush();
-    
+
     @Override
     public String toString() {
         return "[SESSIONID:" + id + ", LocaAddress:" + getLocaAddress() + ", RemoteAddress:" + getRemoteAddress() + "]";
