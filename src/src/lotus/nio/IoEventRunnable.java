@@ -43,6 +43,7 @@ public class IoEventRunnable implements Runnable{
                     break;
                 case SESSION_IDLE:
                     handler.onIdle(session);
+                    session.setLastActive(System.currentTimeMillis());
                     break;
                 case SESSION_RECVMSG:
                     if(session.isWaitForRecvPack() && session instanceof NioTcpSession && ((NioTcpSession) session).callCheckMessageCallback(att)){

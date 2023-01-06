@@ -198,7 +198,6 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
             if(session != null && nowtime - session.getLastActive() > context.getSessionIdleTimeOut()) {
                 /*call on idle */
                 session.pushEventRunnable(new IoEventRunnable(null, IoEventType.SESSION_IDLE, session, context));
-                session.setLastActive(System.currentTimeMillis());
                 
             }
         }
