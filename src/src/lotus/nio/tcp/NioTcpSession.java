@@ -10,15 +10,15 @@ import java.util.concurrent.LinkedBlockingQueue;
 import lotus.nio.NioContext;
 import lotus.nio.Session;
 
-public class NioTcpSession extends Session{
+public class NioTcpSession extends Session {
 	private SocketChannel                  channel;
 	private SelectionKey                   key;
 	private LinkedBlockingQueue<Object>    qwrite;
-	private volatile boolean               sentclose  = false;
+	private volatile boolean 			   sentClose = false;
 	private NioTcpIoProcess                ioprocess;
 	private Object                         msglock;
 	private MessageCheckCallback           msgcheckcallback = null;
-	
+
 	public NioTcpSession(NioContext context, SocketChannel channel, NioTcpIoProcess ioprocess, long id) {
 		super(context, id);
 		this.channel = channel;
@@ -26,15 +26,15 @@ public class NioTcpSession extends Session{
 		this.msglock = new Object();
 		this.ioprocess = ioprocess;
 	}
-	
+
 	public void setKey(SelectionKey key){
 	    this.key = key;
 	}
-	
+
 	public boolean callCheckMessageCallback(Object recvmsg){
 	    return msgcheckcallback.thatsRight(recvmsg);
 	}
-	
+
 	@Override
 	public SocketAddress getRemoteAddress() {
 		try {
@@ -51,7 +51,7 @@ public class NioTcpSession extends Session{
         } catch (IOException e) {}
 	    return null;
 	}
-	
+
 	@Override
 	public void write(Object data) {
 	    synchronized(msglock){
@@ -62,12 +62,12 @@ public class NioTcpSession extends Session{
 	            closeNow();
 	            return;
 	        }
-	        
+
 	        addInterestOps(SelectionKey.OP_WRITE);/*注册写事件*/
 	        key.selector().wakeup();
 	    }
 	}
-	
+
 	/**
 	 * 直接把buffer写入channel
 	 * @param buf
@@ -77,7 +77,7 @@ public class NioTcpSession extends Session{
 	public int write(ByteBuffer buf) throws IOException {
 	    return channel.write(buf);
 	}
-	
+
 	/**
 	 * 直接从channel内读取buffer
 	 * @param buf
@@ -87,7 +87,7 @@ public class NioTcpSession extends Session{
 	public int read(ByteBuffer buf) throws IOException {
 	    return channel.read(buf);
 	}
-	
+
 	public void addInterestOps(int value){
 	    key.interestOps(key.interestOps() | value);
 	}
@@ -95,23 +95,23 @@ public class NioTcpSession extends Session{
 	public void removeInterestOps(int value){
 	    key.interestOps(key.interestOps() & (~value));
 	}
-	
+
 	public void removeAllOpts() {
 	    removeAttr(SelectionKey.OP_ACCEPT);
 	    removeAttr(SelectionKey.OP_CONNECT);
 	    removeAttr(SelectionKey.OP_READ);
 	    removeAttr(SelectionKey.OP_WRITE);
 	}
-	
+
 	public Object getMessageLock(){
 	    return msglock;
 	}
-	
-	public void write(Object data, boolean sentclose){
+
+	public synchronized void write(Object data, boolean sentclose) {
 		write(data);
-		this.sentclose = sentclose;
+		this.sentClose = sentclose;
 	}
-	
+
 	/**
      * 发送并等待一条消息
      * @param data
@@ -121,7 +121,7 @@ public class NioTcpSession extends Session{
     public Object writeAndWaitForMessage(Object data, int timeout){
         return writeAndWaitForMessage(data, timeout, new MessageCheckCallback() {});
     }
-	
+
     /**
      * 发送并等待一条消息
      * @param data
@@ -129,49 +129,49 @@ public class NioTcpSession extends Session{
      * @param checkcallback 此回调用来判断收到的消息是否是当前需要的返回
      * @return
      */
-	public Object writeAndWaitForMessage(Object data, int timeout, MessageCheckCallback checkcallback){
+	public Object writeAndWaitForMessage(Object data, int timeout, MessageCheckCallback checkcallback) {
 	    checkcallback.setSendMsg(data);
 	    write(data);
 	    return waitForMessage(timeout, checkcallback);
 	}
-	
+
 	/**
 	 * 等待一条消息
 	 * @param timeout
 	 * @return
 	 */
-	public Object waitForMessage(int timeout, MessageCheckCallback checkcallback){
+	public Object waitForMessage(int timeout, MessageCheckCallback checkcallback) {
 	    this.msgcheckcallback = checkcallback;
 	    _wait(timeout);
         Object tmsg = get();
         set(null);
         return tmsg;
 	}
-	
-	
-	public Object poolMessage(){
+
+
+	public Object poolMessage() {
 	    Object obj = qwrite.poll();
-	    
+
 	    return obj;
 	}
-	
+
 	@Override
 	public int getWriteMessageSize(){
 	    return qwrite.size();
 	}
-	
+
 	public SocketChannel getChannel(){
 		return channel;
 	}
-	
+
 	public boolean isBlocking() {
 	    return channel.isBlocking();
 	}
-	
-	public boolean isSentClose(){
-		return sentclose;
+
+	public synchronized boolean isSentClose() {
+		return sentClose;
 	}
-	
+
 	@Override
 	public synchronized void closeNow() {
 	    if(closed) return;
@@ -180,8 +180,8 @@ public class NioTcpSession extends Session{
 	}
 
 	@Override
-	public void closeOnFlush() {
-		sentclose = true;
+	public synchronized void closeOnFlush() {
+		sentClose = true;
 	}
 
 }

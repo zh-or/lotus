@@ -3,6 +3,8 @@ node_modules
 dist
 *.log
 
+src/target
+
 package-lock.json
 
 # local env files
