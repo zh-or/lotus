@@ -156,8 +156,9 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
                         //capacity 容量
                         //limit 也就是缓冲区可以利用（进行读写）的范围的最大值
                         //position 当前读写位置
-                        readcache.flip();
-                        while(handleReadData(readcache, session));
+                        do {
+                            readcache.flip();
+                        } while(handleReadData(readcache, session));
                         //selector.wakeup();
                     }
                 }
@@ -219,7 +220,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
         if(remaining <= 0){//用完了回收掉
             context.putByteBufferToCache(readcache);
             session.updateReadCacheBuffer(null);
-        }else{
+        } else {
             //copyData(readcache);
             if(remaining >= readcache.capacity()){/*已经读满了, 缓存不够. 就不写环形缓冲队列了 :(*/
                 readcache.rewind();//重置 position 位置为 0 并忽略 mark
@@ -235,7 +236,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
                 /*扩容后这便是一个新的obj了, 故手动更新*/
                 newreadcache.put(tmp_buffer, 0, limit);
                 session.updateReadCacheBuffer(newreadcache);/*update*/
-            }else{
+            } else {
                 readcache.compact();//把未读的数据复制到缓冲区起始位置 此时 position 为数据结尾
                 session.updateReadCacheBuffer(readcache);/*update*/
             }
@@ -244,7 +245,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
         if(ishavepack) {
             session.pushEventRunnable(new IoEventRunnable(msgout.read(), IoEventType.SESSION_RECVMSG, session, context));
             msgout.write(null);
-            return readcache.hasRemaining();
+            return remaining > 0;
         }
         return false;
     }
