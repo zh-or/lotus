@@ -11,16 +11,16 @@ public class FileQueue {
     private long                readPos;
     private long                fileLen;
     private RandomAccessFile    raf;
-    
+
     public FileQueue(String path) throws IOException {
         this(new File(path));
     }
-    
+
     public FileQueue(File f) throws IOException {
         raf = new RandomAccessFile(f, "rw");
         readPos = raf.length();
     }
-    
+
     public void close() {
         try {
             wait.notifyAll();
@@ -28,13 +28,13 @@ public class FileQueue {
         } catch (IOException e) {
         }
     }
-    
+
     public void setReadPos(long pos) {
         readPos = pos;
     }
-    
+
     private synchronized String poll()  {
-        
+
         try {
             raf.seek(readPos);
             String line = raf.readLine();
@@ -43,7 +43,7 @@ public class FileQueue {
         } catch(Exception e) {}
         return null;
     }
-    
+
     public String pollAndWait(long timeout) throws IOException {
         if(readPos + 1 >= fileLen) {
             try {
@@ -55,7 +55,7 @@ public class FileQueue {
         }
         return poll();
     }
-    
+
     public synchronized void push(String line) throws IOException {
         fileLen = raf.length();
         raf.seek(fileLen);
