@@ -81,7 +81,7 @@ public abstract class Session {
         return attrs.remove(key);
     }
     
-    public void setLastActive(long t){
+    public synchronized void setLastActive(long t){
     	this.lastactive = t;
     }
     
