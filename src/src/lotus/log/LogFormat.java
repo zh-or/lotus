@@ -10,8 +10,7 @@ public class LogFormat {
 
     private static LogFormat format               =   null;
     private static Object    _lock                =   new Object();
-
-    private SimpleDateFormat sdf                  =   new SimpleDateFormat("MM-dd HH:mm:ss");
+    private TimeZone         timeZone             =   null;
     private LogWriter        writer               =   null;
     private LogFilter        logfilter            =   null;
     private boolean          debug_enable         =   true;
@@ -46,7 +45,7 @@ public class LogFormat {
      * @param id GMT+8
      */
     public void setTimeZoneID(String id) {
-        sdf.setTimeZone(TimeZone.getTimeZone(id));
+        timeZone = TimeZone.getTimeZone(id);
     }
 
     public void setProjectName(String name) {
@@ -73,6 +72,10 @@ public class LogFormat {
             cname = "[" + clazzName + "]";
         }
 
+        SimpleDateFormat sdf = new SimpleDateFormat("MM-dd HH:mm:ss");
+        if(timeZone != null) {
+            sdf.setTimeZone(timeZone);
+        }
         String msg_ = sdf.format(new Date());
         msg_ = String.format("%s %s%s%s %s", msg_, PROJECT_NAME, cname, Log.lvl[l], str);
         if(logfilter == null || logfilter.log(l, msg_)) {
