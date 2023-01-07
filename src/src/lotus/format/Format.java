@@ -52,13 +52,14 @@ public class Format {
         return sb.toString();
     }
     
-    static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     
-    public synchronized static String formatTime(long time){
+    public static String formatTime(long time) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         return sdf.format(new Date(time));
     }
     
-    public synchronized static String formatTime(Date date){
+    public static String formatTime(Date date) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         return sdf.format(date);
     }
     
