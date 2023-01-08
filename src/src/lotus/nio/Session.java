@@ -86,7 +86,7 @@ public abstract class Session {
         lastActive = t;
     }
 
-    public long getLastActive(){
+    public synchronized long getLastActive(){
     	return lastActive;
     }
 
