@@ -22,7 +22,8 @@ public class NioTcpServer extends NioContext{
 	private NioTcpIoProcess     ioprocess[] =   null;
     private int                 iipBound    =   0;
     private final ReentrantLock rliplock    =   new ReentrantLock();
-	private AcceptThread        acceptrhread=   null;
+	private AcceptThread        acceptRunner=   null;
+    private Thread              acceptThread=   null;
 	private long                idcount     =   0l;
 	private boolean             tcpNoDelay  =   false;
 	
@@ -46,7 +47,9 @@ public class NioTcpServer extends NioContext{
         
         for(int i = 0; i < selector_thread_total; i++) {
             ioprocess[i] = new NioTcpIoProcess(this);
-            new Thread(ioprocess[i], "lotus nio tcp server selector thread - " + i).start();
+            Thread tmpThread = new Thread(ioprocess[i], "lotus nio tcp server selector thread - " + i);
+            ioprocess[i].setThread(tmpThread);
+            tmpThread.start();
         }
         
         if(event_pool_thread_size > 0) {
@@ -60,8 +63,9 @@ public class NioTcpServer extends NioContext{
         }
         
         /*一个线程 accept */
-        acceptrhread = new AcceptThread();
-        new Thread(acceptrhread, "lotus nio tcp accept thread").start();
+        acceptRunner = new AcceptThread();
+        acceptThread = new Thread(acceptRunner, "lotus nio tcp accept thread");
+        acceptThread.start();
         
         ssc.bind(addr);
     }
@@ -76,17 +80,19 @@ public class NioTcpServer extends NioContext{
 	
 	public void close() {
 		try {
-            acceptrhread.close();
+            acceptRunner.close();
+            acceptThread.join(20000);
             if(executor != null) executor = null;
 		    for(int i = 0; i < selector_thread_total; i++){
 		        try {
 		            ioprocess[i].close();
+                    ioprocess[i].joinThread(20000);
                 } catch (Exception e) { }
 		    }
             bufferlist.clear();
 		    if(ssc != null) ssc.close();
 		    ssc = null;
-        } catch (IOException e) {}
+        } catch (Exception e) {}
 	}
 	
     private class AcceptThread implements Runnable{

@@ -20,6 +20,7 @@ import lotus.utils.Utils;
 
 public class NioTcpIoProcess extends IoProcess implements Runnable {
 	private Selector                    selector    = null;
+    private Thread                      thread      = null;
 
     public NioTcpIoProcess(NioContext context) throws IOException {
     	super(context);
@@ -29,6 +30,16 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
 
     public NioTcpSession putChannel(SocketChannel channel, long id) throws Exception {
         return putChannel(channel, id, true);
+    }
+
+    public void setThread(Thread thread) {
+        this.thread = thread;
+    }
+
+    public void joinThread(long ms) throws Exception {
+        if(thread != null) {
+            thread.join(ms);
+        }
     }
 
     /**
