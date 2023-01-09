@@ -117,6 +117,11 @@ public abstract class HttpHandler {
      * @throws Exception 
      */
     public boolean defFileRequest(String basePath, HttpRequest request, HttpResponse response) throws Exception {
+
+        if(Utils.CheckNull(basePath)) {
+            return false;
+        }
+
         String reqPath  = request.getPath();
         
         if(this.requestFile(reqPath, request, response)) {
