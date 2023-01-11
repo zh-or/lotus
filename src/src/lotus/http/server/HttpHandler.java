@@ -142,7 +142,7 @@ public abstract class HttpHandler {
         
         String web = request.getHeader("if-modified-since");
         String self = new Date(Files.getLastModifiedTime(file.toPath(), LinkOption.NOFOLLOW_LINKS).toMillis()).toString();
-        response.setHeader("Cathe-Control", "max-age=315360000");
+        response.setHeader("Cache-Control", "max-age=315360000");
         response.setHeader("Last-Modified", self);
         
         if(!Utils.CheckNull(web) && web.equals(self)) {
