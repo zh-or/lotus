@@ -68,7 +68,7 @@ public class HttpRestServiceDispatcher extends HttpHandler{
                 base = path.path();
             }
         } catch(Exception e) {
-            
+            e.printStackTrace();
         }
         services.put(base, service);
     }
