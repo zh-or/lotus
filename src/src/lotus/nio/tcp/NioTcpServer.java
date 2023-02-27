@@ -8,15 +8,16 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Iterator;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import lotus.nio.IoHandler;
 import lotus.nio.NioContext;
 import lotus.utils.Utils;
-import lotus.nio.IoEventRunnable.IoEventType;
 
 public class NioTcpServer extends NioContext{
     private ServerSocketChannel ssc			=	null;
@@ -88,7 +89,7 @@ public class NioTcpServer extends NioContext{
                     ((ExecutorService) executor).shutdown();
                     ((ExecutorService) executor).awaitTermination(10, TimeUnit.SECONDS);
                 } catch(Exception e2) {
-                    e.printStackTrace();
+                    e2.printStackTrace();
                 }
                 executor = null;
             }

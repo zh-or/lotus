@@ -65,6 +65,13 @@ public class NamedClass {
         }
     }
 
+    /**
+     * 需要注意被调用方法的参数个数, 以及参数类型
+     * @param name
+     * @param args
+     * @return
+     * @throws Exception
+     */
     public Object callMenthodByName(String name, Object... args) throws Exception {
         NamedObj wrap = namedMap.get(name);
         if(wrap == null) {
