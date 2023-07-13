@@ -14,14 +14,14 @@ import lotus.json.JSONObject;
  *
  */
 public class BeanBase {
-	
-    
+
+
     public BeanBase() {
-        
+
     }
-    
+
 	/**
-	 * 
+	 *
 	 * @param key
 	 * @param val
 	 */
@@ -31,10 +31,10 @@ public class BeanBase {
 	    return BeanBase.ObjToJson(this);
 	}
 
-	
-	/**
-     * 
-     * @param c
+
+    /**
+     *
+     * @param obj
      *            此类不能为内部类, 必须要有一个空的构造方法
      * @param json
      * @return
@@ -59,14 +59,21 @@ public class BeanBase {
             Class<?> type = f.getType();
             if (type == String.class)
                 f.set(e, json.getString(name));
-            else if (type == boolean.class)
+            else if (type == boolean.class || type == Boolean.class)
                 f.setBoolean(e, json.getBoolean(name));
-            else if (type == long.class)
-                f.setLong(e, json.getLong(name));
-            else if (type == int.class || type == char.class || type == byte.class || type == short.class)
+            else if (type == long.class || type == Long.class)
+                f.set(e, json.getLong(name));
+            else if (type == int.class || type == char.class || type == byte.class || type == short.class ||
+                    type == Integer.class || type == Byte.class || type == Short.class
+            )
                 f.set(e, json.getInt(name));
-            else if (type == float.class || type == double.class)
+            else if (type == float.class || type == double.class ||
+                    type == Float.class || type == Double.class
+            )
                 f.set(e, json.getDouble(name));
+            else {
+                f.set(e, JsonToObj(type, json.getJSONObject(name)));
+            }
         }
         return e;
     }
@@ -87,29 +94,29 @@ public class BeanBase {
             String name = f.getName();
             if (type == String.class)
                 json.put(name, f.get(obj));
-            else if (type == boolean.class)
+            else if (type == boolean.class || type == Boolean.class)
                 json.put(name, f.getBoolean(obj));
-            else if (type == long.class)
-                json.put(name, f.getLong(obj));
-            else if (type == int.class)
-                json.put(name, f.getInt(obj));
+            else if (type == long.class || type == Long.class)
+                json.put(name, (Long) f.get(obj));
+            else if (type == int.class || type == Integer.class)
+                json.put(name, (Integer) f.get(obj));
             else if (type == char.class)
                 json.put(name, f.getChar(obj));
-            else if (type == byte.class)
+            else if (type == byte.class || type == Byte.class)
                 json.put(name, f.getByte(obj));
-            else if (type == short.class)
+            else if (type == short.class || type == Short.class)
                 json.put(name, f.getShort(obj));
-            else if (type == float.class)
+            else if (type == float.class || type == Float.class)
                 json.put(name, f.getFloat(obj));
-            else if (type == double.class)
+            else if (type == double.class || type == Double.class)
                 json.put(name, f.getDouble(obj));
             else {
-            	Object child = f.get(obj);
-            	if(child != null && BeanBase.class.isAssignableFrom(type)) {
-            		json.put(name, ObjToJson(child));
-            	} else {
+                Object child = f.get(obj);
+                if(child != null && BeanBase.class.isAssignableFrom(type)) {
+                    json.put(name, ObjToJson(child));
+                } else {
                     json.put(name, child);
-            	}
+                }
             }
         }
         return json;
@@ -134,12 +141,12 @@ public class BeanBase {
         }
         return null;
     }
-    
-    
+
+
 /*    public static <E> E SQLResToObj(Class<E> obj) {
         Field[] fields = obj.getDeclaredFields();
-        
-        
+
+
         return null;
     }*/
 }

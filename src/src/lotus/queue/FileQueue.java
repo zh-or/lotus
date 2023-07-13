@@ -23,9 +23,11 @@ public class FileQueue {
 
     public void close() {
         try {
-            wait.notifyAll();
+            synchronized (wait) {
+                wait.notifyAll();
+            }
             raf.close();
-        } catch (IOException e) {
+        } catch (Exception e) {
         }
     }
 
@@ -44,7 +46,7 @@ public class FileQueue {
         return null;
     }
 
-    public String pollAndWait(long timeout) throws IOException {
+    public String pollAndWait(long timeout) throws Exception {
         if(readPos + 1 >= fileLen) {
             try {
                 synchronized(wait) {
@@ -56,7 +58,7 @@ public class FileQueue {
         return poll();
     }
 
-    public synchronized void push(String line) throws IOException {
+    public synchronized void push(String line) throws Exception {
         fileLen = raf.length();
         raf.seek(fileLen);
         raf.write(line.getBytes(charset));
