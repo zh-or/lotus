@@ -174,9 +174,17 @@ public class NioTcpSession extends Session {
 
 	@Override
 	public synchronized void closeNow() {
+		if(key != null) {
+			try {
+				key.channel().close();
+				key.cancel();
+			} catch (IOException e) {
+
+			}
+		}
+		//ioprocess.cancelKey(key);
 	    if(closed) return;
         super.closeNow();
-        ioprocess.cancelKey(key);
 	}
 
 	@Override

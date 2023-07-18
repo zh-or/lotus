@@ -137,7 +137,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
         }
         Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
 
-        while(keys.hasNext()){
+        while(keys.hasNext()) {
             if(!isrun) break;
 
             SelectionKey key = keys.next();
@@ -311,11 +311,14 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
         try {
             if(((SocketChannel) key.channel()).finishConnect() == false){
                 /*连接失败???*/
-                cancelKey(key);
+                //cancelKey(key);
+                key.channel().close();
+                key.cancel();
                 return;
             }
         } catch (Exception e) {
             e.printStackTrace();
+            return;
         }
 
         session.removeInterestOps(SelectionKey.OP_CONNECT);//取消连接成功事件
@@ -323,7 +326,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
         session.pushEventRunnable(new IoEventRunnable(null, IoEventType.SESSION_CONNECTION, session, context));
     }
 
-    public void cancelKey(SelectionKey key) {
+    /*public void cancelKey(SelectionKey key) {
         if(key == null) return;
         try {
             Session session = (Session) key.attachment();
@@ -331,7 +334,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
             key.channel().close();
             key.cancel();
         } catch (Exception e) {}
-    }
+    }*/
 
     public void close() {
         isrun = false;
@@ -339,7 +342,10 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
         try {
             Iterator<SelectionKey> it = selector.keys().iterator();
             while(it.hasNext()){
-                cancelKey(it.next());
+                //cancelKey(it.next());
+
+                Session session = (Session) it.next().attachment();
+                session.closeNow();
             }
             selector.selectNow();
             selector.close();
