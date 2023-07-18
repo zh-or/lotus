@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.github.zh-or</groupId>
     <artifactId>lotus-mvn</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.3</version>
     <name>lotus</name>
     <description>http-server, json, http-client, nio-server</description>
     <url>https://github.com/zh-or/lotus</url>
