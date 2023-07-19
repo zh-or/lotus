@@ -40,7 +40,7 @@ import lotus.nio.tcp.NioTcpSession;
  * */
 public class HttpServer {
     private static final String          WS_HTTP_REQ        =   "_____________WS_HTTP_REQ_______________";
-    
+
     private NioTcpServer                server              =   null;
     private Charset                     charset             =   null;
     private boolean                     enableWebSocket     =   false;
@@ -53,10 +53,10 @@ public class HttpServer {
     private HttpsProtocolCodec          httpsProtocolCodec  =   null;
     private boolean                     isNeedClientAuth    =   false;
     private int                         oldBufferSize       =   0;
-    
+
     public HttpServer() {
         server = new NioTcpServer();
-        
+
         server.setHandler(ioHandler);
         uploadTmpDir = System.getProperty("java.io.tmpdir") + File.separator;
         charset = Charset.forName("utf-8");
@@ -65,11 +65,11 @@ public class HttpServer {
         //连接空闲时关闭
         setTimeOut(1000 * 20);
     }
-    
+
     public void setKeyStoreAndEnableSSL(String keystore, String password) throws Exception {
         setKeyStoreAndEnableSSL(keystore, password, "TLS");
     }
-    
+
     /**
      * java1.8最高只支持tls1.2
      * 如果要jdk1.8支持 tls1.3 需要加另外的库
@@ -89,9 +89,9 @@ public class HttpServer {
     public void setKeyStoreAndEnableSSL(String keystore, String password, String protocol) throws Exception {
         setKeyStoreAndEnableSSL(keystore, password, protocol, isNeedClientAuth, 10 * 1000);
     }
-    
+
     public void setKeyStoreAndEnableSSL(String keystore, String password, String protocol, boolean needClientAuth, int handshakeTimeOut) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, UnrecoverableKeyException, KeyManagementException {
-          
+
         File fKeyStore = new File(keystore);
         if(!fKeyStore.exists()) {
             throw new FileNotFoundException("keystore file not found");
@@ -104,53 +104,53 @@ public class HttpServer {
         sslContext = SSLContext.getInstance(protocol);
         TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
         tmf.init(ks);
-        
+
         sslContext.init(
                 kmf.getKeyManagers(),
-                new TrustManager[] { new HttpServerX509TrustManager(this) }, 
+                new TrustManager[] { new HttpServerX509TrustManager(this) },
                 null);
         httpsProtocolCodec = new HttpsProtocolCodec(this);
         server.setProtocolCodec(httpsProtocolCodec);
         isNeedClientAuth = needClientAuth;
         enableSSL = true;
     }
-    
+
     public boolean isNeedClientAuth() {
         return isNeedClientAuth;
     }
-    
+
     public HttpProtocolCodec getHttpProtocolCodec() {
         return httpProtocolCodec;
     }
-    
+
     public boolean isTcpNoDelay() {
         return server.isTcpNoDelay();
     }
-    
+
     public void setTcpNoDelay(boolean noDelay) {
         server.setTcpNoDelay(noDelay);
     }
-    
+
     public SSLContext getSSLContext() {
         return sslContext;
     }
-    
+
     public boolean isEnableSSL() {
         return enableSSL;
     }
-    
+
     public int getRequestMaxLimit() {
         return requestMaxLimit;
     }
-    
+
     public void setRequestMaxLimit(int limit) {
         requestMaxLimit = limit;
     }
-    
+
     public String getUploadTempDir() {
         return uploadTmpDir;
     }
-    
+
     public synchronized void reSizeCacheBuffer(int size) {
         if(size != oldBufferSize) {
             //System.out.println("resize:" + size);
@@ -158,7 +158,7 @@ public class HttpServer {
             oldBufferSize = size;
         }
     }
-    
+
     /**
      * 设置上传文件保存的临时目录
      * @param dir
@@ -166,14 +166,14 @@ public class HttpServer {
     public void setUploadTempDir(String dir) {
         uploadTmpDir = dir;
     }
-    
+
     public void setEventThreadPoolSize(int size) {
         server.setEventThreadPoolSize(size);
     }
-    
+
     /**
      * 启用https时, 系统会自动覆盖此值, 以避免此值过小导致频繁分配内存
-     * @param ReadBufferCacheSize
+     * @param bufferCacheSize
      */
     public void setCacheBufferSize(int bufferCacheSize) {
         oldBufferSize = bufferCacheSize;
@@ -183,15 +183,15 @@ public class HttpServer {
     public boolean isOpenWebSocket() {
         return enableWebSocket;
     }
-    
+
     /**
      * https://tools.ietf.org/html/rfc6455#page-31
-     * @param open
+     * @param enable
      */
     public void enableWebSocket(boolean enable) {
         this.enableWebSocket = enable;
     }
-    
+
     /**
      * 设置连接超时时间, 超时后会关闭该连接
      * @param t 毫秒
@@ -199,7 +199,7 @@ public class HttpServer {
     public void setTimeOut(int t){
         server.setSessionIdleTime(t);/*keep-alive*/
     }
-    
+
     /**
      * @param handler
      */
@@ -210,7 +210,7 @@ public class HttpServer {
     public void start(InetSocketAddress addr) throws IOException {
         server.start(addr);
     }
-    
+
     public void stop() {
         if(server != null) {
             server.close();
@@ -224,7 +224,7 @@ public class HttpServer {
     public void setCharset(Charset charset){
         this.charset = charset;
     }
-    
+
     public Charset getCharset() {
         return this.charset;
     }
@@ -267,16 +267,16 @@ public class HttpServer {
             HttpRequest request = (HttpRequest) session.getAttr(WS_HTTP_REQ);
             handler.wsIdle(session, request);
         };
-        
+
 
         @Override
         public void onException(Session session, Throwable e) {
             try {
 
                 handler.exception(e, null, null);
-                
+
                 //session.closeNow();
-                
+
             } catch(Exception e2) {
                 e2.printStackTrace();
             }
@@ -284,7 +284,7 @@ public class HttpServer {
     };
 
     private IoHandler ioHandler = new IoHandler() {
-        
+
         public boolean onBeforeConnection(Session session) throws Exception {
             if(enableSSL) {
                 NioTcpSession tcpSession = (NioTcpSession) session;
@@ -301,18 +301,18 @@ public class HttpServer {
                     //System.out.println("exception:" + session.getId() + " msg:" + e.getMessage());
                     return false;
                 }
-                
+
             }
             return true;
         };
-        
+
         public void onConnection(Session session) throws Exception {
-            
+
         };
-        
+
         @Override
         public void onRecvMessage(Session session, Object msg)throws Exception {
-            
+
             if(msg == null) {
                 return;
             }
@@ -328,7 +328,7 @@ public class HttpServer {
                     session.setProtocolCodec(new WebSocketProtocolCodec(HttpServer.this));
                     session.setIoHandler(wsIoHandler);
                     session.setAttr(WS_HTTP_REQ, request);
-                
+
                     response.flush();
                     if(handler == null) {
                         return;
@@ -341,7 +341,7 @@ public class HttpServer {
                 response.setHeader("Content-Type", "text/html; charset=" + charset.displayName());
 
                 if(handler != null) {
-                    handler.service(request.getMothed(), request, response);
+                    handler.service(request.getMethod(), request, response);
                     response.flush();
                     if("close".equals(request.getHeader("connection"))) {
                         /*
@@ -365,7 +365,7 @@ public class HttpServer {
             try {
                 if(request != null && request.isFormData()) {
                     HttpFormData formData = request.getFormData();
-                    
+
                     formData.removeCache();
                     formData.close();
                 }
@@ -373,13 +373,13 @@ public class HttpServer {
                 e.printStackTrace();
             }
         }
-        
+
         public void onClose(Session session) throws Exception {
             freeSSLEngine(session);
         };
-        
+
         public void onSentMessage(Session session, Object msg) throws Exception {
-            
+
         };
 
         @Override
@@ -392,12 +392,12 @@ public class HttpServer {
         public void onException(Session session, Throwable e) {
             try {
                 if(e instanceof SSLClosedException) {
-                    
+
                 } else {
                     handler.exception(e, null, null);
                 }
                 session.closeNow();
-                
+
             } catch(Exception e2) {
                 e2.printStackTrace();
             }

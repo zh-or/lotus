@@ -22,7 +22,7 @@ import lotus.utils.Utils;
 
 public class HttpRequest {
     private Session                 session         =   null;
-    private HttpMethod              mothed          =   null;
+    private HttpMethod              method          =   null;
     private String                  path            =   null;
     private String                  queryString     =   null;
     private HttpVersion             version         =   null;
@@ -35,7 +35,7 @@ public class HttpRequest {
     private HttpServer              context         =   null;
     private HttpFormData            formData        =   null;
     private HashMap<String, Object> attrs           =   null;
-    
+
     public HttpRequest(Session session, Charset charset, HttpServer context) {
         headers = new HashMap<String, String>();
         attrs = new HashMap<String, Object>();
@@ -44,7 +44,7 @@ public class HttpRequest {
         this.context = context;
         isHTTPSReq = context.isEnableSSL() && session.getAttr(SSLState.SSL_STATE_KEY) != null;
     }
-    
+
     public Object getAttr(String key, Object defval){
         Object val = attrs.get(key);
         if(val == null) return defval;
@@ -54,65 +54,65 @@ public class HttpRequest {
     public Object getAttr(String key){
         return getAttr(key, null);
     }
-    
+
     public void setAttr(String key, Object val){
         attrs.put(key, val);
     }
-    
+
     public Object removeAttr(String key){
         return attrs.remove(key);
     }
-    
+
     public boolean isFormData() {
         return this.formData != null;
     }
-    
+
     public void setFormData(HttpFormData formData) {
         this.formData = formData;
     }
-    
+
     public HttpFormData getFormData() {
         return formData;
     }
-    
+
     public HttpServer getContext() {
         return context;
     }
-    
-    public HttpMethod getMothed() {
-        return mothed;
+
+    public HttpMethod getMethod() {
+        return method;
     }
-    
+
     public String getPath(){
         if(Utils.CheckNull(path)) {
             return "/";
         }
         return path;
     }
-    
+
     public String getFullPath() {
         if(queryString != null) {
             return path + queryString;
         }
         return path;
     }
-    
+
     public boolean isWebSocketConnection() {
         return isWebSocket;
     }
-    
+
     public boolean isHTTPSConnection() {
         return isHTTPSReq;
     }
-    
+
     public void setCharacterEncoding(String charset) {
         this.charset = Charset.forName(charset);
     }
-    
+
     public Charset getCharacterEncoding() {
         return this.charset;
     }
-    
+
     public void parseHeader(String sheaders) {
         final String[] headerFields = sheaders.split("\r\n");
         if(headerFields != null && headerFields.length > 1){
@@ -125,7 +125,7 @@ public class HttpRequest {
             }
             final String[] elements = requestLine.split(" ");
             if(elements != null && elements.length == 3){
-                mothed = HttpMethod.valueOf(elements[0]);
+                method = HttpMethod.valueOf(elements[0]);
                 path = elements[1];
                 int mid = path.lastIndexOf("?");
                 if(mid != -1){
@@ -139,11 +139,11 @@ public class HttpRequest {
                     version = HttpVersion.HTTP_1_0;
                 }
             }
-            
+
             if(context.isOpenWebSocket()){
                 String connection = getHeader("Connection");
                 if(
-                        "Upgrade".equals(connection) || 
+                        "Upgrade".equals(connection) ||
                         (!Utils.CheckNull(connection) && connection.indexOf("Upgrade") != -1)
                          /*这里可能是多个值, 如 FireFox-> Connection:keep-alive, Upgrade*/
                   ) {
@@ -153,10 +153,10 @@ public class HttpRequest {
                     }
                 }
             }
-            
+
         }
     }
-    
+
     public synchronized Cookie getCookie(String key) {
         Cookie cookie = null;
         if(cookies == null) {
@@ -174,21 +174,21 @@ public class HttpRequest {
         cookie = cookies.get(key);
         return cookie;
     }
-    
 
-    
+
+
     public void setBody(final byte[] body){
         this.body = body;
     }
-    
+
     public HttpVersion getVersion(){
         return version;
     }
-    
+
     public String getQueryString(){
         return queryString;
     }
-    
+
     /**
      * key已全部转换为小写
      * @param key 会自动将此参数的字符串转换为小写字符
@@ -197,7 +197,7 @@ public class HttpRequest {
     public String getHeader(String key){
         return headers.get(key.toLowerCase());
     }
-    
+
     public String getParameter(String name) {
         Matcher m = Pattern.compile("[&?]" + name + "=([^&]*)").matcher("&" + queryString);
         if(m.find()){
@@ -209,7 +209,7 @@ public class HttpRequest {
             }
         }else if(body != null && getHeader("Content-Type") != null && getHeader("Content-Type").indexOf("application/x-www-form-urlencoded") != -1){
             String bodyStr = new String(body, charset);
-            
+
             m = Pattern.compile("[&]" + name + "=([^&]*)").matcher("&" + bodyStr);
             if(m.find()){
                 try {
@@ -221,12 +221,12 @@ public class HttpRequest {
         }
         return null;
     }
-    
+
     public String getParameter(String name, String defval){
         String val = getParameter(name);
         return val == null ? defval : val;
     }
-    
+
     /**
      * 检查是否包含参数key, 只能用于检查get方法, post的 url编码方法
      * @param pars 参数key数组
@@ -241,60 +241,60 @@ public class HttpRequest {
         }
         return true;
     }
-    
+
     public byte[] getBody(){
         return this.body;
     }
-    
+
     public String getBodyString() {
         if(this.body == null || this.body.length <= 0) {
             throw new InvalidParameterException("没有收到body");
         }
         return new String(this.body, context.getCharset());
     }
-    
+
     public JSONObject getBodyJSONObject() throws JSONException {
         return new JSONObject(getBodyString());
     }
-    
+
     public JSONArray getBodyJSONArray() throws JSONException {
         return new JSONArray(getBodyString());
     }
-    
+
     public SocketAddress getRemoteAddress(){
         return session.getRemoteAddress();
     }
-    
-    public String getIpAddress() {  
-        
-        String ip = getHeader("X-Forwarded-For");  
+
+    public String getIpAddress() {
+
+        String ip = getHeader("X-Forwarded-For");
 
         try {
-            if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {  
-                if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {  
+            if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+                if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
                     ip = getHeader("Proxy-Client-IP");
-                }  
-                if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {  
+                }
+                if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
                     ip = getHeader("WL-Proxy-Client-IP");
-                }  
-                if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {  
+                }
+                if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
                     ip = getHeader("HTTP_CLIENT_IP");
-                }  
-                if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {  
-                    ip = getHeader("HTTP_X_FORWARDED_FOR"); 
-                }  
-                if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {  
+                }
+                if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+                    ip = getHeader("HTTP_X_FORWARDED_FOR");
+                }
+                if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
                     ip = getRemoteAddress().toString();
-                }  
-            } else if (ip.length() > 15) {  
-                String[] ips = ip.split(",");  
-                for (int index = 0; index < ips.length; index++) {  
-                    String strIp = (String) ips[index];  
-                    if (!("unknown".equalsIgnoreCase(strIp))) {  
-                        ip = strIp;  
-                        break;  
-                    }  
-                }  
+                }
+            } else if (ip.length() > 15) {
+                String[] ips = ip.split(",");
+                for (int index = 0; index < ips.length; index++) {
+                    String strIp = (String) ips[index];
+                    if (!("unknown".equalsIgnoreCase(strIp))) {
+                        ip = strIp;
+                        break;
+                    }
+                }
             }
             int p = ip.indexOf(":");
             if(p != -1){
@@ -308,12 +308,12 @@ public class HttpRequest {
     public Session getSession() {
         return session;
     }
-    
+
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append("Request [mothed=");
-        builder.append(mothed);
+        builder.append(method);
         builder.append(", path=");
         builder.append(path);
         builder.append(", queryString=");

@@ -18,11 +18,11 @@ public class HttpProtocolCodec implements ProtocolCodec{
     private static final String CONTENT_LENGTH  =   "content-length";
     private static final String REQUEST         =   "http-request";
     private HttpServer   context                =   null;
-    
+
     public HttpProtocolCodec(HttpServer context) {
         this.context = context;
     }
-    
+
     @Override
     public boolean decode(Session session, ByteBuffer in, ProtocolDecoderOutput out)  throws Exception {
         HttpStatus status = (HttpStatus) session.getAttr(STATUS);
@@ -30,7 +30,7 @@ public class HttpProtocolCodec implements ProtocolCodec{
             session.setAttr(STATUS, HttpStatus.HEAD);
             status = (HttpStatus) session.getAttr(STATUS);
         }
-     
+
         switch (status) {
             case HEAD:
             {
@@ -40,7 +40,7 @@ public class HttpProtocolCodec implements ProtocolCodec{
                     session.setProtocolCodec(newdec);
                     return newdec.decode(session, in, out);
                 }*/
-                
+
                 in.mark();
                 while(in.remaining() > 3){
                     /*\r\n\r\n*/
@@ -53,7 +53,7 @@ public class HttpProtocolCodec implements ProtocolCodec{
                         req.parseHeader(sheaders);
 
                         final int contentLength = Utils.StrtoInt(req.getHeader("content-length"));
-                        
+
                         if(contentLength > context.getRequestMaxLimit()) {
                             HttpResponse res = HttpResponse.defaultResponse(session, req);
                             res.setHeader("Connection", "close");
@@ -61,7 +61,7 @@ public class HttpProtocolCodec implements ProtocolCodec{
                             session.closeOnFlush();
                             throw new Exception("content to overflow len:" + contentLength + " max:" + context.getRequestMaxLimit());
                         }
-                        
+
                         String contentType = req.getHeader("Content-Type");
                         if(contentType != null && contentType.indexOf("multipart/form-data") != -1) {//是文件上传请求
                             HttpFormData formData = new HttpFormData(req);
@@ -109,7 +109,7 @@ public class HttpProtocolCodec implements ProtocolCodec{
             {
                 final int contentLength = (Integer) session.getAttr(CONTENT_LENGTH, 0);
                 if(contentLength > 0){
-                    
+
                     if(contentLength <= in.remaining()){
                         HttpRequest req = (HttpRequest) session.removeAttr(REQUEST);
                         final byte[] body = new byte[contentLength];
@@ -132,11 +132,11 @@ public class HttpProtocolCodec implements ProtocolCodec{
                 final int contentLength = (Integer) session.getAttr(CONTENT_LENGTH, 0);
                 final HttpRequest req = (HttpRequest) session.getAttr(REQUEST);
                 HttpFormData formData = req.getFormData();
-                
+
                 while(in.hasRemaining()) {
                     formData.write(in);
                 }
-                
+
                 if(contentLength <= formData.getCacheFileLength()) {
                     formData.close();
                     session.setAttr(STATUS, HttpStatus.HEAD);
@@ -145,14 +145,14 @@ public class HttpProtocolCodec implements ProtocolCodec{
                     out.write(req);
                     return true;
                 }
-                
+
             }
                 break;
         }
-        
+
         return false;
     }
-    
+
     @Override
     public boolean encode(Session session, Object msg, LotusIOBuffer out) throws Exception {
         HttpMessageWrap wrap = (HttpMessageWrap) msg;
@@ -166,19 +166,24 @@ public class HttpProtocolCodec implements ProtocolCodec{
 
             case HttpMessageWrap.HTTP_MESSAGE_TYPE_FILE:
                 File file = (File) wrap.data;
-                
+
                 try (FileChannel channel = FileChannel.open(file.toPath(), StandardOpenOption.READ);) {
                     long len = file.length();
-                    //把文件映射到内存发送
-                    MappedByteBuffer mapBuffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, len);
-                    mapBuffer.position((int) len);
-                    out.append(mapBuffer);
+                    //把文件映射到内存发送, 这里最大不能超过Integer.MAX_LENGTH个字节即2G, 需要分成多个map映射
+                    do {
+                        long step = Math.min(Integer.MAX_VALUE, len);
+                        MappedByteBuffer mapBuffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, step);
+                        mapBuffer.position((int) step);
+                        out.append(mapBuffer);
+                        len -= step;
+                    } while(len > 0);
+
                     channel.close();
                     return true;
                 }
 
         }
         return true;
-  
+
     }
 }
