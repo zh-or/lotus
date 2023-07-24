@@ -34,6 +34,7 @@ import lotus.nio.IoHandler;
 import lotus.nio.Session;
 import lotus.nio.tcp.NioTcpServer;
 import lotus.nio.tcp.NioTcpSession;
+import lotus.utils.DebugLogFileManager;
 
 /*
  * 一个简单的http服务器
@@ -272,8 +273,9 @@ public class HttpServer {
         @Override
         public void onException(Session session, Throwable e) {
             try {
+                HttpRequest request = (HttpRequest) session.getAttr(WS_HTTP_REQ);
 
-                handler.exception(e, null, null);
+                handler.exception(e, request, null);
 
                 //session.closeNow();
 
@@ -307,7 +309,9 @@ public class HttpServer {
         };
 
         public void onConnection(Session session) throws Exception {
-
+            /*DebugLogFileManager.getInstance().append(
+                    String.format("session-%d", session.getId())
+                    , "connection:" + session.toString());*/
         };
 
         @Override
@@ -340,6 +344,9 @@ public class HttpServer {
 
                 response.setHeader("Content-Type", "text/html; charset=" + charset.displayName());
 
+                /*DebugLogFileManager.getInstance().append(
+                        String.format("session-%d", session.getId())
+                        , "recv http request:" + request.getPath());*/
                 if(handler != null) {
                     handler.service(request.getMethod(), request, response);
                     response.flush();
@@ -376,6 +383,9 @@ public class HttpServer {
 
         public void onClose(Session session) throws Exception {
             freeSSLEngine(session);
+            /*DebugLogFileManager.getInstance().append(
+                    String.format("session-%d", session.getId())
+                    , "close:" + session.toString());*/
         };
 
         public void onSentMessage(Session session, Object msg) throws Exception {

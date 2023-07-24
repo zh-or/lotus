@@ -16,13 +16,13 @@ public class IoEventRunnable implements Runnable{
         SESSION_IDLE,
         SESSION_EXCEPTION
     }
-    
+
     private Object att;
     private IoEventType type;
     private Session session;
     private NioContext context;
 //    private SeqExecutorService seqexservice;
-    
+
     public IoEventRunnable(Object att, IoEventType type, Session session, NioContext context) {
         this.att = att;
         this.type = type;
@@ -33,7 +33,6 @@ public class IoEventRunnable implements Runnable{
     @Override
     public void run() {
 //        long s = System.currentTimeMillis();
-        session.RuningEvent(true);
         Throwable _e = null;
         try {
             IoHandler handler = session.getEventHandler();
@@ -47,8 +46,8 @@ public class IoEventRunnable implements Runnable{
                     break;
                 case SESSION_RECVMSG:
                     if(session.isWaitForRecvPack() && session instanceof NioTcpSession && ((NioTcpSession) session).callCheckMessageCallback(att)){
-                        session.set(att);
-                        session._notifyAll();
+                        session.setPack(att);
+                        //session.packNotifyAll();
                     }else{
                         handler.onRecvMessage(session, att);
                     }
@@ -74,8 +73,6 @@ public class IoEventRunnable implements Runnable{
             }
         } catch (Throwable e) {
             _e = e;
-        }finally{
-            session.RuningEvent(false);
         }
         if(_e != null){
             session.pushEventRunnable(new IoEventRunnable(_e, IoEventType.SESSION_EXCEPTION, session, context));

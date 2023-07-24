@@ -15,6 +15,7 @@ import lotus.nio.LotusIOBuffer;
 import lotus.nio.NioContext;
 import lotus.nio.ProtocolDecoderOutput;
 import lotus.nio.Session;
+import lotus.utils.DebugLogFileManager;
 import lotus.utils.Utils;
 
 
@@ -150,13 +151,18 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
 
             try {
                 if(!key.isValid()) {
-                    session.closeNow();
+                    //session.closeNow();
                     continue;
                 }
                 if(key.isReadable()) {/*call decode */
 //                    long s = System.currentTimeMillis();
                     ByteBuffer readcache = session.getReadCacheBuffer();
                     int len = session.getChannel().read(readcache);
+
+                    /*DebugLogFileManager.getInstance().append(
+                            String.format("session-%d", session.getId())
+                            , readcache, true);*/
+
                     if(len < 0){/*EOF*/
                         session.closeNow();
                         context.putByteBufferToCache(readcache);
@@ -194,7 +200,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
 
     private void handleTimeOut() {
         Iterator<SelectionKey> keys = selector.keys().iterator();
-        final long nowtime = System.currentTimeMillis();
+        long nowTime = System.currentTimeMillis();
         while(keys.hasNext()){
             SelectionKey key = keys.next();/*这里报错?*/
             if(!isrun) break;
@@ -207,7 +213,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
                 continue;
             }
             NioTcpSession session = (NioTcpSession) key.attachment();
-            if(session != null && nowtime - session.getLastActive() > context.getSessionIdleTimeOut()) {
+            if(session != null && nowTime - session.getLastActive() > context.getSessionIdleTimeOut()) {
                 /*call on idle */
                 session.pushEventRunnable(new IoEventRunnable(null, IoEventType.SESSION_IDLE, session, context));
 
@@ -275,7 +281,7 @@ public class NioTcpIoProcess extends IoProcess implements Runnable {
                     for(ByteBuffer buff : buffers) {
                         buff.flip();
                         while(buff.hasRemaining()) {
-                            session.write(buff);
+                            session.writeToChannel(buff);
                         }
                     }
                     out.free();
