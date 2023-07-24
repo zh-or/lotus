@@ -26,7 +26,7 @@ public class HttpsProtocolCodec implements ProtocolCodec {
 
     /***
      * 处理握手
-     * 
+     *
      * @param session
      * @return 如果握手完成后有多余的数据则返回, 会流转到decode处理
      * @throws Exception
@@ -39,7 +39,7 @@ public class HttpsProtocolCodec implements ProtocolCodec {
          * ALERT 21 0x15 3) HANDSHAKE 22 0x16 4) APPLICATION_DATA 23 0x17
          */
         ByteBuffer tmpBuf = session.getWriteCacheBuffer(0);
-        int n = session.read(tmpBuf);
+        int n = session.readFromChannel(tmpBuf);
         if (n < 0) {
             // 已关闭
             return null;
@@ -89,28 +89,7 @@ public class HttpsProtocolCodec implements ProtocolCodec {
             if (state != null) {
 
                 LotusIOBuffer tmpOut = new LotusIOBuffer(session.getContext());
-                boolean r = true;
-                HttpMessageWrap wrap = (HttpMessageWrap) msg;
-                // 当发送文件时, 这里直接拦截处理, 因为buffer可能存不了一个文件必须分开发送
-                if (wrap.type == HttpMessageWrap.HTTP_MESSAGE_TYPE_FILE) {
-                    File file = (File) wrap.data;
-
-                    try (FileChannel channel = FileChannel.open(file.toPath(), StandardOpenOption.READ);) {
-                        long size = channel.size();
-                        int maxBuffSize = state.getAppBufferSize() / 3 * 2;
-                        do {
-                            ByteBuffer cache = ByteBuffer.allocate(maxBuffSize);
-                            channel.read(cache);
-                            tmpOut.append(cache);
-                        } while (channel.position() < size);
-                        
-                        channel.close();
-                    }
-
-                } else {
-                    r = httpProtocolCodec.encode(session, msg, tmpOut);
-                }
-
+                boolean r = httpProtocolCodec.encode(session, msg, tmpOut);
                 ByteBuffer[] bufs = tmpOut.getAllBuffer();
                 ByteBuffer outBuf;
                 for (ByteBuffer buf : bufs) {

@@ -21,7 +21,7 @@ public abstract class Session {
     protected long                              createtime      =   0l;
     protected volatile boolean                  closed          = false;
     protected boolean                           isWaitForRecvPack = false;
-    protected Object                            notifiRecvMsg   = null;
+    protected Object                            notifyRecvMsg   = null;
     protected ProtocolCodec                     codec           = null;
     protected IoHandler                         handler         = null;
 
@@ -81,7 +81,7 @@ public abstract class Session {
     public Object removeAttr(Object key){
         return attrs.remove(key);
     }
-    
+
     public synchronized void setLastActive(long t){
         lastActive = t;
     }
@@ -126,15 +126,11 @@ public abstract class Session {
         context.putByteBufferToCache(buff);
     }
 
-    public void RuningEvent(boolean is) {
-        synchronized (runingEventObj) {
-            runingEvent = is;
-        }
-    }
-
-    public void pushEventRunnable(Runnable run){
+    public void pushEventRunnable(Runnable run) {
+        //保证事件并发时的顺序, 用同一个线程执行
         synchronized (runingEventObj) {
             if(!runingEvent){
+                runingEvent = true;
                 context.ExecuteEvent(run);
             }else{
                 eventList.add(run);
@@ -147,7 +143,16 @@ public abstract class Session {
     }
 
     public Runnable pullEventRunnable(){
-        return eventList.poll();
+        Runnable run = eventList.poll();
+        if(run == null) {
+            synchronized (runingEventObj) {
+                run = eventList.poll();
+                if(run == null) {
+                    runingEvent = false;
+                }
+            }
+        }
+        return run;
     }
 
     /**
@@ -171,7 +176,7 @@ public abstract class Session {
         return isWaitForRecvPack;
     }
 
-    public void _wait(int timeout) {
+    public void packWait(int timeout) {
         synchronized (recvPackwait) {
             isWaitForRecvPack = true;
             try {
@@ -191,22 +196,23 @@ public abstract class Session {
         return false;
     }
 
-    public void _notify(){
+    public void packNotify() {
         synchronized (recvPackwait) {
             isWaitForRecvPack = false;
             recvPackwait.notify();
         }
     }
 
-    public Object get() {
-        return notifiRecvMsg;
+    public Object getPack() {
+        return notifyRecvMsg;
     }
 
-    public void set(Object msg){
-        this.notifiRecvMsg = msg;
+    public void setPack(Object msg) {
+        this.notifyRecvMsg = msg;
+        packNotifyAll();
     }
 
-    public void _notifyAll() {
+    public void packNotifyAll() {
         synchronized (recvPackwait) {
             isWaitForRecvPack = false;
             recvPackwait.notifyAll();

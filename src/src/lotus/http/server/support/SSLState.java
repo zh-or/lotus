@@ -91,7 +91,7 @@ public class SSLState {
         netInBuffer.flip();
         session.putWriteCacheBuffer(buf);
 
-        session.write(emptyBuff);// initializes res
+        session.writeToChannel(emptyBuff);// initializes res
 
         do {
             if(engine.isInboundDone() || engine.isOutboundDone()) {
@@ -102,7 +102,7 @@ public class SSLState {
                 case NEED_UNWRAP:
                     if(!unwrap(netInBuffer, appInBuffer)) {
                         netInBuffer.compact();
-                        session.read(netInBuffer);
+                        session.readFromChannel(netInBuffer);
                         netInBuffer.flip();
                     }
                     break;
@@ -111,7 +111,7 @@ public class SSLState {
                     wrap(emptyBuff, netOutBuffer);
                     netOutBuffer.flip();
                     while(netOutBuffer.hasRemaining()) {
-                        session.write(netOutBuffer);
+                        session.writeToChannel(netOutBuffer);
                     }
                     break;
                 case NEED_TASK:

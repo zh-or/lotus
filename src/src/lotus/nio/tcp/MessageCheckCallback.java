@@ -6,23 +6,22 @@ package lotus.nio.tcp;
  *
  */
 public abstract class MessageCheckCallback {
-    
+
     private Object tmpSendmsg;
-    
+
     public void setSendMsg(Object msg){
         this.tmpSendmsg = msg;
     }
-    
+
     public Object getSendMsg(){
         return tmpSendmsg;
     }
-    
+
     /**
-     * @param sendmsg getSendMsg()
-     * @param recvmsg
+     * @param recvMsg
      * @return 返回 true 则表示此条消息是想要的
      */
-    public boolean thatsRight(Object recvmsg){
+    public boolean thatsRight(Object recvMsg){
         return true;
     }
 }

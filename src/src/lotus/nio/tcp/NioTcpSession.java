@@ -54,15 +54,16 @@ public class NioTcpSession extends Session {
 
 	@Override
 	public void write(Object data) {
-	    synchronized(msglock){
+	    synchronized(msglock) {
 	        qwrite.add(data);
-	        if(key == null || !key.isValid()){//没有准备好? 可能被关闭了
-	            //context.ExecuteEvent(new IoEventRunnable(new Exception("session is not valid"), IoEventType.SESSION_EXCEPTION, this, context));
-	            //context.ExecuteEvent(new IoEventRunnable(null, IoEventType.SESSION_CLOSE, this, context));
-	            closeNow();
-	            return;
-	        }
+	        if(key == null || !key.isValid()) {//没有准备好? 可能被关闭了
+				System.out.println(this.toString() + " :: 发送消息时发现连接不可用了------------------------------------");
+	            if(!channel.isOpen()) {
 
+					closeNow();
+					return;
+				}
+	        }
 	        addInterestOps(SelectionKey.OP_WRITE);/*注册写事件*/
 	        key.selector().wakeup();
 	    }
@@ -74,7 +75,7 @@ public class NioTcpSession extends Session {
 	 * @return
 	 * @throws IOException
 	 */
-	public int write(ByteBuffer buf) throws IOException {
+	public int writeToChannel(ByteBuffer buf) throws IOException {
 	    return channel.write(buf);
 	}
 
@@ -84,7 +85,7 @@ public class NioTcpSession extends Session {
 	 * @return
 	 * @throws IOException
 	 */
-	public int read(ByteBuffer buf) throws IOException {
+	public int readFromChannel(ByteBuffer buf) throws IOException {
 	    return channel.read(buf);
 	}
 
@@ -107,9 +108,9 @@ public class NioTcpSession extends Session {
 	    return msglock;
 	}
 
-	public synchronized void write(Object data, boolean sentclose) {
+	public synchronized void write(Object data, boolean sentClose) {
 		write(data);
-		this.sentClose = sentclose;
+		this.sentClose = sentClose;
 	}
 
 	/**
@@ -126,13 +127,13 @@ public class NioTcpSession extends Session {
      * 发送并等待一条消息
      * @param data
      * @param timeout
-     * @param checkcallback 此回调用来判断收到的消息是否是当前需要的返回
+     * @param checkCallback 此回调用来判断收到的消息是否是当前需要的返回
      * @return
      */
-	public Object writeAndWaitForMessage(Object data, int timeout, MessageCheckCallback checkcallback) {
-	    checkcallback.setSendMsg(data);
+	public Object writeAndWaitForMessage(Object data, int timeout, MessageCheckCallback checkCallback) {
+		checkCallback.setSendMsg(data);
 	    write(data);
-	    return waitForMessage(timeout, checkcallback);
+	    return waitForMessage(timeout, checkCallback);
 	}
 
 	/**
@@ -140,12 +141,12 @@ public class NioTcpSession extends Session {
 	 * @param timeout
 	 * @return
 	 */
-	public Object waitForMessage(int timeout, MessageCheckCallback checkcallback) {
-	    this.msgcheckcallback = checkcallback;
-	    _wait(timeout);
-        Object tmsg = get();
-        set(null);
-        return tmsg;
+	public Object waitForMessage(int timeout, MessageCheckCallback checkCallback) {
+	    this.msgcheckcallback = checkCallback;
+	    packWait(timeout);
+        Object tMsg = getPack();
+        setPack(null);
+        return tMsg;
 	}
 
 
@@ -156,7 +157,7 @@ public class NioTcpSession extends Session {
 	}
 
 	@Override
-	public int getWriteMessageSize(){
+	public int getWriteMessageSize() {
 	    return qwrite.size();
 	}
 
@@ -174,16 +175,21 @@ public class NioTcpSession extends Session {
 
 	@Override
 	public synchronized void closeNow() {
+		if(closed) {
+			//调用关闭后, selector 还会再次触发一个读事件, 读取时会返回-1
+			System.out.println("bug");
+			return;
+		}
 		if(key != null) {
 			try {
 				key.channel().close();
+			} catch (IOException e) {}
+			try {
 				key.cancel();
-			} catch (IOException e) {
-
-			}
+				key.selector().wakeup();
+			} catch (Exception e) {}
 		}
 		//ioprocess.cancelKey(key);
-	    if(closed) return;
         super.closeNow();
 	}
 
