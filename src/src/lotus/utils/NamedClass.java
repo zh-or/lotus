@@ -18,20 +18,20 @@ public class NamedClass {
     private class NamedObj {
         public Object rawObj;
         public Method m;
-        
+
         public NamedObj(Object rawObj, Method m) {
             this.rawObj = rawObj;
             this.m = m;
         }
     }
-    
+
     private ConcurrentHashMap<String, NamedObj> namedMap;
-    
-    
+
+
     public NamedClass() {
         namedMap = new ConcurrentHashMap<>();
     }
-    
+
     /**
      * 注册对象
      * @param obj
@@ -43,12 +43,12 @@ public class NamedClass {
         }
         Class<? extends Object> clazz = obj.getClass();
         NamedAnnotation na = clazz.getAnnotation(NamedAnnotation.class);
-        
+
         Method[] ms = clazz.getDeclaredMethods();
-        
+
         for(Method m : ms) {
             NamedAnnotation ma = m.getAnnotation(NamedAnnotation.class);
-            
+
             if(ma != null) {
                 NamedObj mWrap = new NamedObj(obj, m);
                 String name;
@@ -72,12 +72,12 @@ public class NamedClass {
      * @return
      * @throws Exception
      */
-    public Object callMenthodByName(String name, Object... args) throws Exception {
+    public Object callMethodByName(String name, Object... args) throws Exception {
         NamedObj wrap = namedMap.get(name);
         if(wrap == null) {
             throw new NoSuchMethodException("name:" + name + " 未找到");
         }
-        
+
         return wrap.m.invoke(wrap.rawObj, args);
     }
 }
