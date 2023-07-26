@@ -1,4 +1,4 @@
-package lotus.http;
+package lotus.http.netty;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -78,6 +78,11 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
     public static final int HTTP_CACHE_SECONDS = 60;
 
     private FullHttpRequest request;
+    private HttpServer context;
+
+    public HttpStaticFileServerHandler(HttpServer context) {
+        this.context = context;
+    }
 
     @Override
     public void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
@@ -94,7 +99,7 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
 
         final boolean keepAlive = HttpUtil.isKeepAlive(request);
         final String uri = request.uri();
-        final String path = sanitizeUri(uri);
+        final String path = sanitizeUri(uri, context.charset.displayName());
         if (path == null) {
             sendError(ctx, FORBIDDEN);
             return;
@@ -108,7 +113,11 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
 
         if (file.isDirectory()) {
             if (uri.endsWith("/")) {
-                sendListing(ctx, file, uri);
+                if(context.isEnableDirList()) {
+                    sendListing(ctx, file, uri);
+                } else {
+                    sendError(ctx, NOT_FOUND);
+                }
             } else {
                 sendRedirect(ctx, uri + '/');
             }
@@ -175,7 +184,7 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
             lastContentFuture = sendFileFuture;
         }
 
-        sendFileFuture.addListener(new ChannelProgressiveFutureListener() {
+/*        sendFileFuture.addListener(new ChannelProgressiveFutureListener() {
             @Override
             public void operationProgressed(ChannelProgressiveFuture future, long progress, long total) {
                 if (total < 0) { // total unknown
@@ -189,7 +198,7 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
             public void operationComplete(ChannelProgressiveFuture future) {
                 System.err.println(future.channel() + " Transfer complete.");
             }
-        });
+        });*/
 
         // Decide whether to close the connection or not.
         if (!keepAlive) {
@@ -208,10 +217,10 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
 
     private static final Pattern INSECURE_URI = Pattern.compile(".*[<>&\"].*");
 
-    private static String sanitizeUri(String uri) {
+    private static String sanitizeUri(String uri, String charset) {
         // Decode the path.
         try {
-            uri = URLDecoder.decode(uri, "UTF-8");
+            uri = URLDecoder.decode(uri, charset);
         } catch (UnsupportedEncodingException e) {
             throw new Error(e);
         }
@@ -241,7 +250,7 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
     private void sendListing(ChannelHandlerContext ctx, File dir, String dirPath) {
         StringBuilder buf = new StringBuilder()
                 .append("<!DOCTYPE html>\r\n")
-                .append("<html><head><meta charset='utf-8' /><title>")
+                .append("<html><head><meta charset='" + context.charset.displayName() + "' /><title>")
                 .append("Listing of: ")
                 .append(dirPath)
                 .append("</title></head><body>\r\n")
@@ -279,7 +288,7 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
         buffer.writeCharSequence(buf.toString(), CharsetUtil.UTF_8);
 
         FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK, buffer);
-        response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html; charset=UTF-8");
+        response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html; charset=" + context.charset.displayName());
 
         sendAndCleanupConnection(ctx, response);
     }
@@ -294,7 +303,7 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
     private void sendError(ChannelHandlerContext ctx, HttpResponseStatus status) {
         FullHttpResponse response = new DefaultFullHttpResponse(
                 HTTP_1_1, status, Unpooled.copiedBuffer("Failure: " + status + "\r\n", CharsetUtil.UTF_8));
-        response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain; charset=UTF-8");
+        response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain; charset=" + context.charset.displayName());
 
         sendAndCleanupConnection(ctx, response);
     }
