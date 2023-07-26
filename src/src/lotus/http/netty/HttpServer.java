@@ -48,6 +48,14 @@ public class HttpServer {
         hooks = new ArrayList<>();
         staticPath = Paths.get("./static");
         charset = Charset.forName("utf-8");
+
+
+        /**
+         * HttpStaticFileServerHandler 要加hook
+         * HttpStaticFileServerHandler 代码需要精简
+         * https 要再测试一下
+         * 优化api
+         */
     }
 
     public synchronized void addServiceHook(HttpRestServiceHook hook) {
