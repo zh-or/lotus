@@ -8,6 +8,7 @@ import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.stream.ChunkedFile;
 import io.netty.util.CharsetUtil;
 import io.netty.util.internal.SystemPropertyUtil;
+import lotus.utils.Utils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -217,7 +218,7 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
 
     private static final Pattern INSECURE_URI = Pattern.compile(".*[<>&\"].*");
 
-    private static String sanitizeUri(String uri, String charset) {
+    private String sanitizeUri(String uri, String charset) {
         // Decode the path.
         try {
             uri = URLDecoder.decode(uri, charset);
@@ -232,17 +233,10 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
         // Convert file separators.
         uri = uri.replace('/', File.separatorChar);
 
-        // Simplistic dumb security check.
-        // You will have to do something serious in the production environment.
-        if (uri.contains(File.separator + '.') ||
-                uri.contains('.' + File.separator) ||
-                uri.charAt(0) == '.' || uri.charAt(uri.length() - 1) == '.' ||
-                INSECURE_URI.matcher(uri).matches()) {
-            return null;
-        }
+
 
         // Convert to absolute path.
-        return SystemPropertyUtil.get("user.dir") + File.separator + uri;
+        return context.staticPath + File.separator +  Utils.BuildPath(uri);
     }
 
     private static final Pattern ALLOWED_FILE_NAME = Pattern.compile("[^-\\._]?[^<>&\\\"]*");
@@ -391,14 +385,16 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
      * @param file
      *            file to extract content type
      */
-    private static void setContentTypeHeader(HttpResponse response, File file) {
+    private  void setContentTypeHeader(HttpResponse response, File file) {
         response.headers().set(HttpHeaderNames.CONTENT_TYPE, getMimeType(file.getPath()));
     }
 
-    public static String getMimeType(String fileUrl) {
+    public  String getMimeType(String fileUrl) {
         FileNameMap fileNameMap = URLConnection.getFileNameMap();
         String type = fileNameMap.getContentTypeFor(fileUrl);
+        if(type == null) {
+            return "text/html; charset=" + context.charset.displayName();
+        }
         return type;
     }
-
 }

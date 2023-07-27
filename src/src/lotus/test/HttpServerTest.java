@@ -9,6 +9,7 @@ import java.net.InetSocketAddress;
 
 public class HttpServerTest  extends HttpBaseService {
     public static void main(String[] args) throws Exception {
+
         HttpServer server = new HttpServer();
         server.addHttpService(new HttpServerTest());
         server.setEventThreadTotal(10);
@@ -24,6 +25,7 @@ public class HttpServerTest  extends HttpBaseService {
                 headers.add("server", "nginx");
             }
         });
+        server.setEnableDirList(true);
         server.start();
         server.bind(new InetSocketAddress(8080));
         System.out.println("服务器启动完成: 8080");

@@ -35,9 +35,11 @@ public abstract class HttpBaseService {
         if(m != null) {
 
             try {
-                if(filter(path, request)) {
+                Object k = filter(path, request);
+                if(k == null) {
                     return m.invoke(this, request);
                 }
+                return k;
             } catch(Throwable e) {
                 return context.exception(e, request);
             }
@@ -46,12 +48,12 @@ public abstract class HttpBaseService {
     }
 
     /**
-     * 重写此方法 返回false可拦截调用
+     * 重写此方法 返回null表示不处理, 返回不为空则拦截并返回到客户端
      * @param path
      * @param request
      * @return
      */
-    public boolean filter(String path, HttpRequestPkg request) {
-        return true;
+    public Object filter(String path, HttpRequestPkg request) {
+        return null;
     }
 }
