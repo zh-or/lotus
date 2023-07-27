@@ -29,7 +29,10 @@ public class HttpServerHandler extends SimpleChannelInboundHandler<FullHttpReque
                 if(path.startsWith(key)) {
                     HttpBaseService service = server.getServices().get(key);
                     if(service != null) {
-                        req.retain();
+                        if(server.eventExec != null) {
+                            //用其他线程时才需要重新引用
+                            req.retain();
+                        }
                         server.exec(() -> {
                             try {
                                 ArrayList<HttpRestServiceHook> hooks = server.getFilters();

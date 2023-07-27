@@ -1,5 +1,6 @@
 package lotus.http.netty;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderNames;
@@ -8,6 +9,9 @@ import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.handler.codec.http.multipart.Attribute;
 import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
 import io.netty.handler.codec.http.multipart.InterfaceHttpData;
+import lotus.json.JSONArray;
+import lotus.json.JSONException;
+import lotus.json.JSONObject;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -20,11 +24,13 @@ public class HttpRequestPkg {
     ChannelHandlerContext channelCtx;
     QueryStringDecoder qsd;
     Map<String, String> parmMap = new HashMap<>();
+    private HashMap<String, Object> attrs           =   null;
 
     public HttpRequestPkg(ChannelHandlerContext channelCtx, HttpServer context, FullHttpRequest rawRequest) throws IOException {
         this.channelCtx = channelCtx;
         this.rawRequest = rawRequest;
         this.context = context;
+        attrs = new HashMap<String, Object>();
         qsd = new QueryStringDecoder(rawRequest.uri());
 
         if (HttpMethod.GET == rawRequest.method()) {
@@ -47,6 +53,44 @@ public class HttpRequestPkg {
         }
     }
 
+    public String getIpAddress() {
+        return channelCtx.channel().remoteAddress().toString();
+    }
+
+    public ByteBuf getBodyByteBuf() {
+        return rawRequest.content();
+    }
+
+    public String getBodyString() {
+        return getBodyByteBuf().toString(context.charset);
+    }
+
+    public JSONArray getBodyJSONArray() throws JSONException {
+        return new JSONArray(getBodyString());
+    }
+
+    public JSONObject getBodyJSONObject() throws JSONException {
+        return new JSONObject(getBodyString());
+    }
+
+    public Object getAttr(String key, Object defval){
+        Object val = attrs.get(key);
+        if(val == null) return defval;
+        return val;
+    }
+    public Object getAttr(String key){
+        return getAttr(key, null);
+    }
+
+    public void setAttr(String key, Object val){
+        attrs.put(key, val);
+    }
+
+    public Object removeAttr(String key){
+        return attrs.remove(key);
+    }
+
+
     public String getPath() {
         return qsd.path();
     }
@@ -56,12 +100,16 @@ public class HttpRequestPkg {
     }
 
     public int getIntParam(String name) {
+        return getIntParam(name, 0);
+    }
+
+    public int getIntParam(String name, int def) {
         try {
             return Integer.valueOf(getParam(name));
         } catch(Exception e) {
             e.printStackTrace();
         }
-        return 0;
+        return def;
     }
 
     public FullHttpRequest raw() {
