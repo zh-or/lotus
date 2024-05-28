@@ -1,7 +1,6 @@
 package or.lotus.support;
 
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import or.lotus.common.support.BeanUtils;
 import or.lotus.geometry.model.LineStringGeo;
 import org.apache.ibatis.logging.slf4j.Slf4jImpl;
 import org.apache.ibatis.session.ExecutorType;

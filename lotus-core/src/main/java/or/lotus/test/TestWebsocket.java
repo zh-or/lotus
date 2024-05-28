@@ -1,8 +1,8 @@
 package or.lotus.test;
 
-import or.lotus.common.http.server.HttpServer;
-import or.lotus.common.http.server.WebSocketMessageHandler;
-import or.lotus.common.http.server.WebSocketSession;
+import or.lotus.http.server.HttpServer;
+import or.lotus.http.server.WebSocketMessageHandler;
+import or.lotus.http.server.WebSocketSession;
 import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
 
 import java.net.InetSocketAddress;

@@ -3,8 +3,8 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>or.lotus.parent</groupId>
     <artifactId>lotus-parent</artifactId>
-    <packaging>pom</packaging>
     <version>2.0</version>
+    <packaging>pom</packaging>
 
     <modules>
         <module>lotus-core</module>

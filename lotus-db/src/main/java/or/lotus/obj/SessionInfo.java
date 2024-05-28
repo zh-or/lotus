@@ -1,9 +1,6 @@
 package or.lotus.obj;
 
 
-import or.lotus.common.support.BeanUtils;
-
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
