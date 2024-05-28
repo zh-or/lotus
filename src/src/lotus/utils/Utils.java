@@ -1,11 +1,12 @@
 package lotus.utils;
 
 import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.UUID;
+import java.util.*;
 
 public class Utils {
 
@@ -16,9 +17,17 @@ public class Utils {
     private Utils() {
     }
 
+    public static int tryToInt(String str, int def) {
+        try {
+            return Integer.valueOf(str);
+        } catch(Exception e) {
+            return def;
+        }
+    }
+
     /**
      * 加密
-     * 
+     *
      * @param data
      * @param key
      * @return
@@ -27,10 +36,10 @@ public class Utils {
         char[] s_box = rc4_init(key);
         return rc4_crypt(data, s_box);
     }
-    
+
     /**
      * rc4 加密解密
-     * 
+     *
      * @param data
      * @param key
      * @return
@@ -75,6 +84,10 @@ public class Utils {
         return data;
     }
 
+    public static String RandomString(int charTotal) {
+        return new String(RandomChars(charTotal));
+    }
+
     /*
      * 获取随机字符
      */
@@ -97,7 +110,7 @@ public class Utils {
     public static int RandomNum(int start, int end) {
         return (int) (start + Math.random() * (end - start + 1));
     }
-    
+
     public static String RandomNum(int length) {
         StringBuilder sb = new StringBuilder(length);
         for(int i = 0; i < length; i++) {
@@ -214,7 +227,7 @@ public class Utils {
     public static String byte2hex(byte[] b) {
         return byte2hex(b, b.length);
     }
-    
+
     public static String byte2hex(byte[] b, int len) {
         if (b == null || b.length <= 0 || len <= 0)
             return "null";
@@ -246,7 +259,7 @@ public class Utils {
 
     /**
      * md5 或 sha1 加密
-     * 
+     *
      * @param s
      *            欲加密字符串
      * @param entype
@@ -266,8 +279,8 @@ public class Utils {
         s = md5.toString();
         return s;
     }
-    
-    
+
+
     public final static byte[] SHA1(String s) throws NoSuchAlgorithmException{
         MessageDigest md = MessageDigest.getInstance(EN_TYPE_SHA1);
         md.update(s.getBytes());
@@ -276,7 +289,7 @@ public class Utils {
 
     /**
      * 取中间文本
-     * 
+     *
      * @param str
      * @param l
      * @param r
@@ -328,7 +341,7 @@ public class Utils {
             return true;
         return false;
     }
-    
+
     /**
      * 重组路径 删掉 ../ ../不会超过当前路径
      * @param path
@@ -338,7 +351,7 @@ public class Utils {
         int b = 0;
         String[] dirs = path.split("/");
         String[] build = new String[dirs.length];
-        
+
         for(String dir : dirs){
             if("..".equals(dir)){
                 build[b] = null;
@@ -367,7 +380,7 @@ public class Utils {
 
     /**
      * 这里返回用长整数代替以免出现负号
-     * 
+     *
      * @param ip
      * @return
      */
@@ -406,6 +419,11 @@ public class Utils {
         return h;
     }
 
+    /**
+     * "a13dv222" 返回 [13, 222]
+     * @param str
+     * @return
+     */
     public static int[] getNumberFromStr(String str) {
         String t = "";
         int[] ret = new int[1];
@@ -433,10 +451,10 @@ public class Utils {
     public static int byteArrSearch(byte[] src, byte[] dest) {
         return byteArrSearch(src, dest, 0);
     }
-    
+
     /**
      * 在src中查找dest的位置
-     * 
+     *
      * @param src
      * @param dest
      * @return 找到了返回dest在src的起始下标 未找到返回-1 此下标从0开始
@@ -469,4 +487,72 @@ public class Utils {
         return p;
     }
 
+    /**
+     * 生成范围包含开始和结束
+     * @param start
+     * @param end
+     * @return
+     */
+    public static List<Integer> intRange(int start, int end) {
+        List<Integer> arr = new ArrayList<>(end - start + 1);
+        for(int i = start; i <= end; i++) {
+            arr.add(Integer.valueOf(i));
+        }
+        return arr;
+    }
+
+    public static int ceilDiv(int a, int b) {
+        if(a == 0 || b == 0)
+            return 0;
+        return (int) Math.ceil((double) a / b);
+    }
+
+    public static int floorDiv(int a, int b) {
+        if(a == 0 || b == 0)
+            return 0;
+        return (int) Math.floor((double) a / b);
+    }
+
+    public static Calendar getCalendar() {
+        return Calendar.getInstance(TimeZone.getTimeZone("GTM+8"));
+    }
+
+    public static String getUploadFileName(String raw) {
+        int p = raw.lastIndexOf(".");
+        if(p != -1) {
+            return UUID.randomUUID().toString() + raw.substring(p);
+        }
+        return UUID.randomUUID().toString();
+    }
+
+    public static String getFileSuffix(String path) {
+        int p = path.lastIndexOf(".");
+        if(p != -1) {
+            return path.substring(p + 1, path.length());
+        }
+        return "";
+    }
+
+    public static ArrayList<Address> getNetworkInfo(boolean isFilter) {
+        Enumeration en;
+        ArrayList<Address> ips = new ArrayList<>();
+        try {
+            en = NetworkInterface.getNetworkInterfaces();
+            while (en.hasMoreElements()) {
+                NetworkInterface ni = (NetworkInterface) en.nextElement();
+                Address addr = new Address(ni);
+                if(isFilter) {
+                    if(!CheckNull(addr.mac) && addr.ips.size() > 0) {
+                        ips.add(addr);
+                    }
+                } else {
+                    ips.add(addr);
+                }
+            }
+        } catch (SocketException e) {
+            e.printStackTrace();
+        }
+        return ips;
+
+    }
 }
