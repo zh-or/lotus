@@ -8,7 +8,7 @@
 </dependency>
 
 ```
-## 放弃自己写了, 节约时间生活吧
+## 2024年5月28日 脚手架项目
 
 
 [![996.icu](https://img.shields.io/badge/link-996.icu-red.svg)](https://996.icu)
