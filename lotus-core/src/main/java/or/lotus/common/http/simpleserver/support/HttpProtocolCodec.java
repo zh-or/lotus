@@ -54,7 +54,7 @@ public class HttpProtocolCodec implements ProtocolCodec {
                         final String sheaders = new String(bheaders, context.getCharset());
                         req.parseHeader(sheaders);
 
-                        final int contentLength = Utils.tryInt(req.getHeader("content-length"));
+                        final int contentLength = Utils.tryInt(req.getHeader("content-length"), 0);
 
                         if(contentLength > context.getRequestMaxLimit()) {
                             HttpResponse res = HttpResponse.defaultResponse(session, req);

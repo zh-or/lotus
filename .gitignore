@@ -3,7 +3,7 @@ node_modules
 dist
 *.log
 
-src/target
+*/target
 
 package-lock.json
 
