@@ -360,34 +360,28 @@ public class Utils {
         return str.substring(_l, _r);
     }
 
-    public static int tryInt(String str) {
-        int res = 0;
+    public static int tryInt(String str, int def) {
         try {
-            res = Integer.valueOf(str);
+            return Integer.valueOf(str);
         } catch (NumberFormatException e) {
-            res = 0;
+            return def;
         }
-        return res;
     }
 
-    public static long tryLong(String str) {
-        long res = 0;
+    public static long tryLong(String str, long def) {
         try {
-            res = Long.valueOf(str);
+            return Long.valueOf(str);
         } catch (NumberFormatException e) {
-            res = 0l;
+            return def;
         }
-        return res;
     }
 
-    public static double tryDouble(String str) {
-        double res = 0d;
+    public static double tryDouble(String str, double def) {
         try {
-            res = Double.valueOf(str);
+            return Double.valueOf(str);
         } catch (Exception e) {
-
+            return def;
         }
-        return res;
     }
 
     public static boolean tryBoolean(String str) {
@@ -401,7 +395,7 @@ public class Utils {
      * @param path
      * @return
      */
-    public static String BuildPath(String path){
+    public static String BuildPath(String path) {
         int b = 0;
         String[] dirs = path.split("/");
         String[] build = new String[dirs.length];
