@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE generatorConfiguration
+        PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
+        "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
+
+<generatorConfiguration>
+    <context id="MySqlContext" targetRuntime="MyBatis3" defaultModelType="flat">
+        <property name="beginningDelimiter" value="`"/>
+        <property name="endingDelimiter" value="`"/>
+        <property name="javaFileEncoding" value="UTF-8"/>
+        <!-- 为模型生成序列化方法-->
+        <plugin type="org.mybatis.generator.plugins.SerializablePlugin"/>
+        <!-- 为生成的Java模型创建一个toString方法 -->
+        <plugin type="org.mybatis.generator.plugins.ToStringPlugin"/>
+        <!--生成mapper.xml时覆盖原文件-->
+        <plugin type="org.mybatis.generator.plugins.UnmergeableXmlMappersPlugin" />
+        <!--增加lombok注解-->
+        <!--<plugin type="main.generator.or.lotus.LombokPlugin"/>-->
+
+        <!--可以自定义生成model的代码注释-->
+        <commentGenerator type="or.lotus.generator.main.Generator">
+            <!-- 是否去除自动生成的注释 true：是 ： false:否 -->
+            <property name="suppressAllComments" value="true"/>
+            <property name="suppressDate" value="true"/>
+            <property name="addRemarkComments" value="false"/>
+        </commentGenerator>
+        <!--配置数据库连接-->
+        <jdbcConnection driverClass="com.mysql.cj.jdbc.Driver"
+                        connectionURL="jdbc:mysql://hotdoc.fun:3306/delu?useUnicode=true&amp;characterEncoding=utf-8&amp;serverTimezone=Asia/Shanghai"
+                        userId="root"
+                        password="yang982465979">
+            <!--解决mysql驱动升级到8.0后不生成指定数据库代码的问题-->
+            <property name="nullCatalogMeansCurrent" value="true" />
+        </jdbcConnection>
+        <!--指定生成model的路径-->
+        <javaModelGenerator targetPackage="com.delu.obj.po" targetProject=".\delu-db\src\main\java"/>
+        <!--指定生成mapper.xml的路径-->
+        <sqlMapGenerator targetPackage="mapper" targetProject=".\delu-db\src\main\resources\com\delu"/>
+        <!--指定生成mapper接口的的路径-->
+        <javaClientGenerator type="XMLMAPPER" targetPackage="com.delu.mapper"
+                             targetProject=".\delu-db\src\main\java"/>
+
+        <!--生成全部表tableName设为%-->
+        <!--生成指定表则为指定表的表明-->
+        <table tableName="test1"
+               enableCountByExample="false"
+               enableUpdateByExample="false"
+               enableDeleteByExample="false"
+               enableSelectByExample="false"
+               selectByExampleQueryId="false">
+
+            <!--如果设置为true，生成的model类会直接使用column本身的名字，而不会再使用驼峰命名方法，比如BORN_DATE，生成的属性名字就是BORN_DATE,而不会是bornDate-->
+            <property name="useActualColumnNames" value="false"/>
+            <!-- 自动为每一个生成的类创建一个构造方法，构造方法包含了所有的field；而不是使用setter；-->
+            <property name="constructorBased" value="true"/>
+            <property name="generateConstructors" value="true"/>
+            <generatedKey column="id" sqlStatement="JDBC" identity="true"/>
+
+
+            <!--user-->
+            <columnOverride column="reg_location" javaType="model.geometry.or.lotus.PointGeo" typeHandler="typehandler.geometry.or.lotus.PointTypeHandler" jdbcType="BINARY"/>
+            <!--trails-->
+            <columnOverride column="start_point" javaType="model.geometry.or.lotus.PointGeo" typeHandler="typehandler.geometry.or.lotus.PointTypeHandler" jdbcType="BINARY"/>
+            <columnOverride column="end_point" javaType="model.geometry.or.lotus.PointGeo" typeHandler="typehandler.geometry.or.lotus.PointTypeHandler" jdbcType="BINARY"/>
+            <!--user_login_log-->
+            <columnOverride column="login_location" javaType="model.geometry.or.lotus.PointGeo" typeHandler="typehandler.geometry.or.lotus.PointTypeHandler" jdbcType="BINARY"/>
+            <!--user_touch_log-->
+            <columnOverride column="touch_location" javaType="model.geometry.or.lotus.PointGeo" typeHandler="typehandler.geometry.or.lotus.PointTypeHandler" jdbcType="BINARY"/>
+            <!--travel_plan, tweet-->
+            <columnOverride column="publish_location" javaType="model.geometry.or.lotus.PointGeo" typeHandler="typehandler.geometry.or.lotus.PointTypeHandler" jdbcType="BINARY"/>
+            <!--travel_plan_step,  travel_plan_step_point-->
+            <columnOverride column="location_point" javaType="model.geometry.or.lotus.PointGeo" typeHandler="typehandler.geometry.or.lotus.PointTypeHandler" jdbcType="BINARY"/>
+            <columnOverride column="lines_data" javaType="model.geometry.or.lotus.LineStringGeo" typeHandler="typehandler.geometry.or.lotus.LineStringTypeHandler" jdbcType="BINARY"/>
+
+        </table>
+
+
+    </context>
+</generatorConfiguration>
