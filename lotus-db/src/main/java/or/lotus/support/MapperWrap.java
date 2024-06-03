@@ -30,11 +30,14 @@ public class MapperWrap implements AutoCloseable {
             _sqlSession.close();
         }
         if(getMapperCount > 0) {
-            //throw new SQLException("由于已经获取了mapper, 此时再切换模式会导致此前回去的mapper失效");
+            throw new SQLException("由于已经获取了mapper, 此时再切换模式会导致此前回去的mapper失效");
         }
         _sqlSession = db.getSqlSession(type, autoCommit);
     }
 
+    public void clearMapperCount() {
+        getMapperCount = 0;
+    }
 
     public <T> T getMapper(Class<T> clazz) {
         getMapperCount ++;
