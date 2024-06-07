@@ -5,6 +5,8 @@ dist
 
 */target
 
+/test
+
 package-lock.json
 
 # local env files
