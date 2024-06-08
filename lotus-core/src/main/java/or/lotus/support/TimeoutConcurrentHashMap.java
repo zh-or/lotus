@@ -1,5 +1,7 @@
 package or.lotus.support;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.Timer;
@@ -11,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @param <K>
  * @param <V>
  */
-public class TimeoutConcurrentHashMap<K, V> extends TimerTask {
+public class TimeoutConcurrentHashMap<K, V> extends TimerTask implements Closeable {
     private ConcurrentHashMap<K, ExpireWrap> map;
     private Timer timer;
 
@@ -97,6 +99,11 @@ public class TimeoutConcurrentHashMap<K, V> extends TimerTask {
                 map.remove(obj.getKey());
             }
         }
+    }
+
+    @Override
+    public void close() throws IOException {
+        shutdown();
     }
 
     private class ExpireWrap <V> {
