@@ -84,6 +84,12 @@ public class TimeoutConcurrentHashMap<K, V> extends TimerTask {
         return null;
     }
 
+    public void shutdown() {
+        if(timer != null) {
+            timer.cancel();
+        }
+    }
+
     @Override
     public void run() {
         for(Map.Entry<K, ExpireWrap> obj : map.entrySet()) {
