@@ -4,7 +4,7 @@ dist
 *.log
 
 */target
-
+*.iml
 /test
 
 package-lock.json
