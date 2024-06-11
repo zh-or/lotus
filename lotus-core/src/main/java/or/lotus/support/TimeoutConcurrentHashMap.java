@@ -47,11 +47,11 @@ public class TimeoutConcurrentHashMap<K, V> extends TimerTask implements Closeab
      *
      * @param k
      * @param v
-     * @param ms 超时时间
+     * @param sec 超时时间
      */
-    public void put(K k, V v, int ms) {
-       if(ms > 0) {
-           map.put(k, new ExpireWrap(v, System.currentTimeMillis() + ms * 1000));
+    public void put(K k, V v, int sec) {
+       if(sec > 0) {
+           map.put(k, new ExpireWrap(v, System.currentTimeMillis() + sec * 1000));
        } else {
            map.put(k, new ExpireWrap(v, -1));
        }
