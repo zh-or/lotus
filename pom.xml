@@ -10,6 +10,7 @@
         <module>lotus-core</module>
         <module>lotus-db</module>
         <module>lotus-generator</module>
+        <module>lotus-wx</module>
     </modules>
     <dependencies>
 
