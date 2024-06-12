@@ -1,6 +1,6 @@
 package or.lotus.http.server.exception;
 
-import or.lotus.support.ApiRes;
+import or.lotus.http.ApiRes;
 
 /**在controller内抛出该异常时会将message输出到data字段*/
 public class HttpApiException extends Exception{
