@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+/**java对象序列化存储到文件*/
 public class FileObj<T> {
     private T obj;
     private String path;
