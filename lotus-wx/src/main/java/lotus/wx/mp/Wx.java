@@ -174,17 +174,18 @@ public class Wx implements Closeable {
     public boolean init() {
         synchronized (initLock) {
             try {
-                HashMap<String, String> params = new HashMap<>();
+                ObjectNode params = BeanUtils.createNode();
                 params.put("grant_type", "client_credential");
                 params.put("appid", appid);
                 params.put("secret", secret);
 
-                String res = HttpClient5.getWithParams("https://api.weixin.qq.com/cgi-bin/stable_token", params, REQ_TIMEOUT);
+                String res = HttpClient5.postJson("https://api.weixin.qq.com/cgi-bin/stable_token", params.toString(), REQ_TIMEOUT);
                 JsonNode json = BeanUtils.parseNode(res);
                 throwWxException("init", params.toString() , json);
-
                 token = json.path("access_token").asText();
                 timeout = json.path("expires_in").asInt();
+                log.info("微信access_token刷新成功: {}", res);
+
                 if(!Utils.CheckNull(token)) {
                     timeout = timeout - 60;//提前一分钟获取, 在普通模式调用下，平台会提前5分钟更新access_token，即在有效期倒计时5分钟内发起调用会获取新的access_token。在新旧access_token交接之际，平台会保证在5分钟内，新旧access_token都可用，这保证了用户业务的平滑过渡；
                     if(timer != null) {
