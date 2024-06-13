@@ -76,6 +76,10 @@ public class WxPay implements Closeable {
             long refund,//退款金额
             long total//原订单总金额
             ) {
+
+        if(!Utils.CheckNull(reason) && reason.length() > 25) {
+            reason = reason.substring(0, 25);
+        }
         CreateRequest refundRequest = new CreateRequest();
         refundRequest.setOutTradeNo(tradeNo);
         refundRequest.setNotifyUrl(notifyUrl /*"https://notify_url"*/);
@@ -93,7 +97,7 @@ public class WxPay implements Closeable {
         return refundService.create(refundRequest);
     }
 
-    /**在微信下单并获取支付参数 goodsDesc 有最大字符限制 140
+    /**在微信下单并获取支付参数 goodsDesc 有最大字符限制 127
      * 回调解签示例
      *
      * WxPay wxPay = context.getWxPayJsApi();
@@ -118,8 +122,8 @@ public class WxPay implements Closeable {
             String goodsDesc,
             String tradeNo) {
 
-        if(!Utils.CheckNull(goodsDesc) && goodsDesc.length() > 140) {
-            goodsDesc = goodsDesc.substring(0, 140);
+        if(!Utils.CheckNull(goodsDesc) && goodsDesc.length() > 40) {
+            goodsDesc = goodsDesc.substring(0, 40);
         }
 
         // request.setXxx(val)设置所需参数，具体参数可见Request定义
