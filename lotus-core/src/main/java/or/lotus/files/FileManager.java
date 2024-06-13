@@ -41,7 +41,7 @@ public class FileManager {
         return nowSize.get() > maxLocalSize;
     }
 
-    protected void refreshSize() {
+    public void refreshSize() {
         try {
             nowSize.set(0);
             Files.walkFileTree(Paths.get(basePath), new FileVisitor() {
@@ -84,6 +84,7 @@ public class FileManager {
 
     /**获取字节数组*/
     public byte[] getBytes(String key) {
+        Utils.assets(Utils.CheckNull(key), "key 不能为空");
         try {
             Path p = getKeyPath(key);
             if(Files.exists(p)) {
@@ -118,6 +119,7 @@ public class FileManager {
 
     /**根据key移除文件*/
     public boolean remove(String key) {
+        Utils.assets(Utils.CheckNull(key), "key 不能为空");
         try {
             Path p = getKeyPath(key);
             if(Files.exists(p)) {
@@ -131,40 +133,34 @@ public class FileManager {
         return false;
     }
 
-    /**根据路径获取文件*/
-    public File getFile(String path) {
-        File f = new File(path);
-        if(f.exists()) {
-            return f;
+    public File getFile(String key) {
+        Utils.assets(Utils.CheckNull(key), "key 不能为空");
+        try {
+            Path p = getKeyPath(key);
+            if(Files.exists(p)) {
+                return p.toFile();
+            }
+        } catch (Exception e) {
+            log.error("从key获取文件失败:", e);
         }
         return null;
     }
 
-    /**保存文件到系统*/
-    public Path saveFile(File file, String rawName) throws IOException {
-        Path np = newFilePath(rawName == null ? file.getName() : rawName);
-        Files.move(file.toPath(), np);
-
-        if(Files.exists(np)) {
-            nowSize.addAndGet(Files.size(np));
-        }
-        return np.normalize();
-    }
-
-    /**根据路径移除文件*/
-    public boolean removeFile(String path)  {
+    public void putFile(String key, File file) {
+        Utils.assets(Utils.CheckNull(key), "key 不能为空");
         try {
-            Path p = Paths.get(path);
+            Path p = getKeyPath(key);
             if(Files.exists(p)) {
                 nowSize.addAndGet(-Files.size(p));
-                Files.deleteIfExists(p);
+                Files.delete(p);
             }
-            return true;
-        } catch (IOException e) {
-            log.error("删除文件失败:", e);
+            nowSize.addAndGet(file.length());
+            Files.copy(file.toPath(), p);
+        } catch (Exception e) {
+            log.error("保存文件失败:", e);
         }
-        return false;
     }
+
 
     /**生成kv存储的文件路径*/
     private Path getKeyPath(String key) throws Exception {
