@@ -15,7 +15,7 @@ import java.util.concurrent.*;
  * 再次执行时不会在数据库类新加数据记录,
  * 如果抛出其他异常则不会自动重试
  * */
-public class DelayQueueExecutor<T> implements Runnable, Closeable {
+public class DelayQueueExecutor implements Runnable, Closeable {
     static final Logger log = LoggerFactory.getLogger(DelayQueueExecutor.class);
 
     private DelayQueue<DelayObj> queue;
@@ -49,7 +49,7 @@ public class DelayQueueExecutor<T> implements Runnable, Closeable {
     }
 
     /**name将用来判断重复*/
-    public void addTask(String taskType, long execTime, T obj) {
+    public void addTask(String taskType, long execTime, Object obj) {
         if(isRun) {//没有初始化完毕时 不调用添加回调
             if(this.callback != null) {
                 this.callback.onAddTask(this, taskType, execTime, obj);
@@ -67,7 +67,7 @@ public class DelayQueueExecutor<T> implements Runnable, Closeable {
     }
 
     /**按名字检查任务是否存在*/
-    public boolean containsTask(T obj) {
+    public boolean containsTask(Object obj) {
         return queue.contains(obj);
     }
 
@@ -116,11 +116,11 @@ public class DelayQueueExecutor<T> implements Runnable, Closeable {
 
 
     public class DelayObj implements Delayed {
-        public T obj;
+        public Object obj;
         public String type;
         public long execTime;
 
-        public DelayObj(String type, long execTime, T obj) {
+        public DelayObj(String type, long execTime, Object obj) {
             this.type = type;
             this.execTime = execTime;
             this.obj = obj;

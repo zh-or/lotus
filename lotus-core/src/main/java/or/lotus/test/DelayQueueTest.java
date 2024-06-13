@@ -15,20 +15,20 @@ public class DelayQueueTest {
 
 
     public static void main(String[] args) throws Exception {
-        DelayQueueExecutor<TestObj> test = new DelayQueueExecutor<TestObj>(new DelayQueueCallBack<TestObj>() {
+        DelayQueueExecutor test = new DelayQueueExecutor(new DelayQueueCallBack() {
             @Override
             public void onInit(DelayQueueExecutor context) {
                 log.info("初始化调用");
             }
 
             @Override
-            public void onAddTask(DelayQueueExecutor context, String type, long execTime, TestObj obj) {
+            public void onAddTask(DelayQueueExecutor context, String type, long execTime, Object obj) {
 
                 log.info("添加延迟任务成功, 执行时间: {}, obj: {}", Format.formatTime(execTime), obj);
             }
 
             @Override
-            public void onRetryException(DelayQueueExecutor context, String type, long execTime, TestObj obj) {
+            public void onRetryException(DelayQueueExecutor context, String type, long execTime, Object obj) {
 
                 log.error("执行延迟任务出错, {} 自动重试,  type: {}, obj: {}",
                         Format.formatTime(execTime),
@@ -37,12 +37,12 @@ public class DelayQueueTest {
             }
 
             @Override
-            public void onSuccess(DelayQueueExecutor context, String type, long execTime, TestObj obj, String result) {
+            public void onSuccess(DelayQueueExecutor context, String type, long execTime, Object obj, String result) {
                 log.info("任务执行成功调用, result:{}", result);
             }
 
             @Override
-            public void onUnknownException(DelayQueueExecutor context, String type, long execTime, TestObj obj, Exception e) {
+            public void onUnknownException(DelayQueueExecutor context, String type, long execTime, Object obj, Exception e) {
 
                 log.error("执行延迟任务出错,  type: {}, obj: {}, e: {}",
                         type,
