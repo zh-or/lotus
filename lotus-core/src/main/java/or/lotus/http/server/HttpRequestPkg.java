@@ -1,5 +1,7 @@
 package or.lotus.http.server;
 
+import io.netty.handler.codec.http.cookie.Cookie;
+import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
 import or.lotus.http.server.exception.HttpMethodNotSupportException;
 import or.lotus.http.server.exception.HttpParamsNotFoundException;
 import or.lotus.json.JSONException;
@@ -239,5 +241,23 @@ public class HttpRequestPkg {
             return new HttpPostRequestDecoder(factory, rawRequest);
         }
         return null;
+    }
+
+    private HashMap<String, Cookie> cookies = null;
+
+    public HashMap<String, Cookie> getCookies() {
+        if(cookies == null) {
+            cookies = new HashMap<>();
+            List<Cookie> list = ServerCookieDecoder.LAX.decodeAll(getHeader("Cookie"));
+            for (Cookie cookie : list) {
+                cookies.put(cookie.name(), cookie);
+            }
+        }
+        return cookies;
+    }
+
+    public Cookie getCookie(String name) {
+        getCookies();
+        return cookies.get(name);
     }
 }
