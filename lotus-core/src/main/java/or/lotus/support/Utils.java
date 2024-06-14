@@ -1,6 +1,7 @@
 package or.lotus.support;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -31,6 +32,10 @@ public class Utils {
         System.out.println(EnCode("123456", EN_TYPE_MD5));
         System.out.println(EnCode("123456打完", EN_TYPE_MD5));
         System.out.println(EnCode("awjkdo1230awsdikoaw", EN_TYPE_MD5));
+
+        System.out.println("-----------");
+        System.out.println(substring("1天, 价格: 1, 购买天数: 1, 当前到期时间: 2025-05-30 15:09:33, deviceId:  4860, iccid: 8986062463009035420, userId: 1 , goodsId: 3", 120));
+        System.out.println(substring("a空留一个开发了哇", 3));
 
     }
 
@@ -136,6 +141,28 @@ public class Utils {
             data[i] ^= s_box[t];
         }
         return data;
+    }
+
+
+    /**按字节长度截取字符串, 默认字符串编码为utf-8*/
+    public static String substring(String s, int maxBytes) throws UnsupportedEncodingException {
+        return substring(s, maxBytes, "utf-8");
+    }
+
+    /**按字节长度截取字符串*/
+    public static String substring(String s, int maxBytes, String charset) throws UnsupportedEncodingException {
+        if(CheckNull(s)) {
+            return s;
+        }
+
+        String s2 =  s.length() > maxBytes ? s.substring(0, maxBytes) : s;
+        int len = s2.getBytes(charset).length;
+
+        while(len > maxBytes) {
+            s2 = s2.substring(0, s2.length() - 1);
+            len = s2.getBytes(charset).length;
+        }
+        return s2;
     }
 
     public static String RandomString(int charTotal) {
