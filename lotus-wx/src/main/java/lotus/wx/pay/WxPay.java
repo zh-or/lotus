@@ -16,7 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
-import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
 public class WxPay implements Closeable {
 
@@ -67,19 +67,28 @@ public class WxPay implements Closeable {
         return new NotificationParser((NotificationConfig) config);
     }
 
-    /**根据订单号发起退款申请*/
+    /**
+     * 根据订单号发起退款申请 reason 限制80字节数 https://pay.weixin.qq.com/docs/merchant/apis/jsapi-payment/create.html
+     * @param tradeNo 【商户订单号】 原支付交易对应的商户订单号，与transaction_id二选一
+     * @param notifyUrl 回调地址
+     * @param refundTradeNo 【商户退款单号】 商户系统内部的退款单号，商户系统内部唯一，只能是数字、大小写字母_-|*@ ，同一退款单号多次请求只退一笔。
+     * @param reason 备注 可空
+     * @param refund 退款金额
+     * @param total 原订单总金额
+     * @return
+     * @throws UnsupportedEncodingException
+     */
     public Refund requestRefund(
             String tradeNo,
             String notifyUrl,
             String refundTradeNo,
-            String reason,//备注 可空
-            long refund,//退款金额
-            long total//原订单总金额
-            ) {
+            String reason,//
+            long refund,//
+            long total//
+            ) throws UnsupportedEncodingException {
 
-        if(!Utils.CheckNull(reason) && reason.length() > 25) {
-            reason = reason.substring(0, 25);
-        }
+        reason = Utils.substring(reason, 80);
+
         CreateRequest refundRequest = new CreateRequest();
         refundRequest.setOutTradeNo(tradeNo);
         refundRequest.setNotifyUrl(notifyUrl /*"https://notify_url"*/);
@@ -97,34 +106,38 @@ public class WxPay implements Closeable {
         return refundService.create(refundRequest);
     }
 
-    /**在微信下单并获取支付参数 goodsDesc 有最大字符限制 127
-     * 回调解签示例
-     *
-     * WxPay wxPay = context.getWxPayJsApi();
-     * String body = request.getBodyString();
-     * RequestParam requestParam = new RequestParam.Builder()
-     *      .serialNumber(request.getHeader("Wechatpay-Serial"))
-     *      .nonce(request.getHeader("Wechatpay-Nonce"))
-     *     .signature(request.getHeader("Wechatpay-Signature"))
-     *     .timestamp(request.getHeader("Wechatpay-Timestamp"))
-     *     .body(body)
-     *     .build();
-     * // 初始化 NotificationParser
-     * NotificationParser parser = wxPay.getNotificationParser();
-     * Transaction transaction = parser.parse(requestParam, Transaction.class);
-     *
-     *
-     * */
+    /**
+     * 在微信下单并获取支付参数 goodsDesc 有最大字节限制 127
+     *      * 回调解签示例
+     *      *
+     *      * WxPay wxPay = context.getWxPayJsApi();
+     *      * String body = request.getBodyString();
+     *      * RequestParam requestParam = new RequestParam.Builder()
+     *      *      .serialNumber(request.getHeader("Wechatpay-Serial"))
+     *      *      .nonce(request.getHeader("Wechatpay-Nonce"))
+     *      *     .signature(request.getHeader("Wechatpay-Signature"))
+     *      *     .timestamp(request.getHeader("Wechatpay-Timestamp"))
+     *      *     .body(body)
+     *      *     .build();
+     *      * // 初始化 NotificationParser
+     *      * NotificationParser parser = wxPay.getNotificationParser();
+     *      * Transaction transaction = parser.parse(requestParam, Transaction.class);
+     * @param openId 【用户标识】 用户在普通商户AppID下的唯一标识。 下单前需获取到用户的OpenID
+     * @param notifyUrl 回调地址
+     * @param amountNum 【总金额】 订单总金额，单位为分。
+     * @param goodsDesc 【商品描述】 商品描述, 必填
+     * @param tradeNo 【商户订单号】 商户系统内部订单号，只能是数字、大小写字母_-*且在同一个商户号下唯一。
+     * @return
+     * @throws UnsupportedEncodingException
+     */
     public PrepayWithRequestPaymentResponse jsapiPayMakeOrder(
             String openId,
             String notifyUrl,
             int amountNum,
             String goodsDesc,
-            String tradeNo) {
+            String tradeNo) throws UnsupportedEncodingException {
 
-        if(!Utils.CheckNull(goodsDesc) && goodsDesc.length() > 40) {
-            goodsDesc = goodsDesc.substring(0, 40);
-        }
+        goodsDesc = Utils.substring(goodsDesc, 127);
 
         // request.setXxx(val)设置所需参数，具体参数可见Request定义
         PrepayRequest request = new PrepayRequest();
