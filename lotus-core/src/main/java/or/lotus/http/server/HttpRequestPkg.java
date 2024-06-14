@@ -260,4 +260,12 @@ public class HttpRequestPkg {
         getCookies();
         return cookies.get(name);
     }
+
+    public String getCookieValue(String name) {
+        Cookie cookie = getCookie(name);
+        if(cookie != null) {
+            return cookie.value();
+        }
+        return null;
+    }
 }
