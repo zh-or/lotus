@@ -12,8 +12,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import or.lotus.nio.Session;
-import or.lotus.support.Base64;
-import or.lotus.support.Utils;
+import or.lotus.db.Base64;
+import or.lotus.db.Utils;
 
 
 public class HttpResponse {

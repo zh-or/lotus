@@ -1,4 +1,4 @@
-package or.lotus.support;
+package or.lotus.db;
 
 import org.apache.ibatis.binding.BindingException;
 import org.apache.ibatis.cursor.Cursor;

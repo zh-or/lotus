@@ -1,7 +1,7 @@
 package or.lotus.nio.tcp;
 
 import or.lotus.nio.*;
-import or.lotus.support.Utils;
+import or.lotus.db.Utils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

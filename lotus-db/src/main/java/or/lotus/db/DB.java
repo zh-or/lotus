@@ -1,4 +1,4 @@
-package or.lotus.support;
+package or.lotus.db;
 
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import or.lotus.geometry.model.LineStringGeo;
