@@ -1,6 +1,6 @@
 package or.lotus.http;
 
-import or.lotus.support.Utils;
+import or.lotus.db.Utils;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

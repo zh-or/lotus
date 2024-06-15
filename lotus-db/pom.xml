@@ -65,6 +65,11 @@
             <scope>compile</scope>
         </dependency>
 
-
+        <!-- https://mvnrepository.com/artifact/com.alibaba/druid -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid</artifactId>
+            <version>1.2.23</version>
+        </dependency>
     </dependencies>
 </project>

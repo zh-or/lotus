@@ -12,7 +12,7 @@ import or.lotus.http.simpleserver.support.HttpRequest;
 import or.lotus.http.simpleserver.support.HttpResponse;
 import or.lotus.http.simpleserver.support.ResponseStatus;
 import or.lotus.nio.Session;
-import or.lotus.support.Utils;
+import or.lotus.db.Utils;
 
 
 public abstract class HttpHandler {

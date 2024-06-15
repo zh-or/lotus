@@ -6,7 +6,7 @@ import or.lotus.json.JSONArray;
 import or.lotus.json.JSONException;
 import or.lotus.json.JSONObject;
 import or.lotus.nio.Session;
-import or.lotus.support.Utils;
+import or.lotus.db.Utils;
 
 import java.io.UnsupportedEncodingException;
 import java.net.SocketAddress;

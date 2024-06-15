@@ -3,7 +3,7 @@ package or.lotus.http;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 
-import or.lotus.support.Utils;
+import or.lotus.db.Utils;
 
 public class WebSocketFrame {
 

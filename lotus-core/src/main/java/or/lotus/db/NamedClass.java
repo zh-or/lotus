@@ -1,4 +1,4 @@
-package or.lotus.support;
+package or.lotus.db;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
