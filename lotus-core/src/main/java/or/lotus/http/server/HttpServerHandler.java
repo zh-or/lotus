@@ -126,7 +126,7 @@ public class HttpServerHandler extends SimpleChannelInboundHandler<FullHttpReque
 
                 if(server.outModelAndViewTime) {
                     try {
-                        writer.write("<!-- handle time: " + (System.currentTimeMillis() - mv.createTime) + "ms -->");
+                        writer.write("<!-- handle time: " + (System.nanoTime() - mv.createTime) + "ns -->");
                     } catch (IOException e) {}
                 }
 

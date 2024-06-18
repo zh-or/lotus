@@ -17,7 +17,7 @@ public class ModelAndView {
     public ModelAndView(String viewName) {
         this.viewName = viewName;
         this.values = new Context();
-        this.createTime = System.currentTimeMillis();
+        this.createTime = System.nanoTime();
     }
 
     public ModelAndView redirect() {
