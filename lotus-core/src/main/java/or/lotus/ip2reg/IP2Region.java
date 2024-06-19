@@ -1,6 +1,5 @@
-package or.lotus.service;
+package or.lotus.ip2reg;
 
-import or.lotus.obj.IpInfo;
 import org.lionsoul.ip2region.xdb.Searcher;
 
 import java.io.Closeable;
