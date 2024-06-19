@@ -1,4 +1,4 @@
-package or.lotus.obj;
+package or.lotus.ip2reg;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;

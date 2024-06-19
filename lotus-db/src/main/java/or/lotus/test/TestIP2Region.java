@@ -1,7 +1,7 @@
 package or.lotus.test;
 
-import or.lotus.obj.IpInfo;
-import or.lotus.service.IP2Region;
+import or.lotus.ip2reg.IpInfo;
+import or.lotus.ip2reg.IP2Region;
 
 public class TestIP2Region {
 
