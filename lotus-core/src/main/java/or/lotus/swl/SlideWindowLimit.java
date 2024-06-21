@@ -1,7 +1,6 @@
 package or.lotus.swl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import or.lotus.redis.RedisClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SlideWindowLimit extends TimerTask {
 
     protected static Logger log = LoggerFactory.getLogger(SlideWindowLimit.class);
-    protected RedisClient redisClient;
+    protected SlideWindowData slideWindowData;
     protected ConcurrentHashMap<String, SlideWindowObj> mem;
     protected Timer timer;
     protected int timeoutSec;
@@ -30,14 +29,14 @@ public class SlideWindowLimit extends TimerTask {
         this(null, limit, limitSec, limitCount);
     }
 
-    public SlideWindowLimit(RedisClient redisClient, int limit, int limitSec, int limitCount) {
-        this.redisClient = redisClient;
+    public SlideWindowLimit(SlideWindowData slideWindowData, int limit, int limitSec, int limitCount) {
+        this.slideWindowData = slideWindowData;
         this.limit = limit;
         this.limitSec = limitSec;
         this.limitCount = limitCount;
         this.timeoutSec = limitSec * limitCount + 1;
 
-        if(redisClient == null) {
+        if(slideWindowData == null) {
             mem = new ConcurrentHashMap<>();
             timer = new Timer();
             timer.schedule(this, 5000, 5000);
@@ -72,15 +71,15 @@ public class SlideWindowLimit extends TimerTask {
     }
 
     private SlideWindowObj get(String key) {
-        if(this.redisClient != null) {
-            return this.redisClient.getObj(SlideWindowObj.class, KEY_PREFIX + key);
+        if(this.slideWindowData != null) {
+            return this.slideWindowData.getObj(SlideWindowObj.class, KEY_PREFIX + key);
         }
         return mem.get(KEY_PREFIX + key);
     }
 
     private void set(String key, SlideWindowObj obj) throws JsonProcessingException {
-        if(this.redisClient != null) {
-            this.redisClient.putObj(KEY_PREFIX + key, obj, timeoutSec);
+        if(this.slideWindowData != null) {
+            this.slideWindowData.putObj(KEY_PREFIX + key, obj, timeoutSec);
         } else {
             mem.put(KEY_PREFIX + key, obj);
         }
