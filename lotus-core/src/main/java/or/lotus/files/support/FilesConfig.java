@@ -1,6 +1,6 @@
 package or.lotus.files.support;
 
-import or.lotus.db.Utils;
+import or.lotus.common.Utils;
 
 import java.nio.charset.Charset;
 

@@ -1,6 +1,6 @@
 package or.lotus.http.simpleserver.support;
 
-import or.lotus.db.Utils;
+import or.lotus.common.Utils;
 
 import java.io.File;
 import java.io.FileInputStream;

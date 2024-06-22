@@ -1,7 +1,7 @@
 package or.lotus.files;
 
 import ch.qos.logback.core.util.FileSize;
-import or.lotus.db.Utils;
+import or.lotus.common.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

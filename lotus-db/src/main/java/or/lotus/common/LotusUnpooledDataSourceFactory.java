@@ -1,4 +1,4 @@
-package or.lotus.db;
+package or.lotus.common;
 
 import org.apache.ibatis.datasource.unpooled.UnpooledDataSourceFactory;
 

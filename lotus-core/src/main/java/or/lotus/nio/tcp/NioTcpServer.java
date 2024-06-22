@@ -2,7 +2,7 @@ package or.lotus.nio.tcp;
 
 import or.lotus.nio.IoHandler;
 import or.lotus.nio.NioContext;
-import or.lotus.db.Utils;
+import or.lotus.common.Utils;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;

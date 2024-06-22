@@ -1,4 +1,4 @@
-package or.lotus.db;
+package or.lotus.common;
 
 import java.io.Closeable;
 import java.io.IOException;

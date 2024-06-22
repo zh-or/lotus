@@ -1,6 +1,6 @@
 package or.lotus.redis;
 
-import or.lotus.db.BeanUtils;
+import or.lotus.common.BeanUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;

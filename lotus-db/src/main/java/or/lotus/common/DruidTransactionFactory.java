@@ -1,4 +1,4 @@
-package or.lotus.db;
+package or.lotus.common;
 
 import com.alibaba.druid.pool.DruidDataSource;
 import com.alibaba.druid.pool.DruidDataSourceFactory;

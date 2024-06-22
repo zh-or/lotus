@@ -5,7 +5,7 @@ import or.lotus.nio.LotusIOBuffer;
 import or.lotus.nio.ProtocolCodec;
 import or.lotus.nio.ProtocolDecoderOutput;
 import or.lotus.nio.Session;
-import or.lotus.db.Utils;
+import or.lotus.common.Utils;
 
 import java.io.File;
 import java.nio.ByteBuffer;

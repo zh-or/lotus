@@ -1,8 +1,8 @@
 package or.lotus.test;
 
 
-import or.lotus.db.Address;
-import or.lotus.db.Utils;
+import or.lotus.common.Address;
+import or.lotus.common.Utils;
 
 import java.util.ArrayList;
 import java.util.regex.Matcher;
