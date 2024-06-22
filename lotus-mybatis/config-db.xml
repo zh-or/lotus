@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+	<!--这个配置文件需要注意节点顺序问题-->
+	<settings>
+	<!--自动转换驼峰命名-->
+		<setting name="mapUnderscoreToCamelCase" value="true" />
+		<setting name="logImpl" value="SLF4J" />
+	</settings>
+
+	<environments default="development">
+		<environment id="development">
+			<transactionManager type="JDBC" />
+			<dataSource type="POOLED">
+				<property name="driver" value="com.mysql.cj.jdbc.Driver" />
+				<property name="url" value="jdbc:mysql://xxx:3306/delu?serverTimezone=Asia/Shanghai&amp;useUnicode=true&amp;characterEncoding=utf-8&amp;zeroDateTimeBehavior=convertToNull&amp;useSSL=false&amp;allowPublicKeyRetrieval=true" />
+				<!--&characterEncoding=utf8-->
+				<property name="username" value="root" />
+				<property name="password" value="xxx" />
+				<!--<property name="validationQuery" value="select 1"/>-->
+
+
+				<property name="poolMaximumActiveConnections" value="100"/><!--最大连接数-->
+				<property name="poolMaximumIdleConnections" value="10"/><!--最大空闲连接-->
+				<property name="poolPingQuery" value="select 1"/><!--ping sql-->
+				<property name="poolPingEnabled" value="true"/><!--是否启用空闲检测-->
+				<property name="poolPingConnectionsNotUsedFor" value="60000"/><!--获取连接前, 这个连接的上次使用时间加上这个值如果小于当前时间则执行上面的ping-->
+			</dataSource>
+		</environment>
+	</environments>
+
+	<!--
+  xml多时尝试使用 package  配置
+
+ -->
+	<mappers>
+		<package name="com.delu.mapper"/>
+		<!--<mapper resource="mapper/IpList.xml" />
+		<mapper resource="mapper/ScanTask.xml" />-->
+		<!-- <mapper class="com.coder.blog.getter.mapper.UrlListMapper"/>-->
+	</mappers>
+</configuration>
