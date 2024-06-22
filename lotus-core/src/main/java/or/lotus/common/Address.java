@@ -1,4 +1,4 @@
-package or.lotus.db;
+package or.lotus.common;
 
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;

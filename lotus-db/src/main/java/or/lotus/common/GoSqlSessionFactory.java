@@ -1,4 +1,4 @@
-package or.lotus.db;
+package or.lotus.common;
 
 import org.apache.ibatis.exceptions.ExceptionFactory;
 import org.apache.ibatis.executor.ErrorContext;

@@ -5,8 +5,8 @@ package lotus.wx.mp;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import or.lotus.http.HttpClient5;
-import or.lotus.db.BeanUtils;
-import or.lotus.db.Utils;
+import or.lotus.common.BeanUtils;
+import or.lotus.common.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

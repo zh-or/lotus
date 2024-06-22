@@ -1,8 +1,8 @@
 package or.lotus.queue.delay;
 
 
-import or.lotus.db.Format;
-import or.lotus.db.Utils;
+import or.lotus.common.Format;
+import or.lotus.common.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

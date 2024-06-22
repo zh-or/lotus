@@ -34,6 +34,7 @@
             <groupId>redis.clients</groupId>
             <artifactId>jedis</artifactId>
             <version>4.4.0</version>
+            <!--后期移除更换 redisson-->
             <!--用其他版本会冲突导致报错-->
         </dependency>
 

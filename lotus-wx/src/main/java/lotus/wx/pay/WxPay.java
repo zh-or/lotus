@@ -11,7 +11,7 @@ import com.wechat.pay.java.service.refund.RefundService;
 import com.wechat.pay.java.service.refund.model.AmountReq;
 import com.wechat.pay.java.service.refund.model.CreateRequest;
 import com.wechat.pay.java.service.refund.model.Refund;
-import or.lotus.db.Utils;
+import or.lotus.common.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

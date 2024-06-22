@@ -1,6 +1,6 @@
 package or.lotus.nio;
 
-import or.lotus.db.Utils;
+import or.lotus.common.Utils;
 
 import java.nio.ByteBuffer;
 

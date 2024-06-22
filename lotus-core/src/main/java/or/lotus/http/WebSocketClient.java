@@ -26,8 +26,8 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
-import or.lotus.db.Base64;
-import or.lotus.db.Utils;
+import or.lotus.common.Base64;
+import or.lotus.common.Utils;
 
 /**
  * 默认 5 秒没有通讯则发送一次ping包

@@ -1,7 +1,7 @@
 package or.lotus.files;
 
 
-import or.lotus.db.Utils;
+import or.lotus.common.Utils;
 
 public class FilesTest {
     public static void main(String[] args) throws Exception {

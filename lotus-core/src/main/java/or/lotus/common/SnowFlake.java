@@ -1,4 +1,4 @@
-package or.lotus.db;
+package or.lotus.common;
 
 public class SnowFlake {
 

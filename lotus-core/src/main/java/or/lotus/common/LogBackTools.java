@@ -1,4 +1,4 @@
-package or.lotus.db;
+package or.lotus.common;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;

@@ -1,4 +1,4 @@
-package or.lotus.db;
+package or.lotus.common;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;

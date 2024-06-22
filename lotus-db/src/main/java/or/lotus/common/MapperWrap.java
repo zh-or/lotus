@@ -1,4 +1,4 @@
-package or.lotus.db;
+package or.lotus.common;
 
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
