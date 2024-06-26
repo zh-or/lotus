@@ -7,7 +7,7 @@ public abstract class DelayQueueCallBack {
 
     }
     /**调用addTask时触发, 当抛出自动重试异常时, 不会触发此回调*/
-    public void onAddTask(DelayQueueExecutor context, String type, long execTime, Object obj) {
+    public void onAddTask(DelayQueueExecutor context, String type, long execTime, Object obj) throws Exception {
 
     }
     /**任务执行完毕时触发*/
