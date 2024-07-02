@@ -14,7 +14,8 @@ import java.util.ArrayList;
 public class TestORM {
     static final Logger log = LoggerFactory.getLogger(TestORM.class);
     public static void main(String[] args) throws SQLException {
-        DataSourceConfig config = new DataSourceConfig("jdbc:mysql://127.0.0.1:3306/test", "root", "123456");
+        //DataSourceConfig config = new DataSourceConfig("jdbc:mysql://127.0.0.1:3306/test", "root", "123456");
+        DataSourceConfig config = new DataSourceConfig("jdbc:mysql://192.168.1.3:3306/test", "root", "b7ve4%7z^6");
         LotusDataSource dataSource = new LotusDataSource();
         dataSource.setConfig(config);
         printInfo(dataSource);
