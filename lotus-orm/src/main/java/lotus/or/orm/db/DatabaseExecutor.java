@@ -6,6 +6,8 @@ import or.lotus.json.BeanBase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.beans.IntrospectionException;
+import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -104,20 +106,18 @@ public class DatabaseExecutor<T> {
                     String name = metaData.getColumnName(i);
                     try {
                         String fieldName = JdbcUtils.convertUnderscoreNameToPropertyName(name, false);
-                        String setMethodName = "set" + JdbcUtils.convertUnderscoreNameToPropertyName(name, true);
-
+                        PropertyDescriptor pd = new PropertyDescriptor(fieldName, newClazz);
+                        Method m = pd.getWriteMethod();
                         Field field = newClazz.getField(fieldName);
-                        Method m = newClazz.getMethod(setMethodName, field.getType());
-
                         Object val = JdbcUtils.getResultSetValue(rs, i, field.getType());
                         m.invoke(obj, val);
-                        resObj.add((T) resObj);
                     } catch (NoSuchFieldException e) {
                         log.trace("对象: {} 不存在字段: {}", clazz.getSimpleName(), name);
+                    } catch (IntrospectionException e) {
+                        throw new RuntimeException(e);
                     }
-
                 }
-
+                resObj.add(obj);
                 if(one) {
                     break;
                 }
@@ -128,8 +128,6 @@ public class DatabaseExecutor<T> {
         } catch (InstantiationException e) {
             throw new RuntimeException(e);
         } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
         } catch (InvocationTargetException e) {
             throw new RuntimeException(e);
