@@ -272,8 +272,8 @@ public class DatabaseExecutor<T> {
                     try {
                         String fieldName = JdbcUtils.convertUnderscoreNameToPropertyName(name, false);
                         Field field = newClazz.getField(fieldName);
-                        Object val = JdbcUtils.getResultSetValue(rs, i, field.getType());
-                        JdbcUtils.invokeSetter(obj, newClazz, fieldName, val);
+                        //Object val = JdbcUtils.getResultSetValue(rs, i, field.getType());
+                        JdbcUtils.invokeSetter(obj, newClazz, fieldName, rs.getObject(i, field.getType()));
 
                     } catch (NoSuchFieldException e) {
                         log.trace("对象: {} 不存在字段: {}", clazz.getSimpleName(), name);
