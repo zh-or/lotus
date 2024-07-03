@@ -264,23 +264,19 @@ public class DatabaseExecutor<T> {
 
             List<T> resObj = new ArrayList<T>();
             while(rs.next()) {
+
                 T obj = clazz.newInstance();
                 Class<?> newClazz = obj.getClass();
                 for(int i = 1; i <= columnCount; i++) {
                     String name = metaData.getColumnName(i);
                     try {
                         String fieldName = JdbcUtils.convertUnderscoreNameToPropertyName(name, false);
-                        PropertyDescriptor pd = new PropertyDescriptor(fieldName, newClazz);
-                        Method m = pd.getWriteMethod();
                         Field field = newClazz.getField(fieldName);
                         Object val = JdbcUtils.getResultSetValue(rs, i, field.getType());
-                        m.invoke(obj, val);
+                        JdbcUtils.invokeSetter(obj, newClazz, fieldName, val);
+
                     } catch (NoSuchFieldException e) {
                         log.trace("对象: {} 不存在字段: {}", clazz.getSimpleName(), name);
-                    } catch (IntrospectionException e) {
-                        throw new RuntimeException(e);
-                    } catch (InvocationTargetException e) {
-                        throw new RuntimeException(e);
                     }
                 }
                 resObj.add(obj);

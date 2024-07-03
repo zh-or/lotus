@@ -1,9 +1,6 @@
 package lotus.or.orm.db;
 
-import lotus.or.orm.pool.LotusConnection;
-
 import java.io.Closeable;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 
