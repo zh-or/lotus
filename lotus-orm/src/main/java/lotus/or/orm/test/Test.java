@@ -1,6 +1,7 @@
 package lotus.or.orm.test;
 
-import java.sql.Date;
+
+import java.util.Date;
 
 public class Test {
     public int id;

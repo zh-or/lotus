@@ -1,6 +1,7 @@
 package lotus.or.orm.db;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 public class LotusSqlBuilder {
@@ -8,9 +9,12 @@ public class LotusSqlBuilder {
 
     ArrayList<WhereItem> wheres = new ArrayList<>(3);
     ArrayList<OrderItem> orders = new ArrayList<>(3);
-
     ArrayList<String> fields = new ArrayList<>(20);
 
+    HashSet<String> defFields = new HashSet<>(10);
+
+    int limitStart = -1;
+    int limitSize = -1;
     String table;
 
     public LotusSqlBuilder(String table) {
@@ -35,6 +39,32 @@ public class LotusSqlBuilder {
         orders.add(item);
     }
 
+    public void limit(int start, int size) {
+        limitStart = start;
+        limitSize = size;
+    }
+
+    public void addDefFields(String ...fs) {
+        for(String f : fs) {
+            defFields.add(f);
+        }
+    }
+
+    public boolean isDefaultFields(String name) {
+        return defFields.contains(name);
+    }
+
+    public String buildCount() {
+        StringBuilder sb = new StringBuilder(255);
+        sb.append("select count(`");
+        sb.append(fields.get(0));
+        sb.append("`) from ");
+        sb.append(table);
+
+        buildComSql(sb);
+        return sb.toString();
+    }
+
     public String buildSelect() {
         if(sql.length() > 0) {
             return sql.toString();
@@ -52,7 +82,7 @@ public class LotusSqlBuilder {
         sql.append(" from ");
         sql.append(table);
         sql.append(" ");
-        buildComSql();
+        buildComSql(sql);
         return sql.toString();
     }
 
@@ -66,12 +96,16 @@ public class LotusSqlBuilder {
             for(String f : fields) {
                 sql.append(f);
                 sql.append("=");
-                sql.append("?,");
+                if(isDefaultFields(f)) {
+                    sql.append("default,");
+                } else {
+                    sql.append("?,");
+                }
             }
             sql.setLength(sql.length() - 1);
         }
 
-        buildComSql();
+        buildComSql(sql);
         return sql.toString();
     }
 
@@ -81,7 +115,7 @@ public class LotusSqlBuilder {
         }
         sql.append("delete from ");
         sql.append(table);
-        buildComSql();
+        buildComSql(sql);
         return sql.toString();
     }
 
@@ -104,7 +138,11 @@ public class LotusSqlBuilder {
             sql.append(") VALUES(");
 
             for(String f : fields) {
-                sql.append("?,");
+                if(isDefaultFields(f)) {
+                    sql.append("default,");
+                } else {
+                    sql.append("?,");
+                }
             }
             sql.setLength(sql.length() - 1);
             sql.append(")");
@@ -114,34 +152,39 @@ public class LotusSqlBuilder {
 
 
     /**组装where, order by*/
-    public void buildComSql() {
+    public void buildComSql(StringBuilder sb) {
         if(wheres.size() > 0) {
-            sql.append(" where ");
+            sb.append(" where ");
 
             for(WhereItem wi : wheres) {
                 if("m".equals(wi.m)) {
-                    sql.append(wi.k);
+                    sb.append(wi.k);
                 } else {
-                    sql.append(wi.k)
-                            .append(wi.m)
-                            .append(wi.v);
+                    sb.append(wi.k)
+                        .append(wi.m)
+                        .append(wi.v);
                 }
             }
         }
 
         if(orders.size() > 0) {
-            sql.append(" order by ");
+            sb.append(" order by ");
             for(OrderItem oi : orders) {
                 if("m".equals(oi.m)) {
-                    sql.append(oi.field);
+                    sb.append(oi.field);
                 } else {
-                    sql.append(oi.m)
+                    sb.append(oi.m)
                         .append(" ")
                         .append(oi.field).append(" ");
                 }
             }
         }
-
+        if(limitStart != -1 && limitSize != -1) {
+            sb.append(" limit ");
+            sb.append(limitStart);
+            sb.append(", ");
+            sb.append(limitSize);
+        }
     }
 
 }

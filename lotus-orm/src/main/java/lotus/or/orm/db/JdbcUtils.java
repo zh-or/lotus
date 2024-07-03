@@ -5,10 +5,16 @@ import or.lotus.common.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.beans.IntrospectionException;
+import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.sql.*;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -61,6 +67,105 @@ public abstract class JdbcUtils {
         }
     }
 
+    public static void invokeSetter(Object obj, Class<?> clazz, String fieldName, Object val) {
+        try {
+            PropertyDescriptor pd = new PropertyDescriptor(fieldName, clazz);
+            Method m = pd.getWriteMethod();
+            if(m != null) {
+                m.invoke(obj, val);
+            }
+        } catch (IntrospectionException e) {
+            throw new RuntimeException(e);
+        } catch (InvocationTargetException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static Object invokeGetter(Object obj, Class<?> clazz, String fieldName) {
+        try {
+            PropertyDescriptor pd = new PropertyDescriptor(fieldName, clazz);
+            Method m = pd.getReadMethod();
+            if(m != null) {
+                return m.invoke(obj);
+            }
+        } catch (IntrospectionException e) {
+            throw new RuntimeException(e);
+        } catch (InvocationTargetException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+        return null;
+    }
+
+    public static void getObjectFieldsToParams(Object obj, List<Object> params) {
+        params.clear();
+        Class<?> clazz = obj.getClass();
+        Field[] fs = clazz.getDeclaredFields();
+        for(Field f : fs) {
+            try {
+                PropertyDescriptor pd = new PropertyDescriptor(f.getName(), clazz);
+                Method m = pd.getReadMethod();
+                params.add(m.invoke(obj));
+            } catch (IntrospectionException e) {
+                throw new RuntimeException(e);
+            } catch (InvocationTargetException e) {
+                throw new RuntimeException(e);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+
+    }
+
+    public static void setParamsToStatement(PreparedStatement ps, List<Object> params) throws SQLException {
+        for(int i = 1; i <= params.size(); i++) {
+            Object p = params.get(i - 1);
+            if(p == null) {
+                ps.setNull(i, Types.NULL);
+                continue;
+            }
+
+            Class<?> type = p.getClass();
+            if (type == String.class)
+                ps.setString(i, (String) p);
+            else if (type == BigDecimal.class)
+                ps.setBigDecimal(i, (BigDecimal) p);
+            else if (type == boolean.class || type == Boolean.class)
+                ps.setBoolean(i, (Boolean) p);
+            else if (type == long.class || type == Long.class)
+                ps.setLong(i, (Long) p);
+            else if (type == int.class || type == Integer.class)
+                ps.setInt(i, (Integer) p);
+            else if (type == char.class)
+                ps.setString(i, String.valueOf((char) p));
+            else if (type == byte.class || type == Byte.class)
+                ps.setByte(i, (Byte) p);
+            else if (type == byte[].class || type == Byte[].class)
+                ps.setBytes(i, (byte[]) p);
+            else if (type == short.class || type == Short.class)
+                ps.setShort(i, (Short) p);
+            else if (type == float.class || type == Float.class)
+                ps.setFloat(i, (Float) p);
+            else if (type == double.class || type == Double.class)
+                ps.setDouble(i, (Double) p);
+            else if (type == java.util.Date.class) {
+                java.sql.Date sqlDate = new java.sql.Date(((Date) p).getTime());
+                ps.setDate(i, sqlDate);
+            } else if (type == Time.class) {
+                ps.setTime(i, (Time) p);
+            }  else if (type == Timestamp.class) {
+                ps.setTimestamp(i, (Timestamp) p);
+            } else {
+                throw new SQLException(type + " :未知的类型");
+            }
+
+        }
+    }
+
 
     public static Object getResultSetValue(ResultSet rs, int index, Class<?> requiredType) throws SQLException {
         if (requiredType == null) {
@@ -84,8 +189,7 @@ public abstract class JdbcUtils {
             value = rs.getLong(index);
         } else if (float.class == requiredType || Float.class == requiredType) {
             value = rs.getFloat(index);
-        } else if (double.class == requiredType || Double.class == requiredType ||
-                Number.class == requiredType) {
+        } else if (double.class == requiredType || Double.class == requiredType || Number.class == requiredType) {
             value = rs.getDouble(index);
         } else if (BigDecimal.class == requiredType) {
             return rs.getBigDecimal(index);

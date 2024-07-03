@@ -11,6 +11,10 @@ public class DataSourceConfig {
     public int heartbeatTimeoutSeconds = 5;//心跳检测超时时间
     public int loginTimeout = 30;//获取连接超时时间 秒
 
+    public String primaryKeyName = "id";//主键名字
+    public boolean insertIgnoreNull = true;//插入时忽略空值
+    public boolean updateIgnoreNull = true;//更新时忽略空值
+
     public DataSourceConfig() {
     }
 
@@ -97,5 +101,29 @@ public class DataSourceConfig {
 
     public void setLoginTimeout(int loginTimeout) {
         this.loginTimeout = loginTimeout;
+    }
+
+    public String getPrimaryKeyName() {
+        return primaryKeyName;
+    }
+
+    public void setPrimaryKeyName(String primaryKeyName) {
+        this.primaryKeyName = primaryKeyName;
+    }
+
+    public boolean isInsertIgnoreNull() {
+        return insertIgnoreNull;
+    }
+
+    public void setInsertIgnoreNull(boolean insertIgnoreNull) {
+        this.insertIgnoreNull = insertIgnoreNull;
+    }
+
+    public boolean isUpdateIgnoreNull() {
+        return updateIgnoreNull;
+    }
+
+    public void setUpdateIgnoreNull(boolean updateIgnoreNull) {
+        this.updateIgnoreNull = updateIgnoreNull;
     }
 }
