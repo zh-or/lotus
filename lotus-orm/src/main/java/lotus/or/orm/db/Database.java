@@ -77,6 +77,18 @@ public class Database {
         DataSource dataSource = getDataSource();
         Connection connection = transactionConnection.get();
         if(connection == null) {
+            //todo 代理对象
+            (Connection)Proxy.newProxyInstance(conn.getClass().getClassLoader(), conn.getClass().getInterfaces(), new InvocationHandler() {
+                @Override
+                public Object invoke(Object proxy, Method method, Object[] args)
+                        throws Throwable {
+                    if("close".equals(method.getName())){
+                        return pool.add(conn);
+                    }else {
+                        return method.invoke(conn, args);
+                    }
+                }
+            });
             connection = dataSource.getConnection();
         }
         return connection;

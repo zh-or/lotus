@@ -67,6 +67,7 @@ public abstract class JdbcUtils {
         }
     }
 
+    /**执行对象的setter方法*/
     public static void invokeSetter(Object obj, Class<?> clazz, String fieldName, Object val) {
         try {
             PropertyDescriptor pd = new PropertyDescriptor(fieldName, clazz);
@@ -83,6 +84,7 @@ public abstract class JdbcUtils {
         }
     }
 
+    /**执行对象的getter方法*/
     public static Object invokeGetter(Object obj, Class<?> clazz, String fieldName) {
         try {
             PropertyDescriptor pd = new PropertyDescriptor(fieldName, clazz);
