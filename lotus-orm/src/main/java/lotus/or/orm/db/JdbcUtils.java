@@ -50,9 +50,9 @@ public abstract class JdbcUtils {
             try {
                 stmt.close();
             } catch (SQLException ex) {
-                log.trace("Could not close JDBC Statement", ex);
+                log.debug("Could not close JDBC Statement", ex);
             } catch (Throwable ex) {
-                log.trace("Unexpected exception on closing JDBC Statement", ex);
+                log.debug("Unexpected exception on closing JDBC Statement", ex);
             }
         }
     }
@@ -63,9 +63,9 @@ public abstract class JdbcUtils {
             try {
                 rs.close();
             } catch (SQLException ex) {
-                log.trace("Could not close JDBC ResultSet", ex);
+                log.debug("Could not close JDBC ResultSet", ex);
             } catch (Throwable ex) {
-                log.trace("Unexpected exception on closing JDBC ResultSet", ex);
+                log.debug("Unexpected exception on closing JDBC ResultSet", ex);
             }
         }
     }
