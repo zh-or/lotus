@@ -1,5 +1,6 @@
 package lotus.or.orm.db;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -10,15 +11,16 @@ public class LotusSqlBuilder {
     ArrayList<WhereItem> wheres = new ArrayList<>(3);
     ArrayList<OrderItem> orders = new ArrayList<>(3);
     ArrayList<String> fields = new ArrayList<>(20);
-
     HashSet<String> defFields = new HashSet<>(10);
 
     int limitStart = -1;
     int limitSize = -1;
     String table;
+    Database db;
 
-    public LotusSqlBuilder(String table) {
+    public LotusSqlBuilder(Database db, String table) {
         this.table = table;
+        this.db = db;
     }
 
     public void setFields(List<String> fields) {
@@ -54,10 +56,10 @@ public class LotusSqlBuilder {
         return defFields.contains(name);
     }
 
-    public String buildCount() {
+    public String buildCount() throws SQLException {
         StringBuilder sb = new StringBuilder(255);
         sb.append("select count(`");
-        sb.append(fields.get(0));
+        sb.append(db.getConfig().getPrimaryKeyName());
         sb.append("`) from ");
         sb.append(table);
 
@@ -65,7 +67,7 @@ public class LotusSqlBuilder {
         return sb.toString();
     }
 
-    public String buildSelect() {
+    public String buildSelect() throws SQLException {
         if(sql.length() > 0) {
             return sql.toString();
         }
@@ -73,7 +75,9 @@ public class LotusSqlBuilder {
 
         if(fields.size() > 0) {
             for(String f : fields) {
+                sql.append("`");
                 sql.append(f);
+                sql.append("`");
                 sql.append(",");
             }
             sql.setLength(sql.length() - 1);
@@ -86,21 +90,21 @@ public class LotusSqlBuilder {
         return sql.toString();
     }
 
-    public String buildUpdate() {
+    public String buildUpdate() throws SQLException {
         if(sql.length() > 0) {
             return sql.toString();
         }
-        sql.append("update set");
+        sql.append("update `");
+        sql.append(table);
+        sql.append("` set ");
 
         if(fields.size() > 0) {
             for(String f : fields) {
+                sql.append("`");
                 sql.append(f);
+                sql.append("`");
                 sql.append("=");
-                if(isDefaultFields(f)) {
-                    sql.append("default,");
-                } else {
-                    sql.append("?,");
-                }
+                sql.append("?,");
             }
             sql.setLength(sql.length() - 1);
         }
@@ -109,7 +113,7 @@ public class LotusSqlBuilder {
         return sql.toString();
     }
 
-    public String buildDelete() {
+    public String buildDelete() throws SQLException {
         if(sql.length() > 0) {
             return sql.toString();
         }
@@ -152,18 +156,27 @@ public class LotusSqlBuilder {
 
 
     /**组装where, order by*/
-    public void buildComSql(StringBuilder sb) {
+    public void buildComSql(StringBuilder sb) throws SQLException {
         if(wheres.size() > 0) {
+            int needCd = 0;
             sb.append(" where ");
-
             for(WhereItem wi : wheres) {
                 if("m".equals(wi.m)) {
-                    sb.append(wi.k);
+                    sb.append(wi.k).append(" ");
+                } else if("in".equals(wi.m)) {
+                    if(needCd % 2 != 0) {
+                        throw new SQLException("where 之间需要增加条件");
+                    }
+                    sb.append(wi.k).append(" in(").append(wi.v).append(") ");
                 } else {
+                    if(needCd % 2 != 0) {
+                        throw new SQLException("where 之间需要增加条件");
+                    }
                     sb.append(wi.k)
                         .append(wi.m)
-                        .append(wi.v);
+                        .append(wi.v).append(" ");
                 }
+                needCd++;
             }
         }
 
@@ -171,11 +184,11 @@ public class LotusSqlBuilder {
             sb.append(" order by ");
             for(OrderItem oi : orders) {
                 if("m".equals(oi.m)) {
-                    sb.append(oi.field);
+                    sb.append(oi.field).append(" ");
                 } else {
-                    sb.append(oi.m)
+                    sb.append(oi.field)
                         .append(" ")
-                        .append(oi.field).append(" ");
+                        .append(oi.m).append(" ");
                 }
             }
         }
