@@ -1,22 +1,14 @@
 package lotus.or.orm.test;
 
-
 import java.util.Date;
 
-public class Test {
+public class TestDto {
+
     public int id;
     public String str;
     public Date createTime;
-    public int typeId;
 
-    public Test() {
-    }
-
-    public Test(int id, String str, Date createTime) {
-        this.id = id;
-        this.str = str;
-        this.createTime = createTime;
-    }
+    public String typeName;
 
     public int getId() {
         return id;
@@ -42,11 +34,11 @@ public class Test {
         this.createTime = createTime;
     }
 
-    public int getTypeId() {
-        return typeId;
+    public String getTypeName() {
+        return typeName;
     }
 
-    public void setTypeId(int typeId) {
-        this.typeId = typeId;
+    public void setTypeName(String typeName) {
+        this.typeName = typeName;
     }
 }

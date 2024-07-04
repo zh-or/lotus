@@ -7,10 +7,13 @@ import org.slf4j.LoggerFactory;
 
 import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.nio.file.Files;
 import java.sql.*;
 import java.util.Date;
 import java.util.HashMap;
@@ -102,30 +105,16 @@ public abstract class JdbcUtils {
         return null;
     }
 
-    public static void getObjectFieldsToParams(Object obj, List<Object> params) {
-        params.clear();
-        Class<?> clazz = obj.getClass();
-        Field[] fs = clazz.getDeclaredFields();
-        for(Field f : fs) {
-            try {
-                PropertyDescriptor pd = new PropertyDescriptor(f.getName(), clazz);
-                Method m = pd.getReadMethod();
-                params.add(m.invoke(obj));
-            } catch (IntrospectionException e) {
-                throw new RuntimeException(e);
-            } catch (InvocationTargetException e) {
-                throw new RuntimeException(e);
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-
+    public static void setParamsToStatement(PreparedStatement ps, List<Object> params) throws SQLException {
+        setParamsToStatement(ps, params, 0);
     }
 
-    public static void setParamsToStatement(PreparedStatement ps, List<Object> params) throws SQLException {
-        for(int i = 1; i <= params.size(); i++) {
-            Object p = params.get(i - 1);
+    public static void setParamsToStatement(PreparedStatement ps, List<Object> params, int start) throws SQLException {
+        for(int j = 0; j < params.size(); j++) {
+            Object p = params.get(j);
+
+            int i = j + start + 1;
+
             if(p == null) {
                 ps.setNull(i, Types.NULL);
                 continue;
@@ -155,19 +144,12 @@ public abstract class JdbcUtils {
             else if (type == double.class || type == Double.class)
                 ps.setDouble(i, (Double) p);
             else if (type == java.util.Date.class) {
-                java.sql.Date sqlDate = new java.sql.Date(((Date) p).getTime());
-                ps.setDate(i, sqlDate);
-            } else if (type == Time.class) {
-                ps.setTime(i, (Time) p);
-            }  else if (type == Timestamp.class) {
-                ps.setTimestamp(i, (Timestamp) p);
+                ps.setTimestamp(i, new Timestamp(((java.util.Date) p).getTime()));
             } else {
                 throw new SQLException(type + " :未知的类型");
             }
-
         }
     }
-
 
     public static Object getResultSetValue(ResultSet rs, int index, Class<?> requiredType) throws SQLException {
         if (requiredType == null) {
@@ -252,7 +234,6 @@ public abstract class JdbcUtils {
         return (rs.wasNull() ? null : value);
     }
 
-
     public static Object getResultSetValue(ResultSet rs, int index) throws SQLException {
         Object obj = rs.getObject(index);
         String className = null;
@@ -281,7 +262,6 @@ public abstract class JdbcUtils {
         }
         return obj;
     }
-
 
 
     /**
@@ -377,4 +357,11 @@ public abstract class JdbcUtils {
         return result.toString();
     }
 
+    public static String sqlFromPackageName(String name, String charsetName) throws IOException {
+        try(InputStream in = JdbcUtils.class.getResourceAsStream(name)) {
+            byte[] bytes = new byte[in.available()];
+            in.read(bytes);
+            return new String(bytes, charsetName);
+        }
+    }
 }
