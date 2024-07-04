@@ -116,6 +116,7 @@ public class LotusDataSource implements DataSource {
     @Override
     public Connection getConnection(String username, String password) throws SQLException {
         LotusConnection connection = pool.poll();
+        boolean needCheck = false;
         if(connection == null) {
             if(poolSize.get() >= config.getMaxConnection()) {
                 try {
@@ -124,6 +125,7 @@ public class LotusDataSource implements DataSource {
                     log.warn("数据库连接池连接耗尽, 等待返回连接失败");
                     return null;
                 }
+                needCheck = true;
             } else {
                 try {
                     String driverName = config.getDriverName();
@@ -139,6 +141,14 @@ public class LotusDataSource implements DataSource {
                 } catch (ClassNotFoundException e) {
                     log.error("驱动未找到:", e);
                 }
+            }
+        }
+        if(needCheck) {
+            if(!connection.heartbeatTest()) {
+                connection.closeRawConnection();
+                poolSize.decrementAndGet();
+                log.error("连接心跳超时, 间隔时间: {}ms, id:{}", System.currentTimeMillis() - connection.lastUseTime, connection.getId());
+                return getConnection(username, password);
             }
         }
         connection.use();
