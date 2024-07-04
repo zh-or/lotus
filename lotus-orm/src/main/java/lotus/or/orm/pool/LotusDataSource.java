@@ -122,7 +122,7 @@ public class LotusDataSource implements DataSource {
                 try {
                     connection = pool.poll(config.getLoginTimeout(), TimeUnit.SECONDS);
                 } catch (InterruptedException e) {
-                    log.warn("数据库连接池连接耗尽, 等待返回连接失败");
+                    log.error("数据库连接池连接耗尽, 等待返回连接失败");
                     return null;
                 }
                 needCheck = true;
