@@ -312,7 +312,7 @@ public class DatabaseExecutor<T> {
             rs = ps.getGeneratedKeys();
             if(rs != null && rs.next()) {
                 String primaryKey = db.getConfig().getPrimaryKeyName();
-                Field field = clazz.getField(primaryKey);
+                Field field = clazz.getDeclaredField(primaryKey);
                 Class<?> fieldType = field.getType();
                 if(fieldType == int.class || fieldType == Integer.class) {
                     JdbcUtils.invokeSetter(object, clazz, primaryKey, (int) rs.getLong(1));
@@ -371,7 +371,7 @@ public class DatabaseExecutor<T> {
             rs = ps.getGeneratedKeys();
             for(int i = 0; rs.next(); i++) {
                 Object obj = list.get(i);
-                Field field = clazz.getField(primaryKey);
+                Field field = clazz.getDeclaredField(primaryKey);
                 Class<?> fieldType = field.getType();
                 if(fieldType == int.class || fieldType == Integer.class) {
                     JdbcUtils.invokeSetter(obj, clazz, primaryKey, (int) rs.getLong(1));
@@ -439,16 +439,17 @@ public class DatabaseExecutor<T> {
 
                 T obj = clazz.newInstance();
                 Class<?> newClazz = obj.getClass();
+
                 for(int i = 1; i <= columnCount; i++) {
                     String name = metaData.getColumnName(i);
                     try {
                         String fieldName = JdbcUtils.convertUnderscoreNameToPropertyName(name, false);
-                        Field field = newClazz.getField(fieldName);
+                        Field field = newClazz.getDeclaredField(fieldName);
                         //Object val = JdbcUtils.getResultSetValue(rs, i, field.getType());
                         JdbcUtils.invokeSetter(obj, newClazz, fieldName, rs.getObject(i, field.getType()));
 
                     } catch (NoSuchFieldException e) {
-                        log.trace("对象: {} 不存在字段: {}", clazz.getSimpleName(), name);
+                        log.error("对象: {} 不存在字段: {}, {}", clazz.getSimpleName(), name, e);
                     }
                 }
                 resObj.add(obj);
