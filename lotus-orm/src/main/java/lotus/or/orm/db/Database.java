@@ -14,6 +14,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * 约定:
+ *  1. 数据库表名必须和类名一致
+ *  2. 数据库字段名完全对应bean的字段, bean的大写会转换为 createTime => create_time
+ *  3. 所有主键名必须一致, 减少无畏的判断
+ *
+ * */
 public class Database {
     static final Logger log = LoggerFactory.getLogger(Database.class);
     ConcurrentHashMap<String, DataSource> dataSources = null;

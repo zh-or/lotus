@@ -1,5 +1,6 @@
 package lotus.or.orm.pool;
 
+import or.lotus.common.Format;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,9 +25,17 @@ public class LotusConnection implements Connection {
 
     public boolean heartbeatTest() {
         int mill = dataSource.getConfig().getHeartbeatFreqSecs() * 1000;
+
+        /*log.info("上次心跳: {}, 间隔: {}s, 当前时间: {}",
+                Format.formatTime(lastUseTime),
+                dataSource.getConfig().getHeartbeatFreqSecs(),
+                Format.formatTime(System.currentTimeMillis())
+                );*/
+
         if(lastUseTime + mill < System.currentTimeMillis()) {
             try {
                 lastUseTime = System.currentTimeMillis();
+                //log.info("心跳");
                 return isValid(dataSource.getConfig().getHeartbeatTimeoutSeconds());
             } catch (SQLException e) {
                 return false;
@@ -53,6 +62,7 @@ public class LotusConnection implements Connection {
 
     @Override
     public void close() {
+        use();
         dataSource.closeConnection(this);
     }
 

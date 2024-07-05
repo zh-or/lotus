@@ -172,8 +172,8 @@ public class LotusSqlBuilder {
                     if(needCd % 2 != 0) {
                         throw new SQLException("where 之间需要增加条件");
                     }
-                    sb.append(wi.k)
-                        .append(wi.m)
+                    sb.append(wi.k).append(" ")
+                        .append(wi.m).append(" ")
                         .append(wi.v).append(" ");
                 }
                 needCd++;
