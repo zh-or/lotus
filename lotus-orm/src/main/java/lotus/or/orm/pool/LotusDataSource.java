@@ -73,7 +73,7 @@ public class LotusDataSource implements DataSource {
             timer.cancel();
         }
         timer = new Timer("lotus data source heartbeat");
-        timer.schedule(timerTask, config.getHeartbeatFreqSecs() * 1000, config.getHeartbeatFreqSecs() * 1000);
+        timer.schedule(timerTask, config.getHeartbeatFreqSecs() * 1000 / 3, config.getHeartbeatFreqSecs() * 1000 / 3);
 
 
     }
@@ -122,7 +122,7 @@ public class LotusDataSource implements DataSource {
                 try {
                     connection = pool.poll(config.getLoginTimeout(), TimeUnit.SECONDS);
                 } catch (InterruptedException e) {
-                    log.error("数据库连接池连接耗尽, 等待返回连接失败");
+                    log.error("数据库连接池连接耗尽, 等待返回连接失败 loginTimeout:{}s", config.getLoginTimeout());
                     return null;
                 }
                 needCheck = true;
@@ -144,14 +144,13 @@ public class LotusDataSource implements DataSource {
             }
         }
         if(needCheck) {
-            if(!connection.heartbeatTest()) {
+            if(!connection.isValid(getConfig().getHeartbeatTimeoutSeconds())) {
                 connection.closeRawConnection();
                 poolSize.decrementAndGet();
                 log.error("连接心跳超时, 间隔时间: {}ms, id:{}", System.currentTimeMillis() - connection.lastUseTime, connection.getId());
                 return getConnection(username, password);
             }
         }
-        connection.use();
         return connection;
     }
 

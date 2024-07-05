@@ -92,7 +92,7 @@ public class DatabaseExecutor<T> {
 
     /**left like right*/
     public DatabaseExecutor<T> whereLike(Object left, Object right) {
-        builder.addWhere(WhereItem.like(left, right));
+        builder.addWhere(WhereItem.like(left, "?"));
         whereParams.add(right);
         return this;
     }
