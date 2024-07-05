@@ -357,8 +357,23 @@ public abstract class JdbcUtils {
         return result.toString();
     }
 
-    public static String sqlFromPackageName(String name, String charsetName) throws IOException {
-        try(InputStream in = JdbcUtils.class.getResourceAsStream(name)) {
+
+    /**
+     * 默认以utf-8读取文件内容
+     * maven 打包需要注意在pom.xml 配置把resources的文件打包到jar中, 不配置默认不会打包, 永远找不到文件
+     * @param path 不要以 / 开头,
+     * */
+    public static String sqlFromResources(String path) throws IOException {
+        return sqlFromResources(path, "UTF-8");
+    }
+
+    /**
+     * maven 打包需要注意在pom.xml 配置把resources的文件打包到jar中, 不配置默认不会打包, 永远找不到文件
+     * @param path 不要以 / 开头,
+     * */
+    public static String sqlFromResources(String path, String charsetName) throws IOException {
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        try(InputStream in = cl.getResourceAsStream(path)) {
             byte[] bytes = new byte[in.available()];
             in.read(bytes);
             return new String(bytes, charsetName);
