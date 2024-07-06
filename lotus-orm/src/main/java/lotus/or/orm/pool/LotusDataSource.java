@@ -27,7 +27,28 @@ public class LotusDataSource implements DataSource {
     protected DataSourceConfig config;
     protected Timer timer;
 
-    public LotusDataSource() { }
+    public LotusDataSource() {
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                close();
+            }
+        });
+
+    }
+
+    public void close() {
+        for(int i = 0; i < poolSize.intValue(); i++) {
+            try {
+                LotusConnection conn = pool.poll(10, TimeUnit.SECONDS);
+                if(conn != null) {
+                    conn.closeRawConnection();
+                }
+            } catch (Exception e) {
+                log.trace("关闭连接出错:", e);
+            }
+        }
+    }
 
     public String toString() {
         return String.format("i: %d, size: %d", poolSize.get(), pool.size());
