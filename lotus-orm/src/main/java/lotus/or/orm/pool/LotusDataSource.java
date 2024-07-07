@@ -34,7 +34,6 @@ public class LotusDataSource implements DataSource {
                 close();
             }
         });
-
     }
 
     public void close() {
