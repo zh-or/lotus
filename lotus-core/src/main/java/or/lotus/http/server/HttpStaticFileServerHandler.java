@@ -107,9 +107,11 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
         File file = new File(path);
 
         if(file.isHidden()) {
+            System.out.println("110:404-" + file.getAbsolutePath());
             sendError(ctx, NOT_FOUND);
             return ;
         } else if(!file.exists()) {
+            System.out.println("404-" + file.getAbsolutePath());
             //自动加上 html 结尾试试
             if(file.getName().lastIndexOf(".") == -1) {
                 file = new File(path + ".html");
@@ -117,6 +119,7 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
         }
 
         if (file.isHidden() || !file.exists()) {
+            System.out.println("122:404-" + file.getAbsolutePath());
             sendError(ctx, NOT_FOUND);
             return;
         }
@@ -126,6 +129,7 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
                 if(context.isEnableDirList()) {
                     sendListing(ctx, file, uri);
                 } else {
+                    System.out.println("132:404-" + file.getAbsolutePath());
                     sendError(ctx, NOT_FOUND);
                 }
             } else {
@@ -168,6 +172,7 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
         try {
             raf = new RandomAccessFile(file, "r");
         } catch (FileNotFoundException ignore) {
+            System.out.println("175:404-" + file.getAbsolutePath());
             sendError(ctx, NOT_FOUND);
             return;
         }
@@ -228,14 +233,16 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
             // Close the connection when the whole content is written out.
             lastContentFuture.addListener(ChannelFutureListener.CLOSE);
         }
-        request.release();
+        //todo 不知道为什么会有释放, 关闭后netty会再释放一次, 就报错了
+        //request.release();
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         //文件这边不报异常, 统一404
-        //cause.printStackTrace();
+        cause.printStackTrace();
         if (ctx.channel().isActive()) {
+            System.out.println("244:404-" );
             sendError(ctx, NOT_FOUND);
         }
     }
