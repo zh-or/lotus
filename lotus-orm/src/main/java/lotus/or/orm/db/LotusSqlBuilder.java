@@ -56,19 +56,26 @@ public class LotusSqlBuilder {
         return defFields.contains(name);
     }
 
+    /**生成sql时只会添加where条件*/
     public String buildCount() throws SQLException {
+        return buildCount(db.getConfig().getPrimaryKeyName());
+    }
+
+    /**生成sql时只会添加where条件*/
+    public String buildCount(String countField) throws SQLException {
         StringBuilder sb = new StringBuilder(255);
-        sb.append("select count(`");
-        sb.append(db.getConfig().getPrimaryKeyName());
-        sb.append("`) from ");
+        sb.append("select count(");
+        sb.append(countField);
+        sb.append(") from ");
         sb.append(table);
 
-        buildComSql(sb);
+        buildWhere(sb);
         return sb.toString();
     }
 
     public String buildSelect() throws SQLException {
         if(sql.length() > 0) {
+            buildComSql(sql);
             return sql.toString();
         }
         sql.append("select ");
@@ -92,6 +99,7 @@ public class LotusSqlBuilder {
 
     public String buildUpdate() throws SQLException {
         if(sql.length() > 0) {
+            buildComSql(sql);
             return sql.toString();
         }
         sql.append("update `");
@@ -115,6 +123,7 @@ public class LotusSqlBuilder {
 
     public String buildDelete() throws SQLException {
         if(sql.length() > 0) {
+            buildComSql(sql);
             return sql.toString();
         }
         sql.append("delete from ");
@@ -154,9 +163,7 @@ public class LotusSqlBuilder {
         return sql.toString();
     }
 
-
-    /**组装where, order by*/
-    public void buildComSql(StringBuilder sb) throws SQLException {
+    public void buildWhere(StringBuilder sb) throws SQLException {
         if(wheres.size() > 0) {
             int needCd = 0;
             sb.append(" where ");
@@ -173,12 +180,19 @@ public class LotusSqlBuilder {
                         throw new SQLException("where 之间需要增加条件");
                     }
                     sb.append(wi.k).append(" ")
-                        .append(wi.m).append(" ")
-                        .append(wi.v).append(" ");
+                            .append(wi.m).append(" ")
+                            .append(wi.v).append(" ");
                 }
                 needCd++;
             }
         }
+
+    }
+
+
+    /**组装where, order by*/
+    public void buildComSql(StringBuilder sb) throws SQLException {
+        buildWhere(sb);
 
         if(orders.size() > 0) {
             sb.append(" order by ");
