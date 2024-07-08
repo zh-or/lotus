@@ -145,7 +145,8 @@ public class DelayQueueExecutor implements Runnable, Closeable {
 
         @Override
         public boolean equals(Object obj) {
-            return this.obj.equals(obj);
+            DelayObj other = (DelayObj) obj;
+            return this.obj.equals(other.obj);
         }
 
         @Override
