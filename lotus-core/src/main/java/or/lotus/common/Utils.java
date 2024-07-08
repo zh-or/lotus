@@ -63,6 +63,12 @@ public class Utils {
         return size;
     }
 
+    public static void assets(String v, String msg) {
+        if(Utils.CheckNull(v)) {
+            throw new IllegalArgumentException(msg);
+        }
+    }
+
     public static void assets(boolean v, String msg) {
         if(v) {
             throw new IllegalArgumentException(msg);
