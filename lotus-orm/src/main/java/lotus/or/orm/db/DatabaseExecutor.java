@@ -91,23 +91,25 @@ public class DatabaseExecutor<T> {
         return this;
     }
 
-    /**如果right不为空则加入判断 left like right*/
-    public DatabaseExecutor<T> whereLikeIfNotEmpty(Object left, Object right) {
-        if(right == null) {
-            return this;
-        }
-
-        if(right instanceof String && Utils.CheckNull((String) right)) {
-            return this;
-        }
-
-        builder.addWhere(WhereItem.like(left, "?"));
-        whereParams.add(right);
-        return this;
-    }
-
     /**left like right*/
     public DatabaseExecutor<T> whereLike(Object left, Object right) {
+       return whereLike(left, right, false);
+    }
+
+    /**left like right
+     * @param ifRightNotEmpty 如果为true则增加空判断, 如果为空则不加入条件
+     * */
+    public DatabaseExecutor<T> whereLike(Object left, Object right, boolean ifRightNotEmpty) {
+        if(ifRightNotEmpty) {
+            if(right == null) {
+                return this;
+            }
+
+            if(right instanceof String && Utils.CheckNull((String) right)) {
+                return this;
+            }
+        }
+
         builder.addWhere(WhereItem.like(left, "?"));
         whereParams.add(right);
         return this;
@@ -125,29 +127,92 @@ public class DatabaseExecutor<T> {
         return this;
     }
 
-    /**left != right*/
+
     public DatabaseExecutor<T> whereNot(Object left, Object right) {
+        return whereNot(left, right, false);
+    }
+
+    /**left != right
+     * @param ifRightNotEmpty 如果为true则增加空判断, 如果为空则不加入条件
+     * */
+    public DatabaseExecutor<T> whereNot(Object left, Object right, boolean ifRightNotEmpty) {
+        if(ifRightNotEmpty) {
+            if(right == null) {
+                return this;
+            }
+
+            if(right instanceof String && Utils.CheckNull((String) right)) {
+                return this;
+            }
+        }
+
         builder.addWhere(WhereItem.not(left, "?"));
         whereParams.add(right);
         return this;
     }
-
-    /**left = right*/
     public DatabaseExecutor<T> whereEq(Object left, Object right) {
+        return whereEq(left, right, false);
+    }
+
+    /**left = right
+     * @param ifRightNotEmpty 如果为true则增加空判断, 如果为空则不加入条件
+     * */
+    public DatabaseExecutor<T> whereEq(Object left, Object right, boolean ifRightNotEmpty) {
+        if(ifRightNotEmpty) {
+            if(right == null) {
+                return this;
+            }
+
+            if(right instanceof String && Utils.CheckNull((String) right)) {
+                return this;
+            }
+        }
         builder.addWhere(WhereItem.eq(left, "?"));
         whereParams.add(right);
         return this;
     }
 
-    /**left < right*/
+
     public DatabaseExecutor<T> whereLt(Object left, Object right) {
+        return whereLt(left, right, false);
+    }
+
+    /**left < right
+     * @param ifRightNotEmpty 如果为true则增加空判断, 如果为空则不加入条件
+     * */
+    public DatabaseExecutor<T> whereLt(Object left, Object right, boolean ifRightNotEmpty) {
+        if(ifRightNotEmpty) {
+            if(right == null) {
+                return this;
+            }
+
+            if(right instanceof String && Utils.CheckNull((String) right)) {
+                return this;
+            }
+        }
         builder.addWhere(WhereItem.lt(left, "?"));
         whereParams.add(right);
         return this;
     }
 
-    /**left > right*/
+
     public DatabaseExecutor<T> whereGt(Object left, Object right) {
+        return whereGt(left, right, false);
+    }
+
+    /**left > right
+     * @param ifRightNotEmpty 如果为true则增加空判断, 如果为空则不加入条件
+     * */
+    public DatabaseExecutor<T> whereGt(Object left, Object right, boolean ifRightNotEmpty) {
+        if(ifRightNotEmpty) {
+            if(right == null) {
+                return this;
+            }
+
+            if(right instanceof String && Utils.CheckNull((String) right)) {
+                return this;
+            }
+        }
         builder.addWhere(WhereItem.gt(left, "?"));
         whereParams.add(right);
         return this;
@@ -202,6 +267,12 @@ public class DatabaseExecutor<T> {
         return 0;
     }
 
+    /**key from fields*/
+    public Object findOneByCol(int col) throws SQLException {
+        Map<String, Object> oneMap = findOneMap();
+        return oneMap.get(builder.fields.get(col));
+    }
+
     public Page<T> findPage(int page, int size) throws SQLException {
         int total = (int) findCount();
         builder.limit(Page.pageToStart(page, size), size);
@@ -213,7 +284,15 @@ public class DatabaseExecutor<T> {
         );
     }
 
+    /***/
+    public DatabaseExecutor<T> limit(int start, int size) {
+        builder.limit(start, size);
+        return this;
+    }
+
+    /**调用此方法会自动加入 limit 0, 1*/
     public T findOne() throws SQLException {
+        limit(0, 1);
 
         List<T> res = runSelect(builder.buildSelect(), true);
         if(res != null && res.size() > 0) {
@@ -226,7 +305,9 @@ public class DatabaseExecutor<T> {
         return runSelect(builder.buildSelect(), false);
     }
 
+    /**调用此方法会自动加入 limit 0, 1*/
     public Map<String, Object> findOneMap() throws SQLException {
+        limit(0, 1);
         List<Map<String, Object>> list = runSelectMap(builder.buildSelect());
         if(!list.isEmpty()) {
             return list.get(0);
