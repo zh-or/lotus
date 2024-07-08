@@ -1,5 +1,6 @@
 package lotus.or.orm.db;
 
+import or.lotus.common.Utils;
 import or.lotus.http.Page;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,6 +88,21 @@ public class DatabaseExecutor<T> {
         }
         sb.setLength(sb.length() - 1);
         builder.addWhere(WhereItem.in(left, sb.toString()));
+        return this;
+    }
+
+    /**如果right不为空则加入判断 left like right*/
+    public DatabaseExecutor<T> whereLikeIfNotEmpty(Object left, Object right) {
+        if(right == null) {
+            return this;
+        }
+
+        if(right instanceof String && Utils.CheckNull((String) right)) {
+            return this;
+        }
+
+        builder.addWhere(WhereItem.like(left, "?"));
+        whereParams.add(right);
         return this;
     }
 
