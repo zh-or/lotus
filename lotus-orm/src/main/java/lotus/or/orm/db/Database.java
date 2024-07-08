@@ -130,6 +130,12 @@ public class Database {
         return exec;
     }
 
+    public DatabaseExecutor execSqlSelect(String sql) {
+        DatabaseExecutor exec = new DatabaseExecutor(this, DatabaseExecutor.SqlMethod.SELECT, null, null);
+        exec.getSqlBuilder().setSql(sql);
+        return exec;
+    }
+
     public <T> DatabaseExecutor<T> selectDto(Class<T> clazz, String sql)  {
         DatabaseExecutor exec = new DatabaseExecutor(this, DatabaseExecutor.SqlMethod.SELECT, clazz, null);
         exec.getSqlBuilder().setSql(sql);
