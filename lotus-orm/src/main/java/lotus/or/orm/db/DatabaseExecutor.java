@@ -259,6 +259,7 @@ public class DatabaseExecutor<T> {
 
     /**select count(config.primaryKeyName) from table [where xxx]*/
     public long findCount() throws SQLException {
+        limit(0, 1);
         List<Map<String, Object>> res = runSelectMap(builder.buildCount());
         if(!res.isEmpty()) {
             Map<String, Object> map = res.get(0);
