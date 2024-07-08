@@ -130,6 +130,7 @@ public class Database {
         return exec;
     }
 
+    /**执行自定义查询sql时 只能使用map返回*/
     public DatabaseExecutor execSqlSelect(String sql) {
         DatabaseExecutor exec = new DatabaseExecutor(this, DatabaseExecutor.SqlMethod.SELECT, null, null);
         exec.getSqlBuilder().setSql(sql);
