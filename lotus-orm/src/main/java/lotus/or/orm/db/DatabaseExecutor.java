@@ -259,8 +259,14 @@ public class DatabaseExecutor<T> {
 
     /**select count(config.primaryKeyName) from table [where xxx]*/
     public long findCount() throws SQLException {
+        return findCount(db.getConfig().getPrimaryKeyName());
+    }
+
+
+    /**select count(countField) from table [where xxx]*/
+    public long findCount(String countField) throws SQLException {
         limit(0, 1);
-        List<Map<String, Object>> res = runSelectMap(builder.buildCount());
+        List<Map<String, Object>> res = runSelectMap(builder.buildCount(countField));
         if(!res.isEmpty()) {
             Map<String, Object> map = res.get(0);
             return (long) map.values().toArray()[0];
@@ -268,7 +274,7 @@ public class DatabaseExecutor<T> {
         return 0;
     }
 
-    /**key from fields*/
+    /**key from fields, col从0开始*/
     public Object findOneByCol(int col) throws SQLException {
         Map<String, Object> oneMap = findOneMap();
         return oneMap.get(builder.fields.get(col));
