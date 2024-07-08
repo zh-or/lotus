@@ -1,6 +1,7 @@
 package test;
 
 import lotus.or.orm.db.Database;
+import lotus.or.orm.db.DatabaseExecutor;
 import lotus.or.orm.db.JdbcUtils;
 import lotus.or.orm.db.Transaction;
 import lotus.or.orm.pool.DataSourceConfig;
@@ -155,8 +156,9 @@ public class TestORM {
         db.registerDataSource(dataSource);
 
         int r = db.execSqlUpdate("update test set type_id = ?").params(1).execute();
-
-        List<TestDto> list = db.selectDto(TestDto.class, JdbcUtils.sqlFromResources("test.sql")).findList();
+        DatabaseExecutor exec = db.selectDto(TestDto.class, JdbcUtils.sqlFromResources("test.sql"));
+        long count = exec.findCount("id", "test");
+        List<TestDto> list = exec.findList();
 
         System.out.println("orm end");
     }
