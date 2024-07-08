@@ -146,6 +146,7 @@ public abstract class JdbcUtils {
             else if (type == java.util.Date.class) {
                 ps.setTimestamp(i, new Timestamp(((java.util.Date) p).getTime()));
             } else {
+
                 throw new SQLException(type + " :未知的类型");
             }
         }
