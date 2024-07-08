@@ -58,11 +58,16 @@ public class LotusSqlBuilder {
 
     /**生成sql时只会添加where条件*/
     public String buildCount() throws SQLException {
-        return buildCount(db.getConfig().getPrimaryKeyName());
+        return buildCount(this.table);
     }
 
+    public String buildCount(String table) throws SQLException {
+        return buildCount(db.getConfig().getPrimaryKeyName(), table);
+    }
+
+
     /**生成sql时只会添加where条件*/
-    public String buildCount(String countField) throws SQLException {
+    public String buildCount(String countField, String table) throws SQLException {
         StringBuilder sb = new StringBuilder(255);
         sb.append("select count(");
         sb.append(countField);

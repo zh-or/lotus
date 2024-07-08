@@ -257,16 +257,25 @@ public class DatabaseExecutor<T> {
         return 0;
     }
 
-    /**select count(config.primaryKeyName) from table [where xxx]*/
+    public DatabaseExecutor table(String table) {
+        builder.table = table;
+        return this;
+    }
+
+    /**select count(config.primaryKeyName) from table [where xxx]
+     * 此方法可以在findList/findMap/findListMap前调用, table 为 select方法传入的对象
+     * */
     public long findCount() throws SQLException {
-        return findCount(db.getConfig().getPrimaryKeyName());
+        return findCount(db.getConfig().getPrimaryKeyName(), builder.table);
     }
 
 
-    /**select count(countField) from table [where xxx]*/
-    public long findCount(String countField) throws SQLException {
-        limit(0, 1);
-        List<Map<String, Object>> res = runSelectMap(builder.buildCount(countField));
+    /**select count(countField) from table [where xxx]
+     * 此方法可以在findList/findMap/findListMap前调用
+     * */
+    public long findCount(String countField, String table) throws SQLException {
+        //limit(0, 1);
+        List<Map<String, Object>> res = runSelectMap(builder.buildCount(countField, table));
         if(!res.isEmpty()) {
             Map<String, Object> map = res.get(0);
             return (long) map.values().toArray()[0];
