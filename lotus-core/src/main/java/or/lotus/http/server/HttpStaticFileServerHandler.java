@@ -8,6 +8,8 @@ import io.netty.handler.codec.http.*;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.stream.ChunkedFile;
 import io.netty.util.CharsetUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 import java.io.*;
@@ -69,6 +71,7 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
  * </pre>
  */
 public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
+    protected static Logger log = LoggerFactory.getLogger(HttpStaticFileServerHandler.class);
 
     public static final String HTTP_DATE_FORMAT = "EEE, dd MMM yyyy HH:mm:ss zzz";
     public static final String HTTP_DATE_GMT_TIMEZONE = "GMT";
@@ -107,11 +110,9 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
         File file = new File(path);
 
         if(file.isHidden()) {
-            System.out.println("110:404-" + file.getAbsolutePath());
             sendError(ctx, NOT_FOUND);
             return ;
         } else if(!file.exists()) {
-            System.out.println("404-" + file.getAbsolutePath());
             //自动加上 html 结尾试试
             if(file.getName().lastIndexOf(".") == -1) {
                 file = new File(path + ".html");
@@ -119,7 +120,6 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
         }
 
         if (file.isHidden() || !file.exists()) {
-            System.out.println("122:404-" + file.getAbsolutePath());
             sendError(ctx, NOT_FOUND);
             return;
         }
@@ -129,7 +129,6 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
                 if(context.isEnableDirList()) {
                     sendListing(ctx, file, uri);
                 } else {
-                    System.out.println("132:404-" + file.getAbsolutePath());
                     sendError(ctx, NOT_FOUND);
                 }
             } else {
@@ -172,7 +171,6 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
         try {
             raf = new RandomAccessFile(file, "r");
         } catch (FileNotFoundException ignore) {
-            System.out.println("175:404-" + file.getAbsolutePath());
             sendError(ctx, NOT_FOUND);
             return;
         }
@@ -241,8 +239,8 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         //文件这边不报异常, 统一404
         cause.printStackTrace();
+        log.error("HttpStaticFileServerHandler.java:242 error:", cause);
         if (ctx.channel().isActive()) {
-            System.out.println("244:404-" );
             sendError(ctx, NOT_FOUND);
         }
     }
