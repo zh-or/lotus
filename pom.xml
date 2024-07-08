@@ -12,6 +12,7 @@
         <module>lotus-mybatis-generator</module>
         <module>lotus-wx</module>
         <module>lotus-orm</module>
+        <module>lotus-orm-test</module>
     </modules>
     <dependencies>
 

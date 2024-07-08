@@ -1,4 +1,4 @@
-package lotus.or.orm.test;
+package test;
 
 
 import java.util.Date;
