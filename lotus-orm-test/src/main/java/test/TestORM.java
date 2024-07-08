@@ -1,6 +1,7 @@
-package lotus.or.orm.test;
+package test;
 
 import lotus.or.orm.db.Database;
+import lotus.or.orm.db.JdbcUtils;
 import lotus.or.orm.db.Transaction;
 import lotus.or.orm.pool.DataSourceConfig;
 import lotus.or.orm.pool.LotusConnection;
@@ -10,7 +11,7 @@ import or.lotus.common.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Array;
+import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -21,7 +22,7 @@ import java.util.Map;
 
 public class TestORM {
     static final Logger log = LoggerFactory.getLogger(TestORM.class);
-    public static void main(String[] args) throws SQLException {
+    public static void main(String[] args) throws Exception {
         DataSourceConfig config = new DataSourceConfig("jdbc:mysql://127.0.0.1:3306/test", "root", "123456");
         //DataSourceConfig config = new DataSourceConfig("jdbc:mysql://192.168.1.3:3306/test", "root", "");
         LotusDataSource dataSource = new LotusDataSource();
@@ -149,13 +150,13 @@ public class TestORM {
         System.out.println("orm end");
     }
 
-    public static void testORM3(LotusDataSource dataSource) throws SQLException {
+    public static void testORM3(LotusDataSource dataSource) throws SQLException, IOException {
         Database db = new Database();
         db.registerDataSource(dataSource);
 
         int r = db.execSqlUpdate("update test set type_id = ?").params(1).execute();
 
-        List<TestDto> list = db.selectDto(TestDto.class, "select t1.*,t2.type_name from test t1 left join types t2 on t1.type_id = t2.id").findList();
+        List<TestDto> list = db.selectDto(TestDto.class, JdbcUtils.sqlFromResources("test.sql")).findList();
 
         System.out.println("orm end");
     }
