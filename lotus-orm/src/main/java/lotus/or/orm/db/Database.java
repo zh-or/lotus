@@ -2,16 +2,17 @@ package lotus.or.orm.db;
 
 import lotus.or.orm.pool.DataSourceConfig;
 import lotus.or.orm.pool.LotusDataSource;
+import or.lotus.common.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -31,6 +32,28 @@ public class Database {
     static final ThreadLocal<Connection> transactionConnection = new ThreadLocal<Connection>();
 
     public Database() {
+    }
+
+    /**如果每个DataSource的close方法不一样就多多调用几次, 数据源被关闭后将被移除注册*/
+    public void close(String dataSourceCloseMethodName, Object ... args) {
+        Utils.assets(dataSourceCloseMethodName, "dataSourceCloseMethodName is null");
+        if(dataSources != null) {
+            for(Map.Entry<String, DataSource> entry : dataSources.entrySet()) {
+                try {
+                    DataSource ds = entry.getValue();
+                    Method[] ms = ds.getClass().getMethods();
+
+                    for(Method m: ms) {
+                        if(dataSourceCloseMethodName.equals(m.getName())) {
+                            m.invoke(ds, args);
+                            dataSources.remove(entry.getKey());
+                        }
+                    }
+                } catch (Exception e) {
+                    log.error("关闭数据源 {} 出错:", entry.getKey(), e);
+                }
+            }
+        }
     }
 
     public Database forName(String name) {
