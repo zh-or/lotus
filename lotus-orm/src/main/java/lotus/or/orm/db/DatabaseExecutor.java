@@ -1,11 +1,13 @@
 package lotus.or.orm.db;
 
+import lotus.or.orm.pool.DataSourceConfig;
 import or.lotus.common.Utils;
 import or.lotus.http.Page;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
 import java.sql.*;
 import java.util.*;
 
@@ -20,11 +22,13 @@ public class DatabaseExecutor<T> {
     Object object;
     LotusSqlBuilder builder;
     Database db;
+    DataSourceConfig config;
     ArrayList<Object> params = new ArrayList<>(20);
     ArrayList<Object> whereParams = new ArrayList<>(20);
 
     public DatabaseExecutor(Database db, SqlMethod m, Class<T> clazz, Object object) {
         this.db = db;
+        this.config = db.getConfig();
         this.sqlMethod = m;
         this.clazz = clazz;
         this.object = object;
@@ -68,6 +72,15 @@ public class DatabaseExecutor<T> {
 
     public DatabaseExecutor<T> params(Object ...ps) {
         for(Object p : ps) {
+            Class<?> paramType = p.getClass();
+            String paramTypeName = paramType.getName();
+            TypeConvert convert = config.getTypeConvert(paramTypeName);
+            if(convert != null) {
+                String sqlHolder = convert.sqlParam();
+                if(!Utils.CheckNull(sqlHolder)) {
+                    builder.addHolder(params.size(), sqlHolder);
+                }
+            }
             params.add(p);
         }
         return this;
@@ -266,7 +279,7 @@ public class DatabaseExecutor<T> {
      * 此方法可以在findList/findMap/findListMap前调用, table 为 select方法传入的对象
      * */
     public long findCount() throws SQLException {
-        return findCount(db.getConfig().getPrimaryKeyName(), builder.table);
+        return findCount(config.getPrimaryKeyName(), builder.table);
     }
 
 
@@ -336,36 +349,36 @@ public class DatabaseExecutor<T> {
     }
 
     private int runDelete(String sql) throws SQLException {
-        if(db.getConfig().isPrintSqlLog()) {
+        if(config.isPrintSqlLog()) {
             log.debug("delete sql: {}, --bind({} {})", sql, params, whereParams);
         }
         try (Connection conn = db.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
         ) {
 
-            JdbcUtils.setParamsToStatement(ps, params);
-            JdbcUtils.setParamsToStatement(ps, whereParams, params.size());
+            setParamsToStatement(ps, params);
+            setParamsToStatement(ps, whereParams, params.size());
             return ps.executeUpdate();
         }
     }
 
 
     private int runUpdate(String sql) throws SQLException {
-        if(db.getConfig().isPrintSqlLog()) {
+        if(config.isPrintSqlLog()) {
             log.debug("update sql: {}, --bind({} {})", sql, params, whereParams);
         }
         try (Connection conn = db.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
         ) {
 
-            JdbcUtils.setParamsToStatement(ps, params);
-            JdbcUtils.setParamsToStatement(ps, whereParams, params.size());
+            setParamsToStatement(ps, params);
+            setParamsToStatement(ps, whereParams, params.size());
             return ps.executeUpdate();
         }
     }
 
     private int runUpdateBatch(String sql, List<Object> list) throws SQLException {
-        if(db.getConfig().isPrintSqlLog()) {
+        if(config.isPrintSqlLog()) {
             log.debug("update batch sql: {}, --bind({} {})", sql, params, whereParams);
         }
         int updateCount = 0;
@@ -376,7 +389,7 @@ public class DatabaseExecutor<T> {
             conn.setAutoCommit(false);
 
             ArrayList<Object> insertParams = new ArrayList<>(20);
-            String primaryKey = db.getConfig().getPrimaryKeyName();
+            String primaryKey = config.getPrimaryKeyName();
 
             Object firstObject = list.get(0);
             Class<?> clazz = firstObject.getClass();
@@ -395,7 +408,7 @@ public class DatabaseExecutor<T> {
                 }
                 //主键
                 insertParams.add(JdbcUtils.invokeGetter(obj, clazz, primaryKey));
-                JdbcUtils.setParamsToStatement(ps, insertParams);
+                setParamsToStatement(ps, insertParams);
                 ps.addBatch();
             }
 
@@ -410,7 +423,7 @@ public class DatabaseExecutor<T> {
 
 
     private int runInsert(String sql) throws SQLException {
-        if(db.getConfig().isPrintSqlLog()) {
+        if(config.isPrintSqlLog()) {
             log.debug("insert sql: {}, --bind({} {})", sql, params, whereParams);
         }
         ResultSet rs = null;
@@ -419,12 +432,12 @@ public class DatabaseExecutor<T> {
              PreparedStatement ps = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS);
         ) {
 
-            JdbcUtils.setParamsToStatement(ps, params);
+            setParamsToStatement(ps, params);
 
             updateCount = ps.executeUpdate();
             rs = ps.getGeneratedKeys();
             if(rs != null && rs.next()) {
-                String primaryKey = db.getConfig().getPrimaryKeyName();
+                String primaryKey = config.getPrimaryKeyName();
                 Field field = clazz.getDeclaredField(primaryKey);
                 Class<?> fieldType = field.getType();
                 if(fieldType == int.class || fieldType == Integer.class) {
@@ -442,7 +455,7 @@ public class DatabaseExecutor<T> {
     }
 
     private int runInsertBatch(String sql, List<Object> list) throws SQLException {
-        if(db.getConfig().isPrintSqlLog()) {
+        if(config.isPrintSqlLog()) {
             log.debug("insert batch sql:{}, --bind({} {})", sql, params, whereParams);
         }
         ResultSet rs = null;
@@ -454,7 +467,7 @@ public class DatabaseExecutor<T> {
             conn.setAutoCommit(false);
 
             ArrayList<Object> insertParams = new ArrayList<>(20);
-            String primaryKey = db.getConfig().getPrimaryKeyName();
+            String primaryKey = config.getPrimaryKeyName();
 
             Object firstObject = list.get(0);
             Class<?> clazz = firstObject.getClass();
@@ -472,7 +485,7 @@ public class DatabaseExecutor<T> {
 
                     insertParams.add(val);
                 }
-                JdbcUtils.setParamsToStatement(ps, insertParams);
+                setParamsToStatement(ps, insertParams);
                 ps.addBatch();
             }
 
@@ -501,7 +514,7 @@ public class DatabaseExecutor<T> {
     }
 
     private List<Map<String, Object>> runSelectMap(String sql) throws SQLException {
-        if(db.getConfig().isPrintSqlLog()) {
+        if(config.isPrintSqlLog()) {
             log.debug("{}, --bind({} {})", sql, params, whereParams);
         }
         ResultSet rs = null;
@@ -509,8 +522,8 @@ public class DatabaseExecutor<T> {
              PreparedStatement ps = conn.prepareStatement(sql);
         ) {
 
-            JdbcUtils.setParamsToStatement(ps, params);
-            JdbcUtils.setParamsToStatement(ps, whereParams, params.size());
+            setParamsToStatement(ps, params);
+            setParamsToStatement(ps, whereParams, params.size());
             rs = ps.executeQuery();
             ResultSetMetaData metaData = rs.getMetaData();
             int columnCount = metaData.getColumnCount();
@@ -532,7 +545,7 @@ public class DatabaseExecutor<T> {
     }
 
     private List<T> runSelect(String sql, boolean one) throws SQLException {
-        if(db.getConfig().isPrintSqlLog()) {
+        if(config.isPrintSqlLog()) {
             log.debug("{}, --bind({} {})", sql, params, whereParams);
         }
         ResultSet rs = null;
@@ -540,8 +553,8 @@ public class DatabaseExecutor<T> {
              PreparedStatement ps = conn.prepareStatement(sql);
         ) {
 
-            JdbcUtils.setParamsToStatement(ps, params);
-            JdbcUtils.setParamsToStatement(ps, whereParams, params.size());
+            setParamsToStatement(ps, params);
+            setParamsToStatement(ps, whereParams, params.size());
 
             rs = ps.executeQuery();
             ResultSetMetaData metaData = rs.getMetaData();
@@ -558,9 +571,16 @@ public class DatabaseExecutor<T> {
                     try {
                         String fieldName = JdbcUtils.convertUnderscoreNameToPropertyName(name, false);
                         Field field = newClazz.getDeclaredField(fieldName);
-                        //Object val = JdbcUtils.getResultSetValue(rs, i, field.getType());
-                        JdbcUtils.invokeSetter(obj, newClazz, fieldName, rs.getObject(i, field.getType()));
 
+                        Class<?> fieldTypeClass = field.getType();
+                        TypeConvert convert = config.getTypeConvert(fieldTypeClass.getName());
+                        if(convert != null) {
+                            JdbcUtils.invokeSetter(obj, newClazz, fieldName, convert.decode(rs, i));
+                        } else {
+                            JdbcUtils.invokeSetter(obj, newClazz, fieldName, rs.getObject(i, fieldTypeClass));
+                        }
+
+                        //Object val = JdbcUtils.getResultSetValue(rs, i, field.getType());
                     } catch (NoSuchFieldException e) {
                         log.error("对象: {} 不存在字段: {}, {}", clazz.getSimpleName(), name, e);
                     }
@@ -579,4 +599,62 @@ public class DatabaseExecutor<T> {
         return null;
     }
 
+
+    private void setParamsToStatement(PreparedStatement ps, List<Object> params) throws SQLException {
+        setParamsToStatement(ps, params, 0);
+    }
+
+    private void setParamsToStatement(PreparedStatement ps, List<Object> params, int start) throws SQLException {
+
+        for(int j = 0; j < params.size(); j++) {
+            Object p = params.get(j);
+
+            int i = j + start + 1;
+
+            if(p == null) {
+                ps.setNull(i, Types.NULL);
+                continue;
+            }
+
+            Class<?> type = p.getClass();
+            //转换
+            if(config != null) {
+                String classFullName = type.getName();
+                TypeConvert convert = config.getTypeConvert(classFullName);
+                if(convert != null) {
+                    convert.encode(ps, i, p);
+                    return ;
+                }
+            }
+
+            if (type == String.class)
+                ps.setString(i, (String) p);
+            else if (type == BigDecimal.class)
+                ps.setBigDecimal(i, (BigDecimal) p);
+            else if (type == boolean.class || type == Boolean.class)
+                ps.setBoolean(i, (Boolean) p);
+            else if (type == long.class || type == Long.class)
+                ps.setLong(i, (Long) p);
+            else if (type == int.class || type == Integer.class)
+                ps.setInt(i, (Integer) p);
+            else if (type == char.class)
+                ps.setString(i, String.valueOf((char) p));
+            else if (type == byte.class || type == Byte.class)
+                ps.setByte(i, (Byte) p);
+            else if (type == byte[].class || type == Byte[].class)
+                ps.setBytes(i, (byte[]) p);
+            else if (type == short.class || type == Short.class)
+                ps.setShort(i, (Short) p);
+            else if (type == float.class || type == Float.class)
+                ps.setFloat(i, (Float) p);
+            else if (type == double.class || type == Double.class)
+                ps.setDouble(i, (Double) p);
+            else if (type == java.util.Date.class) {
+                ps.setTimestamp(i, new Timestamp(((java.util.Date) p).getTime()));
+            } else {
+
+                throw new SQLException(type + " :未知的类型");
+            }
+        }
+    }
 }

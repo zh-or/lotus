@@ -242,6 +242,9 @@ public class Database {
         return exec.execute();
     }
 
+    /**useDefaultField的字段为数据库默认值不从obj取
+     * @param useDefaultField 字段为数据库字段名
+     * */
     public int insertAll(List<Object> obj, String ...useDefaultField) throws SQLException {
         if(obj == null && obj.size() == 0) {
             return 0;
@@ -264,7 +267,9 @@ public class Database {
         return exec.execute();
     }
 
-    /**useDefaultField的字段为数据库默认值不从obj取*/
+    /**useDefaultField的字段为数据库默认值不从obj取
+     * @param useDefaultField 字段为数据库字段名
+     * */
     public int insert(Object obj, String ...useDefaultField) throws SQLException {
         Class<?> clazz = obj.getClass();
         DatabaseExecutor exec = new DatabaseExecutor(this, DatabaseExecutor.SqlMethod.INSERT, clazz, obj);
@@ -277,10 +282,12 @@ public class Database {
 
         for(Field f : fields) {
             String name = f.getName();
-            fieldNames.add(JdbcUtils.convertPropertyNameToUnderscoreName(name));
-
-            if(!exec.getSqlBuilder().isDefaultFields(name)) {
-                exec.params(JdbcUtils.invokeGetter(obj, clazz, name));
+            Object val = JdbcUtils.invokeGetter(obj, clazz, name);
+            if(val != null) {
+                fieldNames.add(JdbcUtils.convertPropertyNameToUnderscoreName(name));
+                if(!exec.getSqlBuilder().isDefaultFields(name)) {
+                    exec.params(val);
+                }
             }
         }
         exec.fieldList(fieldNames);
