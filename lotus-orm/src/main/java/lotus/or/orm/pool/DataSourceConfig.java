@@ -1,5 +1,9 @@
 package lotus.or.orm.pool;
 
+import lotus.or.orm.db.TypeConvert;
+
+import java.util.concurrent.ConcurrentHashMap;
+
 public class DataSourceConfig {
     public String url;
     public String username;
@@ -16,6 +20,8 @@ public class DataSourceConfig {
 
     public boolean printSqlLog = true;
 
+    private ConcurrentHashMap<String, TypeConvert> typeConvertMap = new ConcurrentHashMap<>();
+
     public DataSourceConfig() {
     }
 
@@ -25,6 +31,14 @@ public class DataSourceConfig {
         this.password = password;
     }
 
+
+    public void addTypeConvert(Class<?> convertClass, TypeConvert typeConvert) {
+        typeConvertMap.put(convertClass.getName(), typeConvert);
+    }
+
+    public TypeConvert getTypeConvert(String fullClassName) {
+        return typeConvertMap.get(fullClassName);
+    }
 
     public String getUrl() {
         return url;

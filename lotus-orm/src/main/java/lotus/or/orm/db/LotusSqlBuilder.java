@@ -1,5 +1,7 @@
 package lotus.or.orm.db;
 
+import or.lotus.intmap.SparseArray;
+
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -12,6 +14,9 @@ public class LotusSqlBuilder {
     ArrayList<OrderItem> orders = new ArrayList<>(3);
     ArrayList<String> fields = new ArrayList<>(20);
     HashSet<String> defFields = new HashSet<>(10);
+
+    /**key = params的下标(不算默认值)*/
+    SparseArray<String> sqlHolder = new SparseArray<>(16);
 
     int limitStart = -1;
     int limitSize = -1;
@@ -31,6 +36,10 @@ public class LotusSqlBuilder {
     public void setSql(String sql) {
         this.sql.setLength(0);
         this.sql.append(sql);
+    }
+
+    public void addHolder(int key, String value) {
+        sqlHolder.put(key, value);
     }
 
     public void addWhere(WhereItem item) {
@@ -110,18 +119,30 @@ public class LotusSqlBuilder {
         sql.append("update `");
         sql.append(table);
         sql.append("` set ");
+        int size = fields.size();
 
-        if(fields.size() > 0) {
-            for(String f : fields) {
+        if(size > 0) {
+            int i = 0;
+            for(String f: fields) {
                 sql.append("`");
                 sql.append(f);
                 sql.append("`");
                 sql.append("=");
-                sql.append("?,");
+
+                if(isDefaultFields(f)) {
+                    sql.append("default,");
+                } else {
+                    String holder = sqlHolder.get(i);
+                    if(holder != null) {
+                        sql.append(holder).append(",");
+                    } else {
+                        sql.append("?,");
+                    }
+                    i++;
+                }
             }
             sql.setLength(sql.length() - 1);
         }
-
         buildComSql(sql);
         return sql.toString();
     }
@@ -143,8 +164,8 @@ public class LotusSqlBuilder {
         }
         sql.append("insert into ");
         sql.append(table);
-
-        if(fields.size() > 0) {
+        int size = fields.size();
+        if(size > 0) {
             sql.append("(");
             for(String f : fields) {
                 sql.append("`");
@@ -154,12 +175,18 @@ public class LotusSqlBuilder {
             }
             sql.setLength(sql.length() - 1);
             sql.append(") VALUES(");
-
+            int i = 0;
             for(String f : fields) {
                 if(isDefaultFields(f)) {
                     sql.append("default,");
                 } else {
-                    sql.append("?,");
+                    String holder = sqlHolder.get(i);
+                    if(holder != null) {
+                        sql.append(holder).append(",");
+                    } else {
+                        sql.append("?,");
+                    }
+                    i++;
                 }
             }
             sql.setLength(sql.length() - 1);

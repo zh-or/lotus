@@ -1,13 +1,16 @@
 package test;
 
 
+import lotus.or.orm.geometry.model.PointGeo;
+
 import java.util.Date;
 
 public class Test {
     public int id;
     public String str;
     public Date createTime;
-    public int typeId;
+    public Integer typeId;
+    public PointGeo p;
 
     public Test() {
     }
@@ -42,11 +45,19 @@ public class Test {
         this.createTime = createTime;
     }
 
-    public int getTypeId() {
+    public Integer getTypeId() {
         return typeId;
     }
 
-    public void setTypeId(int typeId) {
+    public void setTypeId(Integer typeId) {
         this.typeId = typeId;
+    }
+
+    public PointGeo getP() {
+        return p;
+    }
+
+    public void setP(PointGeo p) {
+        this.p = p;
     }
 }

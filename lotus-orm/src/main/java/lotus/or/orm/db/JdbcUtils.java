@@ -105,52 +105,6 @@ public abstract class JdbcUtils {
         return null;
     }
 
-    public static void setParamsToStatement(PreparedStatement ps, List<Object> params) throws SQLException {
-        setParamsToStatement(ps, params, 0);
-    }
-
-    public static void setParamsToStatement(PreparedStatement ps, List<Object> params, int start) throws SQLException {
-        for(int j = 0; j < params.size(); j++) {
-            Object p = params.get(j);
-
-            int i = j + start + 1;
-
-            if(p == null) {
-                ps.setNull(i, Types.NULL);
-                continue;
-            }
-
-            Class<?> type = p.getClass();
-            if (type == String.class)
-                ps.setString(i, (String) p);
-            else if (type == BigDecimal.class)
-                ps.setBigDecimal(i, (BigDecimal) p);
-            else if (type == boolean.class || type == Boolean.class)
-                ps.setBoolean(i, (Boolean) p);
-            else if (type == long.class || type == Long.class)
-                ps.setLong(i, (Long) p);
-            else if (type == int.class || type == Integer.class)
-                ps.setInt(i, (Integer) p);
-            else if (type == char.class)
-                ps.setString(i, String.valueOf((char) p));
-            else if (type == byte.class || type == Byte.class)
-                ps.setByte(i, (Byte) p);
-            else if (type == byte[].class || type == Byte[].class)
-                ps.setBytes(i, (byte[]) p);
-            else if (type == short.class || type == Short.class)
-                ps.setShort(i, (Short) p);
-            else if (type == float.class || type == Float.class)
-                ps.setFloat(i, (Float) p);
-            else if (type == double.class || type == Double.class)
-                ps.setDouble(i, (Double) p);
-            else if (type == java.util.Date.class) {
-                ps.setTimestamp(i, new Timestamp(((java.util.Date) p).getTime()));
-            } else {
-
-                throw new SQLException(type + " :未知的类型");
-            }
-        }
-    }
 
     public static Object getResultSetValue(ResultSet rs, int index, Class<?> requiredType) throws SQLException {
         if (requiredType == null) {

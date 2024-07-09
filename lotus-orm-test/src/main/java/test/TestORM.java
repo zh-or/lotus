@@ -1,18 +1,20 @@
 package test;
 
-import lotus.or.orm.db.Database;
-import lotus.or.orm.db.DatabaseExecutor;
-import lotus.or.orm.db.JdbcUtils;
-import lotus.or.orm.db.Transaction;
+import lotus.or.orm.db.*;
+import lotus.or.orm.geometry.GeometryConvertToModel;
+import lotus.or.orm.geometry.model.PointGeo;
 import lotus.or.orm.pool.DataSourceConfig;
 import lotus.or.orm.pool.LotusConnection;
 import lotus.or.orm.pool.LotusDataSource;
 import or.lotus.common.Format;
 import or.lotus.common.Utils;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.io.WKBWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -26,9 +28,39 @@ public class TestORM {
     public static void main(String[] args) throws Exception {
         DataSourceConfig config = new DataSourceConfig("jdbc:mysql://127.0.0.1:3306/test", "root", "123456");
         //DataSourceConfig config = new DataSourceConfig("jdbc:mysql://192.168.1.3:3306/test", "root", "");
+
+        config.addTypeConvert(PointGeo.class, new TypeConvert<PointGeo>() {
+
+            @Override
+            public String sqlParam() {
+                return "ST_PointFromWKB(?, 4326)";
+            }
+
+            @Override
+            public Object decode(ResultSet ps, int index) throws SQLException {
+                InputStream in = ps.getBinaryStream(index);
+
+                return GeometryConvertToModel.toPointGeo(in);
+            }
+
+            @Override
+            public void encode(PreparedStatement ps, int index, PointGeo obj) throws SQLException{
+                Geometry geo = obj.toGeometry();
+                //geo.setSRID(4326);
+                int dimension = geo.getDimension();
+                dimension = (dimension == 2 || dimension == 3) ? dimension : 2;
+                //有SRID的话前面会多4个字节, 但是插入数据库不需要这一节, 需要在sql中指定SRID的值
+                //http://www.tsusiatsoftware.net/jts/javadoc/com/vividsolutions/jts/io/WKBWriter.html
+                //文档
+                WKBWriter write = new WKBWriter(dimension, false);
+                byte[] data = write.write(geo);
+                ps.setBytes(index, data);
+            }
+        });
+
         LotusDataSource dataSource = new LotusDataSource();
         dataSource.setConfig(config);
-        printInfo(dataSource);
+        //printInfo(dataSource);
         testConnection(dataSource);
         testORM3(dataSource);
         //testORM(dataSource);
@@ -154,6 +186,17 @@ public class TestORM {
     public static void testORM3(LotusDataSource dataSource) throws SQLException, IOException {
         Database db = new Database();
         db.registerDataSource(dataSource);
+
+        int rId = Utils.RandomNum(2, 18);
+        Test ut = new Test();
+        ut.setId(rId);
+        ut.setP(new PointGeo(106.53, 29.5306));
+
+        int updateR = db.update(ut);
+        ut.setStr("插入带point的数据");
+        int insertR = db.insert(ut, "create_time");
+
+        List<Test> t1 = db.select(Test.class).findList();
 
         int r = db.execSqlUpdate("update test set type_id = ?").params(1).execute();
         DatabaseExecutor exec = db.selectDto(TestDto.class, JdbcUtils.sqlFromResources("test.sql"));
