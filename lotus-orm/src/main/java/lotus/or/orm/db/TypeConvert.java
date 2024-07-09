@@ -7,7 +7,9 @@ import java.sql.SQLException;
 public abstract class TypeConvert<T> {
 
     /**如果insert/update的 sql占位需要包裹函数时使用此方法返回, 比如 ST_PointFromWKB(?, 4326)*/
-    public abstract String sqlParam();
+    public String sqlParam() {
+        return "?";
+    }
 
     /**
      * 从PreparedStatement中获取值
