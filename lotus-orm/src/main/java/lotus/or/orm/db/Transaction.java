@@ -16,10 +16,12 @@ public class Transaction implements Closeable, InvocationHandler {
     Connection proxyConnection;
     Database db;
     boolean isCommit = false;
+    boolean rawIsAutoCommit = false;
 
     public Transaction(Database db) throws SQLException {
         this.db = db;
         connection = db.getConnection();
+        rawIsAutoCommit = connection.getAutoCommit();
         connection.setAutoCommit(false);
         Class<?> clazz = connection.getClass();
         proxyConnection = (Connection) Proxy.newProxyInstance(clazz.getClassLoader(), clazz.getInterfaces(), this);
@@ -50,18 +52,22 @@ public class Transaction implements Closeable, InvocationHandler {
     @Override
     public void close() {
         try {
-            if(!isCommit) {
+            if(!isCommit) {//未提交事物执行一次回滚操作
                 connection.rollback();
             }
-            db.transactionConnection.remove();
         } catch (SQLException e) {
-            log.debug("事物关闭原始连接出错:", e);
+            log.debug("自动回滚异常:", e);
         }
-
+        db.transactionConnection.remove();
+        try {
+            connection.setAutoCommit(rawIsAutoCommit);
+        } catch (SQLException e) {
+            log.error("事物还原AutoCommit出错 值={}", rawIsAutoCommit, e);
+        }
         try {
             connection.close();
         } catch (SQLException e) {
-            log.debug("事物关闭原始连接出错:", e);
+            log.error("事物关闭原始连接出错:", e);
         }
     }
 
