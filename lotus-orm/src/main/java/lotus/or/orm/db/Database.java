@@ -183,7 +183,7 @@ public class Database {
         return exec;
     }
 
-    /**使用config.primaryKeyName 作为主键更新*/
+    /**使用config.primaryKeyName 作为主键更新所有字段*/
     public int updateAll(List<?> obj) throws SQLException {
         if(obj == null && obj.size() == 0) {
             return 0;
@@ -207,10 +207,18 @@ public class Database {
         return exec.execute();
     }
 
-    /**update(Test.class, "str", "updateTime").params("str1", new Date()).execute() */
+    /** update(Test.class, "str", "updateTime").params("str1", new Date()).execute() */
     public DatabaseExecutor update(Object obj, String ...fields) throws SQLException {
         DatabaseExecutor exec = new DatabaseExecutor(this, DatabaseExecutor.SqlMethod.UPDATE, obj.getClass(), obj);
         exec.fieldList(Arrays.asList(fields));
+
+        String primaryKeyName = getConfig().getPrimaryKeyName();
+        Class clazz = obj.getClass();
+        Object val = JdbcUtils.invokeGetter(obj, clazz, primaryKeyName);
+        if(val != null) {
+            exec.whereEq(primaryKeyName, val);
+        }
+
         return exec;
     }
 

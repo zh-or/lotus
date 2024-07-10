@@ -8,7 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 
 public class LotusSqlBuilder {
-    StringBuilder sql = new StringBuilder(255);
+    StringBuilder sql = new StringBuilder(4096);//4k
 
     ArrayList<WhereItem> wheres = new ArrayList<>(3);
     ArrayList<OrderItem> orders = new ArrayList<>(3);
