@@ -20,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *  1. 数据库表名必须和类名一致
  *  2. 数据库字段名完全对应bean的字段, bean的大写会转换为 createTime => create_time
  *  3. 所有主键名必须一致, 减少无畏的判断
+ *  4. bean的字段不要用基本数据类型, 全部使用包装类型 比如 int => Integer
  *
  * */
 public class Database {
@@ -116,9 +117,18 @@ public class Database {
         if(connection == null) {
             connection = dataSource.getConnection();
         }
+
         return connection;
     }
 
+    /**事物一定要调用close
+     * 通常用法
+     * try(Transaction transaction = db.beginTransaction()) {
+     *     //todo
+     *     transaction.commit();
+     * }
+     *
+     * */
     public Transaction beginTransaction() throws SQLException {
         Transaction transaction = new Transaction(this);
         return transaction;
@@ -214,6 +224,15 @@ public class Database {
      * @param updateIgnoreNull 更新时如果有字段为null则忽略该字段
      */
     public int update(Object obj, boolean updateIgnoreNull) throws SQLException {
+        return updateByExec(obj, updateIgnoreNull).execute();
+    }
+
+    public DatabaseExecutor updateByExec(Object obj) {
+        return updateByExec(obj, getConfig().isUpdateIgnoreNull());
+    }
+
+
+    public DatabaseExecutor updateByExec(Object obj, boolean updateIgnoreNull) {
         Class<?> clazz = obj.getClass();
         DatabaseExecutor exec = new DatabaseExecutor(this, DatabaseExecutor.SqlMethod.UPDATE, clazz, obj);
         Field[] fields = clazz.getDeclaredFields();
@@ -239,7 +258,7 @@ public class Database {
         }
         exec.fieldList(fieldNames);
         exec.useDefaultField(primaryKeyName);
-        return exec.execute();
+        return exec;
     }
 
     /**useDefaultField的字段为数据库默认值不从obj取
