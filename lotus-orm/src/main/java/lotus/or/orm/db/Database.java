@@ -227,11 +227,18 @@ public class Database {
         return updateByExec(obj, updateIgnoreNull).execute();
     }
 
+    /**根据对象的主键更新, 如果没有主键会更新整个表的数据
+     * 可增加where条件, 但是必须先 whereAnd() | whereOr() 因为第一个条件是 id = ?
+     * */
     public DatabaseExecutor updateByExec(Object obj) {
         return updateByExec(obj, getConfig().isUpdateIgnoreNull());
     }
 
 
+    /**根据对象的主键更新, 如果没有主键会更新整个表的数据
+     * 可增加where条件, 但是必须先 whereAnd() | whereOr() 因为第一个条件是 id = ?
+     * @param updateIgnoreNull 更新时如果有字段为null则忽略该字段
+     * */
     public DatabaseExecutor updateByExec(Object obj, boolean updateIgnoreNull) {
         Class<?> clazz = obj.getClass();
         DatabaseExecutor exec = new DatabaseExecutor(this, DatabaseExecutor.SqlMethod.UPDATE, clazz, obj);
