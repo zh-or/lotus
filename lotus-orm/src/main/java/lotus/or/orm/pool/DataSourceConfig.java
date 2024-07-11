@@ -22,6 +22,8 @@ public class DataSourceConfig {
 
     public boolean printStack = true;
 
+    public String printStackPackagePrefix = null;
+
     private ConcurrentHashMap<String, TypeConvert> typeConvertMap = new ConcurrentHashMap<>();
 
     public DataSourceConfig() {
@@ -151,4 +153,13 @@ public class DataSourceConfig {
     public void setPrintStack(boolean printStack) {
         this.printStack = printStack;
     }
+
+    public String getPrintStackPackagePrefix() {
+        return printStackPackagePrefix;
+    }
+
+    public void setPrintStackPackagePrefix(String printStackPackagePrefix) {
+        this.printStackPackagePrefix = printStackPackagePrefix;
+    }
+
 }
