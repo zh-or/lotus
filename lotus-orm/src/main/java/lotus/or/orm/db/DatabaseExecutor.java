@@ -593,9 +593,19 @@ public class DatabaseExecutor<T> {
             sb.append("\n┌================================== Lotus ORM ===========================================");
             if(config.isPrintStack()) {
                 StackTraceElement stack[] = Thread.currentThread().getStackTrace();
-
+                String printStackPackagePrefix = config.getPrintStackPackagePrefix();
+                boolean foundPrefix = false;
                 for(int i = 1; i < stack.length; i++) {
-                    if(!stack[i].getClassName().startsWith("lotus.or.orm.db")) {
+                    if(printStackPackagePrefix != null) {
+                        if(stack[i].getClassName().startsWith(printStackPackagePrefix)) {
+                            foundPrefix = true;
+                            sb.append("\n\t");
+                            sb.append(stack[i].toString());
+                        } else if(foundPrefix) {
+                            //如果遇到了其他包则跳出循环, 以免误导(堆栈会和实际链路不一样)
+                            break;
+                        }
+                    } else if(!stack[i].getClassName().startsWith("lotus.or.orm.db")) {
                         sb.append("\n\t");
                         sb.append(stack[i].toString());
                     }
