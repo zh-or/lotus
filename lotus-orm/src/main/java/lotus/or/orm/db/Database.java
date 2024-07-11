@@ -299,7 +299,7 @@ public class Database {
         int t = insertAll(obj, useDefaultField);
         int t1 = obj.size();
 
-        if(t != t1){
+        if(t != t1) {
             throw new SQLException("批量插入有失败, 目标数量: " + t1 + " 实际插入:" + t);
         }
     }
