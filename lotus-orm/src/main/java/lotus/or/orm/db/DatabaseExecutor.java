@@ -349,9 +349,7 @@ public class DatabaseExecutor<T> {
     }
 
     private int runDelete(String sql) throws SQLException {
-        if(config.isPrintSqlLog()) {
-            log.debug("delete sql: {}, --bind({} {})", sql, params, whereParams);
-        }
+        printSqlLog(sql);
         try (Connection conn = db.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
         ) {
@@ -364,9 +362,8 @@ public class DatabaseExecutor<T> {
 
 
     private int runUpdate(String sql) throws SQLException {
-        if(config.isPrintSqlLog()) {
-            log.debug("update sql: {}, --bind({} {})", sql, params, whereParams);
-        }
+        printSqlLog(sql);
+
         try (Connection conn = db.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
         ) {
@@ -378,9 +375,8 @@ public class DatabaseExecutor<T> {
     }
 
     private int runUpdateBatch(String sql, List<Object> list) throws SQLException {
-        if(config.isPrintSqlLog()) {
-            log.debug("update batch sql: {}, --bind({} {})", sql, params, whereParams);
-        }
+        printSqlLog(sql);
+
         int updateCount = 0;
         try (Connection conn = db.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
@@ -423,9 +419,7 @@ public class DatabaseExecutor<T> {
 
 
     private int runInsert(String sql) throws SQLException {
-        if(config.isPrintSqlLog()) {
-            log.debug("insert sql: {}, --bind({} {})", sql, params, whereParams);
-        }
+        printSqlLog(sql);
         ResultSet rs = null;
         int updateCount = 0;
         try (Connection conn = db.getConnection();
@@ -455,9 +449,7 @@ public class DatabaseExecutor<T> {
     }
 
     private int runInsertBatch(String sql, List<Object> list) throws SQLException {
-        if(config.isPrintSqlLog()) {
-            log.debug("insert batch sql:{}, --bind({} {})", sql, params, whereParams);
-        }
+        printSqlLog(sql);
         ResultSet rs = null;
         int updateCount = 0;
         try (Connection conn = db.getConnection();
@@ -514,9 +506,7 @@ public class DatabaseExecutor<T> {
     }
 
     private List<Map<String, Object>> runSelectMap(String sql) throws SQLException {
-        if(config.isPrintSqlLog()) {
-            log.debug("{}, --bind({} {})", sql, params, whereParams);
-        }
+        printSqlLog(sql);
         ResultSet rs = null;
         try (Connection conn = db.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
@@ -545,9 +535,7 @@ public class DatabaseExecutor<T> {
     }
 
     private List<T> runSelect(String sql, boolean one) throws SQLException {
-        if(config.isPrintSqlLog()) {
-            log.debug("{}, --bind({} {})", sql, params, whereParams);
-        }
+        printSqlLog(sql);
         ResultSet rs = null;
         try (Connection conn = db.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
@@ -597,6 +585,35 @@ public class DatabaseExecutor<T> {
             JdbcUtils.closeResultSet(rs);
         }
         return null;
+    }
+
+    private void printSqlLog(String sql) {
+        if(config.isPrintSqlLog()) {
+            StringBuilder sb = new StringBuilder(2048);
+            sb.append("\n┌---------------------------------------------------------------------------------");
+            if(config.isPrintStack()) {
+                StackTraceElement stack[] = Thread.currentThread().getStackTrace();
+
+                for(int i = 1; i < stack.length; i++) {
+                    if(!stack[i].getClassName().startsWith("lotus.or.orm.db")) {
+                        sb.append("\n\t");
+                        sb.append(stack[i].toString());
+                    }
+                }
+            }
+
+            sb.append("\n\tSQL ===> ");
+            sb.append(sql);
+            sb.append("\n\tbind(");
+            sb.append(params);
+            sb.append(" ");
+            sb.append(whereParams);
+            sb.append(" )");
+
+            sb.append("\n└---------------------------------------------------------------------------------\n");
+            log.debug(sb.toString());
+        }
+
     }
 
 
