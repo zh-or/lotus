@@ -590,7 +590,7 @@ public class DatabaseExecutor<T> {
     private void printSqlLog(String sql) {
         if(config.isPrintSqlLog()) {
             StringBuilder sb = new StringBuilder(2048);
-            sb.append("\n┌---------------------------------------------------------------------------------");
+            sb.append("\n┌================================== Lotus ORM ===========================================");
             if(config.isPrintStack()) {
                 StackTraceElement stack[] = Thread.currentThread().getStackTrace();
 
@@ -610,7 +610,7 @@ public class DatabaseExecutor<T> {
             sb.append(whereParams);
             sb.append(" )");
 
-            sb.append("\n└---------------------------------------------------------------------------------\n");
+            sb.append("\n└========================================================================================\n");
             log.debug(sb.toString());
         }
 
