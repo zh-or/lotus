@@ -20,6 +20,8 @@ public class DataSourceConfig {
 
     public boolean printSqlLog = true;
 
+    public boolean printStack = true;
+
     private ConcurrentHashMap<String, TypeConvert> typeConvertMap = new ConcurrentHashMap<>();
 
     public DataSourceConfig() {
@@ -140,5 +142,13 @@ public class DataSourceConfig {
 
     public void setPrintSqlLog(boolean printSqlLog) {
         this.printSqlLog = printSqlLog;
+    }
+
+    public boolean isPrintStack() {
+        return printStack;
+    }
+
+    public void setPrintStack(boolean printStack) {
+        this.printStack = printStack;
     }
 }
