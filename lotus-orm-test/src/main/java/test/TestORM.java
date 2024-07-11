@@ -37,7 +37,7 @@ public class TestORM {
             }
 
             @Override
-            public Object decode(ResultSet ps, int index) throws SQLException {
+            public PointGeo decode(ResultSet ps, int index) throws SQLException {
                 InputStream in = ps.getBinaryStream(index);
 
                 return GeometryConvertToModel.toPointGeo(in);
