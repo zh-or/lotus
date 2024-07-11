@@ -256,6 +256,18 @@ public class DatabaseExecutor<T> {
         return this;
     }
 
+    /**如果受影响行数小于 1 则抛出异常*/
+    public void executeOrError() throws SQLException {
+        executeOrError(1);
+    }
+
+    /**如果受影响行数小于 @Param minRows 则抛出异常*/
+    public void executeOrError(int minRows) throws SQLException {
+        if(execute() < minRows) {
+            throw new SQLException("sql执行受影响行数小于:" + minRows);
+        }
+    }
+
     public int execute() throws SQLException {
 
         switch (sqlMethod) {

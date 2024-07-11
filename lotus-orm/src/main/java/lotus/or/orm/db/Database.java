@@ -167,6 +167,11 @@ public class Database {
         exec.fieldsFromObj();
         return exec;
     }
+    public void deleteOrError(Class<?> clazz, long id) throws SQLException {
+        if(delete(clazz, id) < 1) {
+            throw new SQLException("受影响行数小于1");
+        }
+    }
 
     /**根据主键删除*/
     public int delete(Class<?> clazz, long id) throws SQLException {
@@ -222,9 +227,23 @@ public class Database {
         return exec;
     }
 
+    /**受影响行数小于1则抛出异常*/
+    public void updateOrError(Object obj) throws SQLException {
+        if(update(obj) < 1) {
+            throw new SQLException("受影响行数小于1");
+        }
+    }
+
     /**根据对象的主键更新对象不为null的值, 如果没有主键会更新整个表的数据*/
     public int update(Object obj) throws SQLException {
         return update(obj, getConfig().isUpdateIgnoreNull());
+    }
+
+    /**受影响行数小于1则抛出异常*/
+    public void updateOrError(Object obj, boolean updateIgnoreNull) throws SQLException {
+        if(update(obj, updateIgnoreNull) < 1) {
+            throw new SQLException("受影响行数小于1");
+        }
     }
 
     /**
@@ -276,6 +295,15 @@ public class Database {
         return exec;
     }
 
+    public void insertAllOrError(List<Object> obj, String ...useDefaultField) throws SQLException {
+        int t = insertAll(obj, useDefaultField);
+        int t1 = obj.size();
+
+        if(t != t1){
+            throw new SQLException("批量插入有失败, 目标数量: " + t1 + " 实际插入:" + t);
+        }
+    }
+
     /**useDefaultField的字段为数据库默认值不从obj取
      * @param useDefaultField 字段为数据库字段名
      * */
@@ -299,6 +327,13 @@ public class Database {
         exec.fieldList(fieldNames);
         exec.useDefaultField(getConfig().getPrimaryKeyName());
         return exec.execute();
+    }
+
+    /**插入时受影响行数小于1则抛出异常*/
+    public void insertOrError(Object obj, String ...useDefaultField) throws SQLException {
+        if(insert(obj, useDefaultField) < 1) {
+            throw new SQLException("插入失败");
+        }
     }
 
     /**useDefaultField的字段为数据库默认值不从obj取
