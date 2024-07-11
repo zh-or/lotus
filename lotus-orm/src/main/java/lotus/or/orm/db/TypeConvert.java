@@ -14,7 +14,7 @@ public abstract class TypeConvert<T> {
     /**
      * 从PreparedStatement中获取值
      */
-    public abstract Object decode(ResultSet ps, int index) throws SQLException;
+    public abstract T decode(ResultSet ps, int index) throws SQLException;
 
     /**设置参数时调用*/
     public abstract void encode(PreparedStatement ps, int index, T obj) throws SQLException;
