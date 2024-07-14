@@ -662,7 +662,7 @@ public class DatabaseExecutor<T> {
                 TypeConvert convert = config.getTypeConvert(classFullName);
                 if(convert != null) {
                     convert.encode(ps, i, p);
-                    return ;
+                    continue ;
                 }
             }
 
