@@ -4,13 +4,25 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.*;
 
+import java.io.File;
+import java.io.IOException;
+import java.text.ParseException;
+
 import static io.netty.handler.codec.http.HttpResponseStatus.FOUND;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 public class HttpResponsePkg {
     FullHttpResponse response;
+    File file;
 
     private HttpResponsePkg() {
+    }
+
+    public static HttpResponsePkg create(File file) throws ParseException, IOException {
+        HttpResponsePkg pkg = new HttpResponsePkg();
+        pkg.file = file;
+
+        return pkg;
     }
 
 
@@ -64,5 +76,10 @@ public class HttpResponsePkg {
     public FullHttpResponse raw() {
 
         return response;
+    }
+
+
+    public boolean isFileResponse() {
+        return file != null;
     }
 }

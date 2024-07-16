@@ -18,6 +18,7 @@ public class GraceShutdown {
     public void shutdown() {
         for(Closeable obj : objs) {
             try {
+                log.info("关闭 {}", obj.getClass().getName());
                 obj.close();
             } catch (IOException e) {
                 log.error("关闭出错: {}, {}", obj, e);

@@ -16,6 +16,7 @@ import java.util.Enumeration;
 import static io.netty.handler.codec.http.HttpResponseStatus.FOUND;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_0;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
+import static or.lotus.http.server.LotusResponseSender.sendResponse;
 
 public class HttpServerHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
     HttpServer server;
@@ -46,12 +47,12 @@ public class HttpServerHandler extends SimpleChannelInboundHandler<FullHttpReque
                                 for (HttpRestServiceHook filter : hooks) {
                                     Object interceptRes = filter.requestHook(req);
                                     if (interceptRes != null) {
-                                        sendResponse(ctx, req, interceptRes);
+                                        sendResponse(server, ctx, req, interceptRes);
                                         return;
                                     }
                                 }
                             } catch (Exception e) {
-                                sendResponse(ctx, req, server.exception(e, req));
+                                sendResponse(server, ctx, req, server.exception(e, req));
                                 return;
                             }
                             if(!"/".equals(key)) {
@@ -61,7 +62,7 @@ public class HttpServerHandler extends SimpleChannelInboundHandler<FullHttpReque
                             for(HttpBaseService service : serviceWrap.services) {
                                 try {
                                     Object res = service.__dispatch(newPath, req);
-                                    sendResponse(ctx, req, res);
+                                    sendResponse(server, ctx, req, res);
                                     isHandle = true;
                                     req.release();
                                     break;
@@ -97,75 +98,5 @@ public class HttpServerHandler extends SimpleChannelInboundHandler<FullHttpReque
     }
 
 
-    private boolean sendResponse(ChannelHandlerContext ctx, HttpRequestPkg request, Object res) {
-        FullHttpResponse response = null;
-        if(res == null) {
-            response = HttpResponsePkg.create().raw();
-        } else if(res instanceof HttpResponsePkg) {
-            response = ((HttpResponsePkg) res).raw();
-        } else if(res instanceof ModelAndView) {
-            if(server.templateEngine == null) {
-                throw new IllegalStateException("你返回了ModelAndView, 但是并没有启用模板引擎.");
-            }
-            ModelAndView mv = (ModelAndView) res;
-            if(mv.isRedirect) {//302跳转
-                response = new DefaultFullHttpResponse(HTTP_1_1, FOUND, Unpooled.EMPTY_BUFFER);
-                response.headers().set(HttpHeaderNames.LOCATION, mv.getViewName());
-            } else {
-                TemplateWriter writer = new TemplateWriter(request.channelCtx.alloc().heapBuffer(server.responseBufferSize), server.charset);
-                try {
-                    server.templateEngine.process(
-                            mv.getViewName(),
-                            mv.values,
-                            writer
-                    );
-                } catch(Exception e) {
-                    Object res2 = server.exception(e, request);
-                    return sendResponse(ctx, request, res2);
-                }
 
-                if(server.outModelAndViewTime) {
-                    try {
-                        writer.write("<!-- handle time: " + ((System.nanoTime() - mv.createTime) / 1_000_000) + "ms -->");
-                    } catch (IOException e) {}
-                }
-
-                response = HttpResponsePkg.create(
-                        request,
-                        writer.getBuffer()
-                ).raw();
-                //todo 此处需要根据实际情况设置缓存头
-                response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html; charset=" + server.charset.displayName());
-            }
-
-        } else {
-            response = HttpResponsePkg.create(request, res.toString()).raw();
-            response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain; charset=" + server.charset.displayName());
-        }
-
-        final boolean keepAlive = HttpUtil.isKeepAlive(request.rawRequest);
-        HttpUtil.setContentLength(response, response.content().readableBytes());
-        if (!keepAlive) {
-            // We're going to close the connection as soon as the response is sent,
-            // so we should also make it clear for the client.
-            response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE);
-        } else if (request.rawRequest.protocolVersion().equals(HTTP_1_0)) {
-            response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
-        }
-        ArrayList<HttpRestServiceHook> hooks = server.getHooks();
-        for(HttpRestServiceHook filter : hooks) {
-            filter.responseHook(request, response);
-        }
-        //todo 需要判断此时是否可写, 如果写入速度过快则会资源耗尽
-        //ctx.channel().isWritable();
-
-        ChannelFuture flushPromise = ctx.writeAndFlush(response);
-
-        if (!keepAlive) {
-            // Close the connection as soon as the response is sent.
-            flushPromise.addListener(ChannelFutureListener.CLOSE);
-        }
-
-        return true;
-    }
 }
