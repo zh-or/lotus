@@ -248,9 +248,12 @@ public class HttpRequestPkg {
     public HashMap<String, Cookie> getCookies() {
         if(cookies == null) {
             cookies = new HashMap<>();
-            List<Cookie> list = ServerCookieDecoder.LAX.decodeAll(getHeader("Cookie"));
-            for (Cookie cookie : list) {
-                cookies.put(cookie.name(), cookie);
+            String cookieStr = getHeader("Cookie");
+            if(!Utils.CheckNull(cookieStr)) {
+                List<Cookie> list = ServerCookieDecoder.LAX.decodeAll(cookieStr);
+                for (Cookie cookie : list) {
+                    cookies.put(cookie.name(), cookie);
+                }
             }
         }
         return cookies;
