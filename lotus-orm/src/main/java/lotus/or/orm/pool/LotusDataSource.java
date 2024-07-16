@@ -39,7 +39,7 @@ public class LotusDataSource implements DataSource {
     public void close() {
         for(int i = 0; i < poolSize.intValue(); i++) {
             try {
-                LotusConnection conn = pool.poll(10, TimeUnit.SECONDS);
+                LotusConnection conn = pool.poll(1, TimeUnit.SECONDS);
                 if(conn != null) {
                     conn.closeRawConnection();
                 }
