@@ -87,7 +87,8 @@ public class HttpServerHandler extends SimpleChannelInboundHandler<FullHttpReque
         } catch(Throwable e) {
             e.printStackTrace();
         }
-        ctx.fireChannelRead(request.retain());
+        //ctx.fireChannelRead(request.retain());//
+        ctx.fireChannelRead(request);//不需要调用retain?
 
        /* System.out.println(channel.remoteAddress()); // 显示客户端的远程地址
         String content = String.format("Receive http request, uri: %s, method: %s, content: %s%n", request.uri(), request.method(), request.content().toString(CharsetUtil.UTF_8));
