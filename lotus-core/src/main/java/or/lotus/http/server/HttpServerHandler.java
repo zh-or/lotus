@@ -64,13 +64,12 @@ public class HttpServerHandler extends SimpleChannelInboundHandler<FullHttpReque
                                     Object res = service.__dispatch(newPath, req);
                                     sendResponse(server, ctx, req, res);
                                     isHandle = true;
-                                    req.release();
                                     break;
                                 } catch (HttpRequestPathNotFoundException e2) {
+
                                 } finally {
-                                    if(server.eventExec!= null) {
-                                        //手动调用会报错
-                                        //req.release();
+                                    if(isHandle && server.eventExec != null) {
+                                        req.release();
                                     }
                                 }
                             }
