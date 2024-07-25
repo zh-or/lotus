@@ -103,7 +103,6 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         //文件这边不报异常, 统一404
-        cause.printStackTrace();
         log.error("HttpStaticFileServerHandler.java:242 error:", cause);
         if (ctx.channel().isActive()) {
             sendError(context, ctx, null, NOT_FOUND);
