@@ -48,11 +48,13 @@ public class HttpServerHandler extends SimpleChannelInboundHandler<FullHttpReque
                                     Object interceptRes = filter.requestHook(req);
                                     if (interceptRes != null) {
                                         sendResponse(server, ctx, req, interceptRes);
+                                        req.release();
                                         return;
                                     }
                                 }
                             } catch (Exception e) {
                                 sendResponse(server, ctx, req, server.exception(e, req));
+                                req.release();
                                 return;
                             }
                             if(!"/".equals(key)) {
@@ -67,12 +69,9 @@ public class HttpServerHandler extends SimpleChannelInboundHandler<FullHttpReque
                                     break;
                                 } catch (HttpRequestPathNotFoundException e2) {
 
-                                } finally {
-                                    if(isHandle && server.eventExec != null) {
-                                        req.release();
-                                    }
                                 }
                             }
+                            req.release();
                             if(!isHandle) {
                                 //没有匹配到 controller, 走文件处理
                                 ctx.fireChannelRead(req.rawRequest);
@@ -86,6 +85,7 @@ public class HttpServerHandler extends SimpleChannelInboundHandler<FullHttpReque
         } catch(Throwable e) {
             e.printStackTrace();
         }
+        req.release();
         //ctx.fireChannelRead(request.retain());//
         ctx.fireChannelRead(request);//不需要调用retain?
 

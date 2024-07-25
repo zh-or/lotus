@@ -223,13 +223,18 @@ public class HttpRequestPkg {
         return rawRequest.headers().get(name);
     }
 
+    private int useCount = 0;
     public FullHttpRequest retain() {
         rawRequest = rawRequest.retain();
+        useCount ++;
         return rawRequest;
     }
 
     public void release() {
-        rawRequest.release();
+        if(useCount > 0) {
+            useCount --;
+            rawRequest.release();
+        }
     }
 
     public boolean isMultipart() {
