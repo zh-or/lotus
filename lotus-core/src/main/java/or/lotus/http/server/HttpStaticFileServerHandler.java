@@ -67,7 +67,6 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
     protected static Logger log = LoggerFactory.getLogger(HttpStaticFileServerHandler.class);
 
 
-    private FullHttpRequest request;
     private HttpServer context;
 
     public HttpStaticFileServerHandler(HttpServer context) {
@@ -76,7 +75,6 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
 
     @Override
     public void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
-        this.request = request;
         if (!request.decoderResult().isSuccess()) {
             sendError(context, ctx, request, BAD_REQUEST);
             return;
