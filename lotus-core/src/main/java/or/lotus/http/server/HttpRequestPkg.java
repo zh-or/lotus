@@ -230,6 +230,7 @@ public class HttpRequestPkg {
         return rawRequest;
     }
 
+    /**只释放自己加的引用*/
     public void release() {
         if(useCount > 0) {
             useCount --;
