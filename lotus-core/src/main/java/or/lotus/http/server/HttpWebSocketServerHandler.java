@@ -76,7 +76,7 @@ public class HttpWebSocketServerHandler  extends SimpleChannelInboundHandler<Web
             } catch(Exception e) {
                 handler.onException(ctx, e);
             } finally {
-                if(server.eventExec!= null) {
+                if(server.eventExec != null) {
                     //手动调用会报错
                     frame.release();
                 }

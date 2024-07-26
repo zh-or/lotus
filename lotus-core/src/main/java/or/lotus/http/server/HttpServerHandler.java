@@ -74,7 +74,7 @@ public class HttpServerHandler extends SimpleChannelInboundHandler<FullHttpReque
                             req.release();
                             if(!isHandle) {
                                 //没有匹配到 controller, 走文件处理
-                                ctx.fireChannelRead(req.rawRequest);
+                                ctx.fireChannelRead(req.rawRequest.retain());
                             }
                         });
                         return;
@@ -87,7 +87,7 @@ public class HttpServerHandler extends SimpleChannelInboundHandler<FullHttpReque
         }
         req.release();
         //ctx.fireChannelRead(request.retain());//
-        ctx.fireChannelRead(request);//不需要调用retain?
+        ctx.fireChannelRead(request.retain());//不需要调用retain?
 
        /* System.out.println(channel.remoteAddress()); // 显示客户端的远程地址
         String content = String.format("Receive http request, uri: %s, method: %s, content: %s%n", request.uri(), request.method(), request.content().toString(CharsetUtil.UTF_8));
