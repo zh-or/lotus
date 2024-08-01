@@ -20,6 +20,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -123,7 +126,17 @@ public class LotusResponseSender {
 
     public static void sendFile(HttpServer context, ChannelHandlerContext ctx, final FullHttpRequest request, String path) throws IOException {
         final boolean keepAlive = HttpUtil.isKeepAlive(request);
-        File file = new File(path);
+
+        //支持符号链接
+        Path p2 = Paths.get(path);
+
+        File file = null;
+        if(Files.isSymbolicLink(p2)) {
+            p2 = Files.readSymbolicLink(p2);
+            file = p2.toFile();
+        } else {
+            file = new File(path);
+        }
         final String uri = request.uri();
 
         if(file.isHidden()) {
