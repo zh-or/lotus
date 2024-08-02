@@ -132,6 +132,12 @@ public class LotusResponseSender {
 
         File file = null;
         if(Files.isSymbolicLink(p2)) {
+            /**检查配置是否启用支持软链接*/
+            if(!context.isSupportSymbolicLink()) {
+                sendError(context, ctx, request, NOT_FOUND);
+                return ;
+            }
+
             p2 = Files.readSymbolicLink(p2);
             file = p2.toFile();
         } else {

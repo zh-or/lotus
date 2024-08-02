@@ -43,7 +43,7 @@ public class HttpServer {
     Charset charset;
     boolean isRun = false;
     boolean isEnableGZIP = false;
-
+    boolean isSupportSymbolicLink = false;
     boolean isEnableDirList = false;
 
     int maxContentLength = 65536;
@@ -152,6 +152,14 @@ public class HttpServer {
 
     public void disableGZIP() {
         isEnableGZIP = false;
+    }
+
+    public boolean isSupportSymbolicLink() {
+        return isSupportSymbolicLink;
+    }
+
+    public void setSupportSymbolicLink(boolean supportSymbolicLink) {
+        isSupportSymbolicLink = supportSymbolicLink;
     }
 
     public void setCharset(Charset charset) throws Exception {
