@@ -181,6 +181,10 @@ public class HttpRequestPkg {
         return def;
     }
 
+    public Map<String, String> getParameterMap() {
+        return parmMap;
+    }
+
     /**
      * index 从1开始, 顺序为从右到左
      */
