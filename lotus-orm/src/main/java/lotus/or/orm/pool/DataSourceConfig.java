@@ -18,6 +18,8 @@ public class DataSourceConfig {
     public String primaryKeyName = "id";//主键名字
     public boolean updateIgnoreNull = true;//更新时忽略空值
 
+    public boolean checkConnectionBefore = true;//获取连接前检测连接是否有效
+
     public boolean printSqlLog = true;
 
     public boolean printStack = true;
@@ -136,6 +138,14 @@ public class DataSourceConfig {
 
     public void setUpdateIgnoreNull(boolean updateIgnoreNull) {
         this.updateIgnoreNull = updateIgnoreNull;
+    }
+
+    public boolean isCheckConnectionBefore() {
+        return checkConnectionBefore;
+    }
+
+    public void setCheckConnectionBefore(boolean checkConnectionBefore) {
+        this.checkConnectionBefore = checkConnectionBefore;
     }
 
     public boolean isPrintSqlLog() {

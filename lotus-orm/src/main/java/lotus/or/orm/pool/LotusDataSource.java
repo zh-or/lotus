@@ -162,6 +162,10 @@ public class LotusDataSource implements DataSource {
                     log.error("驱动未找到:", e);
                 }
             }
+        } else {
+            if(getConfig().isCheckConnectionBefore()) {
+                needCheck = true;
+            }
         }
         if(needCheck) {
             if(!connection.isValid(getConfig().getHeartbeatTimeoutSeconds())) {
