@@ -547,10 +547,10 @@ public class DatabaseExecutor<T> {
             rs = ps.executeQuery();
             ResultSetMetaData metaData = rs.getMetaData();
             int columnCount = metaData.getColumnCount();
-
+            int mapSize = (int) (columnCount / 0.75 + 1);
             List<Map<String, Object>> resObj = new ArrayList<>();
             while(rs.next()) {
-                Map<String, Object> obj = new HashMap<>();
+                Map<String, Object> obj = new HashMap<>(mapSize);
                 for(int i = 1; i <= columnCount; i++) {
                     String name = metaData.getColumnName(i);
                     String fieldName = JdbcUtils.convertUnderscoreNameToPropertyName(name, false);
