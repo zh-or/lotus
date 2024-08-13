@@ -106,7 +106,14 @@ public class DatabaseExecutor<T> {
 
     /**left like right*/
     public DatabaseExecutor<T> whereLike(Object left, Object right) {
-       return whereLike(null, left, right, false);
+       return whereLike(left, right, false);
+    }
+
+    /**left like right
+     * @param ifRightNotEmpty 如果为true则增加空判断, 如果为空则不加入条件
+     * */
+    public DatabaseExecutor<T> whereLike(Object left, Object right, boolean ifRightNotEmpty) {
+        return whereLike(null, left, right, ifRightNotEmpty);
     }
 
     /**left like right
@@ -145,7 +152,14 @@ public class DatabaseExecutor<T> {
 
 
     public DatabaseExecutor<T> whereNot(Object left, Object right) {
-        return whereNot(null, left, right, false);
+        return whereNot(left, right, false);
+    }
+
+    /**left != right
+     * @param ifRightNotEmpty 如果为true则增加空判断, 如果为空则不加入条件
+     * */
+    public DatabaseExecutor<T> whereNot(Object left, Object right, boolean ifRightNotEmpty) {
+        return whereNot(left, right, ifRightNotEmpty);
     }
 
     /**left != right
@@ -170,7 +184,14 @@ public class DatabaseExecutor<T> {
         return this;
     }
     public DatabaseExecutor<T> whereEq(Object left, Object right) {
-        return whereEq(null, left, right, false);
+        return whereEq(left, right, false);
+    }
+
+    /**left = right
+     * @param ifRightNotEmpty 如果为true则增加空判断, 如果为空则不加入条件
+     * */
+    public DatabaseExecutor<T> whereEq(Object left, Object right, boolean ifRightNotEmpty) {
+        return whereEq(null, left, right, ifRightNotEmpty);
     }
 
     /**left = right
@@ -197,7 +218,14 @@ public class DatabaseExecutor<T> {
 
 
     public DatabaseExecutor<T> whereLt(Object left, Object right) {
-        return whereLt(null, left, right, false);
+        return whereLt(left, right, false);
+    }
+
+    /**left < right
+     * @param ifRightNotEmpty 如果为true则增加空判断, 如果为空则不加入条件
+     * */
+    public DatabaseExecutor<T> whereLt(Object left, Object right, boolean ifRightNotEmpty) {
+        return whereLt(null, left, right, ifRightNotEmpty);
     }
 
     /**left < right
@@ -224,7 +252,14 @@ public class DatabaseExecutor<T> {
 
 
     public DatabaseExecutor<T> whereGt(Object left, Object right) {
-        return whereGt(null, left, right, false);
+        return whereGt(left, right, false);
+    }
+
+    /**left > right
+     * @param ifRightNotEmpty 如果为true则增加空判断, 如果为空则不加入条件
+     * */
+    public DatabaseExecutor<T> whereGt(Object left, Object right, boolean ifRightNotEmpty) {
+        return whereGt(null, left, right, ifRightNotEmpty);
     }
 
     /**left > right
