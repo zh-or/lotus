@@ -321,6 +321,28 @@ public class DatabaseExecutor<T> {
         }
     }
 
+    /**取结果集的第一行第一列*/
+    public Object execAndGet() throws SQLException {
+        return execAndGet(1, 1);
+    }
+
+    /**从1开始计数*/
+    public Object execAndGet(int row, int col) throws SQLException {
+        List<Map<String, Object>> list = findListMap();
+        if(list != null && list.size() >= row) {
+            Map<String, Object> item = list.get(row - 1);
+            Iterator<Map.Entry<String, Object>> it = item.entrySet().iterator();
+            int i = 1;
+            while(it.hasNext()) {
+                if(i == col) {
+                    return it.next().getValue();
+                }
+                i++;
+            }
+        }
+        return null;
+    }
+
     public int execute() throws SQLException {
 
         switch (sqlMethod) {
@@ -350,6 +372,7 @@ public class DatabaseExecutor<T> {
 
     /**select count(countField) from table [where xxx]
      * 此方法可以在findList/findMap/findListMap前调用
+     * 如果是联表查询不要使用此方法, 有局限性
      * */
     public long findCount(String countField, String table) throws SQLException {
         //limit(0, 1);
@@ -399,7 +422,7 @@ public class DatabaseExecutor<T> {
         return runSelect(builder.buildSelect(), false);
     }
 
-    /**调用此方法会自动加入 limit 0, 1*/
+    /**调用此方法会自动加入 limit 0, 1, 返回的是 LinkedHashMap 此map是有序的*/
     public Map<String, Object> findOneMap() throws SQLException {
         limit(0, 1);
         List<Map<String, Object>> list = runSelectMap(builder.buildSelect());
@@ -409,6 +432,7 @@ public class DatabaseExecutor<T> {
         return null;
     }
 
+    /**返回的是 LinkedHashMap 此map是有序的*/
     public List<Map<String, Object>> findListMap() throws SQLException {
         return runSelectMap(builder.buildSelect());
     }
@@ -585,7 +609,7 @@ public class DatabaseExecutor<T> {
             int mapSize = (int) (columnCount / 0.75 + 1);
             List<Map<String, Object>> resObj = new ArrayList<>();
             while(rs.next()) {
-                Map<String, Object> obj = new HashMap<>(mapSize);
+                Map<String, Object> obj = new LinkedHashMap<>(mapSize);
                 for(int i = 1; i <= columnCount; i++) {
                     String name = metaData.getColumnName(i);
                     String fieldName = JdbcUtils.convertUnderscoreNameToPropertyName(name, false);
