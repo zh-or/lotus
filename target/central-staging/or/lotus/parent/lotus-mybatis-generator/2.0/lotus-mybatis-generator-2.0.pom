@@ -6,27 +6,24 @@
         <artifactId>lotus-parent</artifactId>
         <version>2.0</version>
     </parent>
-    <artifactId>lotus-orm-test</artifactId>
-    <name>Archetype - lotus-orm-test</name>
-
+    <artifactId>lotus-mybatis-generator</artifactId>
 
     <dependencies>
+
 
         <dependency>
             <groupId>or.lotus.parent</groupId>
             <artifactId>lotus-core</artifactId>
             <version>2.0</version>
+            <scope>compile</scope>
         </dependency>
+
+
+        <!-- mybatis-generator -->
         <dependency>
-            <groupId>or.lotus.parent</groupId>
-            <artifactId>lotus-orm</artifactId>
-            <version>2.0</version>
-        </dependency>
-        <!-- mysql -->
-        <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-            <version>8.0.33</version>
+            <groupId>org.mybatis.generator</groupId>
+            <artifactId>mybatis-generator-core</artifactId>
+            <version>1.4.2</version>
         </dependency>
 
     </dependencies>
