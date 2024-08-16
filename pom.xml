@@ -109,7 +109,7 @@
     </licenses>
     <developers>
         <developer>
-            <name>yangfan</name>
+            <name>zh-or</name>
             <email>332536322@qq.com</email>
             <organization>https://github.com/zh-or</organization>
         </developer>
@@ -136,7 +136,6 @@
                 </repository>
             </distributionManagement>
         </profile>
-
 
     </profiles>
 </project>
