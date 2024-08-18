@@ -5,7 +5,6 @@ dist
 
 */target
 *.iml
-/test
 
 package-lock.json
 
@@ -27,4 +26,4 @@ yarn-error.log*
 *.sln
 *.sw?
 *.class
-/target/
+target/
