@@ -6,7 +6,7 @@
 
     <parent>
         <artifactId>lotus-parent</artifactId>
-        <groupId>or.lotus.parent</groupId>
+        <groupId>io.github.zh-or</groupId>
         <version>2.0</version>
     </parent>
 
