@@ -1,12 +1,42 @@
 ## Maven引用
 ```
-<!-- https://mvnrepository.com/artifact/io.github.zh-or/lotus-mvn -->
+<!-- https://central.sonatype.com/namespace/io.github.zh-or -->
+
+<!-- core -->
 <dependency>
     <groupId>io.github.zh-or</groupId>
-    <artifactId>lotus-mvn</artifactId>
-    <version>1.0.1</version>
+    <artifactId>lotus-core</artifactId>
+    <version>2.0</version>
 </dependency>
 
+
+<!-- orm -->
+<dependency>
+    <groupId>io.github.zh-or</groupId>
+    <artifactId>lotus-orm</artifactId>
+    <version>2.0</version>
+</dependency>
+
+<!-- mybatis -->
+<dependency>
+    <groupId>io.github.zh-or</groupId>
+    <artifactId>lotus-mybatis</artifactId>
+    <version>2.0</version>
+</dependency>
+
+<!-- mybatis-generator -->
+<dependency>
+    <groupId>io.github.zh-or</groupId>
+    <artifactId>lotus-mybatis-generator</artifactId>
+    <version>2.0</version>
+</dependency>
+
+<!-- wx lib-->
+<dependency>
+    <groupId>io.github.zh-or</groupId>
+    <artifactId>lotus-wx</artifactId>
+    <version>2.0</version>
+</dependency>
 ```
 ## 2024年5月28日 脚手架项目
 
