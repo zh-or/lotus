@@ -1,7 +1,7 @@
 package test;
 
 
-import lotus.or.orm.geometry.model.PointGeo;
+import or.lotus.orm.geometry.model.PointGeo;
 
 import java.util.Date;
 
