@@ -18,7 +18,7 @@
         <!--<plugin type="main.generator.or.lotus.LombokPlugin"/>-->
 
         <!--可以自定义生成model的代码注释-->
-        <commentGenerator type="or.lotus.generator.main.Generator">
+        <commentGenerator type="or.lotus.mybatis.generator.main.Generator">
             <!-- 是否去除自动生成的注释 true：是 ： false:否 -->
             <property name="suppressAllComments" value="true"/>
             <property name="suppressDate" value="true"/>
