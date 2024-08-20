@@ -51,7 +51,7 @@ public class WebSocketClient {
     }
 
 
-    private static final String fistr_package =
+    private static final String request_package =
             "GET %s HTTP/1.1\r\n" +
             "Host: %s\r\n" +
             "Connection: Upgrade\r\n" +
@@ -129,7 +129,7 @@ public class WebSocketClient {
         //握手
 
         String key = Base64.byteArrayToBase64(Utils.RandomNum(16).getBytes());
-        String tmp = String.format(fistr_package, uri, uri.getHost(), key);
+        String tmp = String.format(request_package, uri, uri.getHost(), key);
 
         bOut.write(tmp.getBytes());
         bOut.flush();
