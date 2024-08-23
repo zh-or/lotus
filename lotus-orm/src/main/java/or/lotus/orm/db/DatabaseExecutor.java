@@ -659,7 +659,8 @@ public class DatabaseExecutor<T> {
 
                         //Object val = JdbcUtils.getResultSetValue(rs, i, field.getType());
                     } catch (NoSuchFieldException e) {
-                        log.error("对象: {} 不存在字段: {}, {}", clazz.getSimpleName(), name, e);
+                        //不输出此异常
+                        //log.error("对象: {} 不存在字段: {}, {}", clazz.getSimpleName(), name, e);
                     }
                 }
                 resObj.add(obj);
