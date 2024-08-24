@@ -4,7 +4,7 @@
     <parent>
         <artifactId>lotus-parent</artifactId>
         <groupId>io.github.zh-or</groupId>
-        <version>2.0</version>
+        <version>${lotus.version}</version>
     </parent>
     <artifactId>lotus-orm-check</artifactId>
 
@@ -19,12 +19,12 @@
         <dependency>
             <groupId>io.github.zh-or</groupId>
             <artifactId>lotus-core</artifactId>
-            <version>2.0</version>
+            <version>${lotus.version}</version>
         </dependency>
         <dependency>
             <groupId>io.github.zh-or</groupId>
             <artifactId>lotus-orm</artifactId>
-            <version>2.0</version>
+            <version>${lotus.version}</version>
         </dependency>
         <!-- mysql -->
         <dependency>
