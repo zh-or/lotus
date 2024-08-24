@@ -1,13 +1,20 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <properties>
+        <lotus.version>2.0.1</lotus.version>
+    </properties>
+
+
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.github.zh-or</groupId>
     <artifactId>lotus-parent</artifactId>
-    <version>2.0</version>
+    <version>${lotus.version}</version>
     <packaging>pom</packaging>
     <name>lotus</name>
     <description>http-server, nio-server, mybatis, orm, wx-lib</description>
     <url>https://github.com/zh-or/lotus</url>
+
 
     <modules>
         <module>lotus-core</module>
@@ -17,6 +24,8 @@
         <module>lotus-orm</module>
         <module>lotus-orm-check</module>
     </modules>
+
+
     <dependencies>
 
     </dependencies>
@@ -43,7 +52,25 @@
                     <target>1.8</target>
                 </configuration>
             </plugin>
-             <!--   central发布插件    -->
+
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.8</version>
+                <executions>
+                    <execution>
+                        <phase>validate</phase>
+                        <configuration>
+                            <tasks>
+                                <property name="lotus.version" value="${lotus.version}"/>
+                            </tasks>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!--   central发布插件    -->
             <plugin>
                 <groupId>org.sonatype.central</groupId>
                 <artifactId>central-publishing-maven-plugin</artifactId>
@@ -74,9 +101,9 @@
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>2.9.1</version>
                 <configuration>
-                	<source>1.8</source>
-        			<encoding>UTF-8</encoding>
-        			<additionalparam>-Xdoclint:none</additionalparam>
+                    <source>1.8</source>
+                    <encoding>UTF-8</encoding>
+                    <additionalparam>-Xdoclint:none</additionalparam>
                 </configuration>
                 <executions>
                     <execution>
