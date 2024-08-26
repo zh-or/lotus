@@ -4,7 +4,7 @@
     <parent>
         <groupId>io.github.zh-or</groupId>
         <artifactId>lotus-parent</artifactId>
-        <version>${lotus.version}</version>
+        <version>${revision}</version>
     </parent>
     <artifactId>lotus-orm</artifactId>
 
@@ -13,7 +13,7 @@
         <dependency>
             <groupId>io.github.zh-or</groupId>
             <artifactId>lotus-core</artifactId>
-            <version>${lotus.version}</version>
+            <version>${revision}</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.locationtech.jts/jts-core -->

@@ -4,7 +4,7 @@
     <parent>
         <groupId>io.github.zh-or</groupId>
         <artifactId>lotus-parent</artifactId>
-        <version>${lotus.version}</version>
+        <version>${revision}</version>
     </parent>
     <artifactId>lotus-wx</artifactId>
 
@@ -14,7 +14,7 @@
         <dependency>
             <groupId>io.github.zh-or</groupId>
             <artifactId>lotus-core</artifactId>
-            <version>${lotus.version}</version>
+            <version>${revision}</version>
         </dependency>
         <dependency>
             <groupId>com.github.wechatpay-apiv3</groupId>
