@@ -15,7 +15,6 @@
     <description>http-server, nio-server, mybatis, orm, wx-lib</description>
     <url>https://github.com/zh-or/lotus</url>
 
-
     <modules>
         <module>lotus-core</module>
         <module>lotus-mybatis</module>
@@ -24,7 +23,6 @@
         <module>lotus-orm</module>
         <module>lotus-orm-check</module>
     </modules>
-
 
     <dependencies>
 
@@ -172,8 +170,6 @@
     <profiles>
         <profile>
             <id>release</id>
-
-
             <distributionManagement>
                 <snapshotRepository>
                     <id>sonatype</id>
