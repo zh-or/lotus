@@ -20,12 +20,12 @@ public class Wx implements Closeable {
 
     protected static Logger log = LoggerFactory.getLogger(Wx.class);
     public static final int REQ_TIMEOUT = 10 * 1000;
-    private String token = null;
-    private int timeout = 7200;
-    private Timer timer = null;
-    private Object initLock = new Object();
-    private String appid;
-    private String secret;
+    protected String token = null;
+    protected int timeout = 7200;
+    protected Timer timer = null;
+    protected Object initLock = new Object();
+    protected String appid;
+    protected String secret;
 
     public Wx(String appid, String secret) {
         this.appid = appid;
