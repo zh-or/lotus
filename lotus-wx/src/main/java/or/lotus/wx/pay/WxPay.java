@@ -15,10 +15,9 @@ import or.lotus.core.common.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
 import java.io.UnsupportedEncodingException;
 
-public class WxPay implements Closeable {
+public class WxPay implements AutoCloseable {
 
     protected static Logger log = LoggerFactory.getLogger(WxPay.class);
 

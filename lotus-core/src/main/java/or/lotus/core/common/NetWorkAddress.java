@@ -5,7 +5,7 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.List;
 
-public class Address {
+public class NetWorkAddress {
     public String name;
     public String displayName;
     public String mac;
@@ -13,7 +13,7 @@ public class Address {
 
     public NetworkInterface net;
 
-    public Address(NetworkInterface net) throws SocketException {
+    public NetWorkAddress(NetworkInterface net) throws SocketException {
         this(
                 net.getName(),
                 net.getDisplayName(),
@@ -23,7 +23,7 @@ public class Address {
         this.net = net;
     }
 
-    public Address(String name, String displayName, byte[] macBytes, List<InterfaceAddress> ips) {
+    public NetWorkAddress(String name, String displayName, byte[] macBytes, List<InterfaceAddress> ips) {
         this.name = name;
         this.displayName = displayName;
         if(macBytes != null) {

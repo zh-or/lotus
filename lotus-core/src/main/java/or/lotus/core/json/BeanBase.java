@@ -12,11 +12,6 @@ import java.lang.reflect.InvocationTargetException;
  */
 public class BeanBase {
 
-
-    public BeanBase() {
-
-    }
-
 	/**
 	 *
 	 * @param key

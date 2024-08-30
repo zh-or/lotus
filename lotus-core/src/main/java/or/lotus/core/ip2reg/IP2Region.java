@@ -2,13 +2,12 @@ package or.lotus.core.ip2reg;
 
 import org.lionsoul.ip2region.xdb.Searcher;
 
-import java.io.Closeable;
 import java.io.IOException;
 
 /**
  * 库地址: https://gitee.com/lionsoul/ip2region
  */
-public class IP2Region implements Closeable {
+public class IP2Region implements AutoCloseable {
 
     Searcher searcher;
     static final String NULL_STR = "";

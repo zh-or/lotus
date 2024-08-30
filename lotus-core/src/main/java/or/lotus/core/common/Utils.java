@@ -354,7 +354,7 @@ public class Utils {
      * @return
      * @throws Exception
      */
-    public final static String EnCode(String s, String entype) throws Exception {
+    public final static String EnCode(String s, String entype) throws NoSuchAlgorithmException, UnsupportedEncodingException {
         MessageDigest md = MessageDigest.getInstance(entype);
         md.update(s.getBytes("UTF-8"));
         byte[] digest = md.digest();
@@ -614,14 +614,14 @@ public class Utils {
         return "";
     }
 
-    public static ArrayList<Address> getNetworkInfo(boolean isFilter) {
+    public static ArrayList<NetWorkAddress> getNetworkInfo(boolean isFilter) {
         Enumeration en;
-        ArrayList<Address> ips = new ArrayList<>();
+        ArrayList<NetWorkAddress> ips = new ArrayList<>();
         try {
             en = NetworkInterface.getNetworkInterfaces();
             while (en.hasMoreElements()) {
                 NetworkInterface ni = (NetworkInterface) en.nextElement();
-                Address addr = new Address(ni);
+                NetWorkAddress addr = new NetWorkAddress(ni);
                 if(isFilter) {
                     if(!CheckNull(addr.mac) && addr.ips.size() > 0) {
                         ips.add(addr);

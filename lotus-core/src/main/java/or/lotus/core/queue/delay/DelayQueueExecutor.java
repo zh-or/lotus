@@ -6,7 +6,6 @@ import or.lotus.core.common.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
 import java.util.concurrent.*;
 
 /**
@@ -15,7 +14,7 @@ import java.util.concurrent.*;
  * 再次执行时不会在数据库类新加数据记录,
  * 如果抛出其他异常则不会自动重试
  * */
-public class DelayQueueExecutor implements Runnable, Closeable {
+public class DelayQueueExecutor implements Runnable, AutoCloseable {
     static final Logger log = LoggerFactory.getLogger(DelayQueueExecutor.class);
 
     private DelayQueue<DelayObj> queue;
