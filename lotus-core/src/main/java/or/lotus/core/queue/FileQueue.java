@@ -1,17 +1,21 @@
 package or.lotus.core.queue;
 
+import or.lotus.core.common.Utils;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.charset.Charset;
 
-/**数据存储到文件的队列*/
-public class FileQueue {
+/**一行一条数据, 默认最大存储10GB*/
+public class FileQueue implements AutoCloseable {
     private Object              wait            =   new Object();
     private Charset             charset         =   Charset.forName("utf-8");
     private long                readPos;
     private long                fileLen;
     private RandomAccessFile    raf;
+
+    private long                autoGcSize     = Utils.formatSize("10GB");
 
     public FileQueue(String path) throws IOException {
         this(new File(path));
@@ -22,10 +26,18 @@ public class FileQueue {
         readPos = raf.length();
     }
 
-    public void gc() {
-        //to do
+    public void setAutoGcSize(long size) {
+        this.autoGcSize = size;
     }
 
+    public synchronized void gc() throws IOException {
+        fileLen = raf.length();
+        raf.seek(fileLen);
+        raf.setLength(0);
+        fileLen = 0;
+    }
+
+    @Override
     public void close() {
         try {
             synchronized (wait) {
@@ -40,8 +52,8 @@ public class FileQueue {
         readPos = pos;
     }
 
+    /**此方法会一直等待数据*/
     private synchronized String poll()  {
-
         try {
             raf.seek(readPos);
             String line = raf.readLine();
@@ -65,6 +77,11 @@ public class FileQueue {
 
     public synchronized void push(String line) throws Exception {
         fileLen = raf.length();
+
+        if(fileLen + line.length() >= autoGcSize) {
+            gc();
+        }
+
         raf.seek(fileLen);
         raf.write(line.getBytes(charset));
         fileLen = raf.length();
