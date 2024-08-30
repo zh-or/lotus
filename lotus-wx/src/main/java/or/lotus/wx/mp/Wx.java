@@ -10,12 +10,11 @@ import or.lotus.core.common.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
 import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class Wx implements Closeable {
+public class Wx implements AutoCloseable {
     public static String WX_EXCEPTION = "微信服务繁忙, 请稍后再试~";
 
     protected static Logger log = LoggerFactory.getLogger(Wx.class);

@@ -1,7 +1,7 @@
 package or.lotus.core.test;
 
 
-import or.lotus.core.common.Address;
+import or.lotus.core.common.NetWorkAddress;
 import or.lotus.core.common.Utils;
 
 import java.util.ArrayList;
@@ -24,8 +24,8 @@ public class TestCommon {
         }
 
 
-        ArrayList<Address> address = Utils.getNetworkInfo(true);
+        ArrayList<NetWorkAddress> netWorkAddresses = Utils.getNetworkInfo(true);
 
-        System.out.println(address.toString());
+        System.out.println(netWorkAddresses.toString());
     }
 }

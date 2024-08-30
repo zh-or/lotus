@@ -3,14 +3,13 @@ package or.lotus.orm.db;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-public class Transaction implements Closeable, InvocationHandler {
+public class Transaction implements AutoCloseable, InvocationHandler {
     static final Logger log = LoggerFactory.getLogger(Transaction.class);
     Connection connection;
     Connection proxyConnection;

@@ -7,24 +7,26 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Calendar;
+import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class FileManager {
-    protected static Logger log = LoggerFactory.getLogger(FileManager.class);
+/** 本地kv存储 */
+public class LocalFileManager {
+    protected static Logger log = LoggerFactory.getLogger(LocalFileManager.class);
     protected String basePath;
     protected long maxLocalSize;
     protected AtomicLong nowSize;
     protected String charset;
 
-    public FileManager(String basePath, String charset) {
+    public LocalFileManager(String basePath, String charset) {
         this(basePath, Utils.formatSize("10GB"), charset);
     }
 
-    public FileManager(String basePath, long maxLocalSize, String charset) {
+    public LocalFileManager(String basePath, long maxLocalSize, String charset) {
         this.basePath = basePath;
         this.maxLocalSize = maxLocalSize;
         this.nowSize = new AtomicLong(0l);
@@ -33,9 +35,6 @@ public class FileManager {
 
         log.info("文件管理器初始化完成, 当前大小: {}, 根目录: {}", new FileSize(nowSize.get()), basePath);
     }
-
-    //todo 联网存储
-    //todo 启动时检查目录内的内容并记录大小
 
     public boolean isFullSize() {
         return nowSize.get() > maxLocalSize;
@@ -84,7 +83,6 @@ public class FileManager {
 
     /**获取字节数组*/
     public byte[] getBytes(String key) {
-        Utils.assets(Utils.CheckNull(key), "key 不能为空");
         try {
             Path p = getKeyPath(key);
             if(Files.exists(p)) {
@@ -97,34 +95,45 @@ public class FileManager {
     }
 
     /**保存字节数组*/
-    public void put(String key, byte[] data) throws Exception {
-        Utils.assets(Utils.CheckNull(key), "key 不能为空");
+    public void put(String key, byte[] data) throws IOException, NoSuchAlgorithmException {
         Utils.assets(data == null, "data 不能为空");
 
         //k v 存储
         Path p = getKeyPath(key);
-        Files.deleteIfExists(p);
-        Files.write(p, data, StandardOpenOption.CREATE_NEW);
+        //Files.deleteIfExists(p);
+        //不使用删除, 使用TRUNCATE_EXISTING可以复写该文件
+        Files.write(p, data, StandardOpenOption.TRUNCATE_EXISTING,  StandardOpenOption.WRITE, StandardOpenOption.CREATE);
 
         nowSize.addAndGet(data.length);
     }
 
     /**保存字符串*/
-    public void put(String key, String data) throws Exception {
-        Utils.assets(key == null, "key 不能为空");
-        Utils.assets(data == null, "data 不能为空");
-        //k v 存储
+    public void put(String key, String data) throws IOException, NoSuchAlgorithmException {
         put(key, data.getBytes(charset));
     }
 
+    public void append(String key, byte[] data) throws IOException, NoSuchAlgorithmException {
+        Utils.assets(data == null, "data 不能为空");
+
+        //k v 存储
+        Path p = getKeyPath(key);
+        Files.write(p, data, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.APPEND);
+
+        nowSize.addAndGet(data.length);
+    }
+
+    public void append(String key, String data) throws IOException, NoSuchAlgorithmException {
+        append(key, data.getBytes(charset));
+    }
+
+
     /**根据key移除文件*/
     public boolean remove(String key) {
-        Utils.assets(Utils.CheckNull(key), "key 不能为空");
         try {
             Path p = getKeyPath(key);
             if(Files.exists(p)) {
                 nowSize.addAndGet(-Files.size(p));
-                Files.deleteIfExists(p);
+                Files.delete(p);
             }
             return true;
         } catch (Exception e) {
@@ -134,7 +143,6 @@ public class FileManager {
     }
 
     public File getFile(String key) {
-        Utils.assets(Utils.CheckNull(key), "key 不能为空");
         try {
             Path p = getKeyPath(key);
             if(Files.exists(p)) {
@@ -147,7 +155,6 @@ public class FileManager {
     }
 
     public void putFile(String key, File file) {
-        Utils.assets(Utils.CheckNull(key), "key 不能为空");
         try {
             Path p = getKeyPath(key);
             if(Files.exists(p)) {
@@ -161,15 +168,15 @@ public class FileManager {
         }
     }
 
-
     /**生成kv存储的文件路径*/
-    private Path getKeyPath(String key) throws Exception {
+    protected Path getKeyPath(String key) throws UnsupportedEncodingException, NoSuchAlgorithmException {
+        Utils.assets(Utils.CheckNull(key), "key 不能为空");
         //路径的特殊字符需要处理掉
         key = key.replaceAll(":", "_");
 
         String sha1 = Utils.EnCode(key, Utils.EN_TYPE_SHA1);
-        String first = sha1.substring(0, 3);
-        String second = sha1.substring(3, 5);
+        String first = sha1.substring(0, 4);
+        String second = sha1.substring(4, 8);
         Path p = Paths.get(basePath, first, second);
 
         if(!Files.exists(p)) {
@@ -177,19 +184,6 @@ public class FileManager {
         }
 
         return p.resolve(key);
-    }
-
-    /**生成文件的新路径*/
-    private Path newFilePath(String rawName) {
-        Calendar cal = Calendar.getInstance();
-
-        String dayPath = cal.get(Calendar.YEAR) + "/" + cal.get(Calendar.DAY_OF_YEAR);
-        String suffix = Utils.getFileSuffix(rawName);
-
-        Path np = Paths.get(basePath, dayPath);
-        np.toFile().mkdirs();
-
-        return np.resolve(Utils.getUUID() + "." + suffix);
     }
 
         /*

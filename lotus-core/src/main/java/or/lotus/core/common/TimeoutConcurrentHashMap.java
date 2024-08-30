@@ -1,9 +1,7 @@
 package or.lotus.core.common;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.Enumeration;
-import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,7 +14,7 @@ import java.util.concurrent.TimeUnit;
  * @param <K>
  * @param <V>
  */
-public class TimeoutConcurrentHashMap<K, V> extends TimerTask implements Closeable {
+public class TimeoutConcurrentHashMap<K, V> extends TimerTask implements AutoCloseable {
     private ConcurrentHashMap<K, ExpireWrap> map;
     private DelayQueue<ExpireWrap<V>> delayQueue;
     private Timer timer;
@@ -42,17 +40,17 @@ public class TimeoutConcurrentHashMap<K, V> extends TimerTask implements Closeab
     /***
      * 此方法加入的对象将永远不会超时
      * @param k
-     * @param v 此对象需要自己实现 equals 否则判断超时, 移除对象会出现问题
+     * @param v
      */
     public void put(K k, V v) {
-        put(k, v, -1);
+        put(k, v, 0);
     }
 
     /***
      *
      * @param k
-     * @param v 此对象需要自己实现 equals 否则判断超时, 移除对象会出现问题
-     * @param sec 超时时间
+     * @param v
+     * @param sec 超时时间秒, 0为不超时
      */
     public void put(K k, V v, int sec) {
        if(sec > 0) {
@@ -105,7 +103,7 @@ public class TimeoutConcurrentHashMap<K, V> extends TimerTask implements Closeab
         ExpireWrap v = null;
         do {
             try {
-                v = delayQueue.poll(1, TimeUnit.SECONDS);
+                v = delayQueue.poll(200, TimeUnit.SECONDS);
                 if(v != null) {
                     map.remove(v.k);
                 }
@@ -136,6 +134,7 @@ public class TimeoutConcurrentHashMap<K, V> extends TimerTask implements Closeab
             this.expire = expire;
         }
 
+        /**超时返回true, 未超时返回false*/
         public boolean isTimeout() {
             return expire != -1 && System.currentTimeMillis() > expire;
         }

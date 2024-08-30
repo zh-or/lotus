@@ -18,7 +18,7 @@ public class SensitiveWordFilter {
     private final static char replace = '*'; // 替代字符
 
     private final static char[] skip = new char[] { // 遇到这些字符就会跳过，例如,如果"AB"是敏感词，那么"A B","A=B"也会被屏蔽
-            '!', '*', '-', '+', '_', '=', ',', '.', '@'
+            ' ', '!', '*', '-', '+', '_', '=', ',', '.', '@'
     };
 
     /**
