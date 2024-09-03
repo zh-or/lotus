@@ -1,56 +1,42 @@
-package or.lotus.core.http.rest;
+package or.lotus.core.http.restful;
 
 import or.lotus.core.common.Utils;
-import or.lotus.core.http.rest.ann.Autowired;
-import or.lotus.core.http.rest.ann.Parameter;
+import or.lotus.core.http.restful.ann.Autowired;
+import or.lotus.core.http.restful.ann.Parameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.regex.Pattern;
 
 public class RestfulDispatcher {
     static final Logger log = LoggerFactory.getLogger(RestfulDispatcher.class);
     public String url;
+    public String dispatcherUrl;
     public boolean isPattern;
-    public Class<?> clazz;
+    public Object controllerObject;
     public Method method;
     public RestfulHttpMethod httpMethod;
 
-    public RestfulDispatcher(String url, Class<?> clazz, Method method, RestfulHttpMethod httpMethod, boolean isPattern) {
+    public RestfulDispatcher(String url, Object controllerObject, Method method, RestfulHttpMethod httpMethod, boolean isPattern) {
         this.url = url.replaceAll("//", "/");
-        this.clazz = clazz;
+        this.dispatcherUrl = url + httpMethod.name();
+        this.controllerObject = controllerObject;
         this.method = method;
         this.httpMethod = httpMethod;
         this.isPattern = isPattern;
     }
 
-
-    public Object dispatch(RestfulContext context, RestfulRequest request) throws Exception {
-        Object ctl = clazz.newInstance();
-        //注入Bean
-
-        Field[] fields = clazz.getFields();
-
-        for(Field field : fields) {
-            Autowired autowired = field.getAnnotation(Autowired.class);
-            if(autowired != null) {
-                String name = autowired.value();
-                if(Utils.CheckNull(name)) {
-                    //使用全限定名
-                    name = field.getDeclaringClass().getName();
-                }
-
-                Object bean = context.beansCache.get(name);
-                if(bean != null) {
-                    field.setAccessible(true);
-                    field.set(ctl, bean);
-                } else {
-                    log.trace("{} 未初始化Bean", name);
-                }
-            }
+    public boolean checkPattern(RestfulRequest request) {
+        if(!isPattern) {
+            return false;
         }
 
+        return Pattern.matches(url, request.getUrl());
+    }
+
+    public RestfulResponse dispatch(RestfulContext context, RestfulRequest request) throws Exception {
         Class<?>[] parameterTypes = method.getParameterTypes();
         Object[] params = new Object[parameterTypes.length];
 
@@ -61,7 +47,13 @@ public class RestfulDispatcher {
             }
         }
 
-        return method.invoke(ctl, params);
+        Object ret = method.invoke(controllerObject, params);
+        //todo 处理返回值为 response
+        // modelAndView -> response
+        // string -> response
+        // json -> response
+        // object.toString() -> response
+        return null;
     }
 
     private Object handleParameter(RestfulContext context, RestfulRequest request, Class<?> type) {

@@ -1,4 +1,4 @@
-package or.lotus.core.http.rest.ann;
+package or.lotus.core.http.restful.ann;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
