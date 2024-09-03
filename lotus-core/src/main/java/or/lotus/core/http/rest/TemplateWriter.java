@@ -10,7 +10,7 @@ public class TemplateWriter extends Writer {
     private ByteBuf buffer;
     private Charset charset;
 
-    protected TemplateWriter(ByteBuf buffer, Charset charset) {
+    public TemplateWriter(ByteBuf buffer, Charset charset) {
         this.buffer = buffer;
         this.charset = charset;
     }
