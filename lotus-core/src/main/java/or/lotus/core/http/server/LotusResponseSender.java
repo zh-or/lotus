@@ -11,6 +11,7 @@ import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.stream.ChunkedFile;
 import io.netty.util.CharsetUtil;
 import or.lotus.core.common.Utils;
+import or.lotus.core.http.rest.TemplateWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
