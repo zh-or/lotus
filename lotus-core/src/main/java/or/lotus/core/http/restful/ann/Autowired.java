@@ -1,4 +1,4 @@
-package or.lotus.core.http.rest.ann;
+package or.lotus.core.http.restful.ann;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 自动注入变量
+ * 自动注入变量, 此注解可在 @Bean 返回的类和 @Controller 注解的类中使用
  */
 @Target ({ElementType.TYPE, ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)

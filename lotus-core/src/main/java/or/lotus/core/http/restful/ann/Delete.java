@@ -1,4 +1,4 @@
-package or.lotus.core.http.rest.ann;
+package or.lotus.core.http.restful.ann;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 
 @Target ({ElementType.TYPE, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Post {
+public @interface Delete {
     /** path */
     String value();
     boolean required() default true;

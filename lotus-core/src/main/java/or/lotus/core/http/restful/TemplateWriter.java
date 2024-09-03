@@ -1,4 +1,4 @@
-package or.lotus.core.http.rest;
+package or.lotus.core.http.restful;
 
 import io.netty.buffer.ByteBuf;
 
