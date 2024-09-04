@@ -3,9 +3,12 @@ package or.lotus.core.http.restful;
 import or.lotus.core.common.BeanUtils;
 import or.lotus.core.common.Utils;
 import or.lotus.core.http.restful.ann.*;
-import or.lotus.core.http.restful.support.BeanWrapTmp;
+import or.lotus.core.http.restful.support.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.templatemode.TemplateMode;
+import org.thymeleaf.templateresolver.FileTemplateResolver;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -25,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 
 /** 使用方式:
  * 1. http容器继承此类, 并实现onStart()和onStop()方法实现启动停止
+ * 2. 实现 sendResponse 处理返回内容
  * 2. 调用addBeans添加 bean
  * 3. 调用scanController扫描Controller类, 并实现@RestfulController注解
  * 4. http容器收到请求时调用dispatch方法分发请求, 返回值为需要输出的内容
@@ -32,7 +36,6 @@ import java.util.concurrent.TimeUnit;
 public abstract class RestfulContext {
     static final Logger log = LoggerFactory.getLogger(RestfulContext.class);
     protected InetSocketAddress bindAddress;
-    protected static final Charset charset = Charset.forName("utf-8");
 
     /**key = @Bean->value | packageName*/
     protected ConcurrentHashMap<String, Object> beansCache;
@@ -48,7 +51,6 @@ public abstract class RestfulContext {
 
     /**请求过滤器*/
     protected RestfulFilter filter;
-
 
 
     public RestfulContext() {
@@ -80,7 +82,7 @@ public abstract class RestfulContext {
         isRunning = true;
     }
 
-    protected synchronized void stop() {
+    public synchronized void stop() {
         onStop();
         if(executorService != null) {
             executorService.shutdown();
@@ -96,55 +98,75 @@ public abstract class RestfulContext {
     protected abstract void onStart();
     protected abstract void onStop();
 
+    /** 业务处理完毕后会调用此方法发送返回 */
+    protected abstract void sendResponse(RestfulRequest request, RestfulResponse response);
+
     /** 分发请求 */
-    protected RestfulResponse dispatch(RestfulRequest request) {
-        if(filter != null) {
-            RestfulResponse response = filter.beforeRequest(request);
-            if(response != null) {
-                return response;
-            }
+    protected void dispatch(RestfulRequest request, RestfulResponse response) {
+        if(executorService != null && !executorService.isShutdown()) {
+            executorService.execute(() -> {
+                handleDispatch(request, response);
+            });
+        } else {
+            handleDispatch(request, response);
         }
-        // 普通请求
-        RestfulDispatcher dispatcher = dispatcherAbsMap.get(request.getDispatchUrl());
-        if(dispatcher != null) {
-            try {
-                RestfulResponse response = dispatcher.dispatch(this, request);
-                RestfulResponse response2 = filter.afterRequest(request, response);
-                if(response2 != null) {
-                    return response2;
-                }
-                return response;
-            } catch (Throwable e) {
-                if(filter != null) {
-                    filter.exception(e, request, response);
-                }
-            }
-        }
-        //正则url验证
-        for(RestfulDispatcher patternDispatcher : dispatcherPatternList) {
-            if(patternDispatcher.checkPattern(request)) {
-                try {
-                    RestfulResponse response = patternDispatcher.dispatch(this, request);
-                    RestfulResponse response2 = filter.afterRequest(request, response);
-                    if(response2 != null) {
-                        return response2;
-                    }
-                    return response;
-                } catch (Throwable e) {
-
-                }
-            }
-        }
-
-        //文件请求
-        String url = request.getUrl();
-
-        //todo 分发请求
-        return null;
     }
 
-    protected void callException(Throwable throwable) {
+    protected void handleDispatch(RestfulRequest request, RestfulResponse response) {
+        /**
+         * 请求处理流程
+         * 1. filter->beforeRequest 过滤器
+         * 2. 普通全字匹配 controller 匹配并调用
+         * 3. 正则url controller匹配并调用
+         * 4. 匹配文件
+         * */
+        RestfulDispatcher dispatcher = null;
+        try {
+            if(filter != null && filter.beforeRequest(request, response)) {
 
+                sendResponse(request, response);
+                return;
+            }
+            // 普通请求
+            dispatcher = dispatcherAbsMap.get(request.getDispatchUrl());
+            if(dispatcher != null) {
+                callDispatcher(dispatcher, request, response);
+                return;
+            } else {
+                //正则url验证
+                for(RestfulDispatcher patternDispatcher : dispatcherPatternList) {
+                    if(patternDispatcher.checkPattern(request)) {
+                        callDispatcher(patternDispatcher, request, response);
+                        return;
+                    }
+                }
+            }
+            //检查是否文件请求
+            callFileHandler(request);
+
+        } catch (Throwable e) {
+            if(filter != null && filter.exception(e, request, response)) {
+                sendResponse(request, response);
+                return;
+            }
+        }
+    }
+
+    protected void callFileHandler(RestfulRequest request) {
+
+        //文件请求
+        if(staticPath == null) {
+
+        }
+        String url = request.getUrl();
+    }
+
+    protected void callDispatcher(RestfulDispatcher dispatcher, RestfulRequest request, RestfulResponse response) throws Exception {
+        dispatcher.dispatch(this, request);
+        if(filter != null) {
+            filter.afterRequest(request, response);
+        }
+        sendResponse(request, response);
     }
 
     /** 扫描指定包名并添加拥有 @RestfulController 注解的类为 Controller, 返回扫描到的 Controller 数量
@@ -167,7 +189,7 @@ public abstract class RestfulContext {
                 Object controller = c.getDeclaredConstructor().newInstance();
 
                 //注入bean
-                injectBeansToObject(controller);
+                RestfulUtils.injectBeansToObject(this, controller);
 
                 //只加载有注解的类
                 String url1 = annotation.value();
@@ -235,7 +257,7 @@ public abstract class RestfulContext {
             if(beanType != null && beanType != void.class) {
                 Object beanObj = beanType.getDeclaredConstructor().newInstance();
                 beansCache.put(tmp.name, beanObj);
-                injectBeansToObject(beanObj);
+                RestfulUtils.injectBeansToObject(this, beanObj);
             }
         }
 
@@ -243,35 +265,6 @@ public abstract class RestfulContext {
     }
 
 
-    /** 注入Bean到对象 */
-    public void injectBeansToObject(Object controllerObject) throws IllegalAccessException {
-        Class clazz = controllerObject.getClass();
-        Field[] fields = clazz.getFields();
-
-        for(Field field : fields) {
-            Autowired autowired = field.getAnnotation(Autowired.class);
-            if(autowired != null) {
-                String name = autowired.value();
-                if(Utils.CheckNull(name)) {
-                    //使用全限定名
-                    name = field.getDeclaringClass().getName();
-                }
-
-                Object bean = beansCache.get(name);
-                if(bean != null) {
-                    field.setAccessible(true);
-                    field.set(controllerObject, bean);
-                } else {
-                    throw new RuntimeException(String.format(
-                            "%s 注入 %s 时 %s 还未注册, 请检查是否在 addBeans 方法之前调用了 scanController ",
-                            clazz.getName(),
-                            name,
-                            name
-                    ));
-                }
-            }
-        }
-    }
 
     //配置
     /** 处理请求业务线程池大小 */
@@ -279,6 +272,9 @@ public abstract class RestfulContext {
 
     /** 可访问静态文件目录 */
     protected Path staticPath = null;
+
+    /** 可访问路径是否需要支持软链接 */
+    protected boolean isSupportSymbolicLink = false;
 
     /** 当有设置静态文件目录时, 是否开启自动列出文件功能 */
     protected boolean enableDirList = false;
@@ -293,6 +289,11 @@ public abstract class RestfulContext {
     protected String defaultIndexFile = null;
 
     protected boolean isEnableGZIP = false;
+    protected Charset charset = Charset.forName("utf-8");
+
+    public void setSupportSymbolicLink(boolean supportSymbolicLink) {
+        isSupportSymbolicLink = supportSymbolicLink;
+    }
 
     public void setStaticPath(Path staticPath) {
         this.staticPath = staticPath;
@@ -325,4 +326,40 @@ public abstract class RestfulContext {
     public void setFilter(RestfulFilter filter) {
         this.filter = filter;
     }
+
+    public void setCharset(Charset charset) {
+        this.charset = charset;
+    }
+
+    public Object getBean(String name) {
+        return beansCache.get(name);
+    }
+
+    public void setOutModelAndViewTime(boolean outModelAndViewTime) {
+        this.outModelAndViewTime = outModelAndViewTime;
+    }
+
+    protected String templateDir = null;
+    protected TemplateEngine templateEngine = null;
+    protected FileTemplateResolver templateResolver = null;
+    protected boolean outModelAndViewTime = true;
+
+    public synchronized void enableTemplateEngine(String path, boolean cache) throws Exception {
+        FileTemplateResolver templateResolver = new FileTemplateResolver();
+        templateResolver.setTemplateMode(TemplateMode.HTML);
+        templateResolver.setPrefix(path);
+        templateResolver.setSuffix(".html");
+        templateResolver.setCacheable(cache);
+        templateResolver.setCharacterEncoding("UTF-8");
+
+        enableTemplateEngine(templateResolver);
+    }
+    public synchronized void enableTemplateEngine(FileTemplateResolver templateResolver) throws Exception {
+        if(isRunning) {
+            throw new Exception("启动后不支持再设置模板引擎");
+        }
+        this.templateDir = templateResolver.getPrefix();
+        this.templateResolver = templateResolver;
+    }
+
 }
