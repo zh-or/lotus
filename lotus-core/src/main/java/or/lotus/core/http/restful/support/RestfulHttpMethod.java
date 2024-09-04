@@ -1,4 +1,4 @@
-package or.lotus.core.http.restful;
+package or.lotus.core.http.restful.support;
 
 public enum RestfulHttpMethod {
     GET,

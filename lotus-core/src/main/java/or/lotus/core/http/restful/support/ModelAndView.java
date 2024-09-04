@@ -1,10 +1,11 @@
-package or.lotus.core.http.restful;
+package or.lotus.core.http.restful.support;
 
+import or.lotus.core.http.restful.RestfulResponse;
 import org.thymeleaf.context.Context;
 
 import java.util.Map;
 
-public class ModelAndView extends RestfulResponse {
+public class ModelAndView {
     public String viewName;
     public Context values;
     public boolean isRedirect = false;
