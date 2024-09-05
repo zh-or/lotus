@@ -97,6 +97,7 @@ public abstract class RestfulResponse extends Writer {
     public abstract void write(String str, int off, int len) throws IOException;
     public abstract void write(int c) throws IOException;
     public abstract RestfulResponse write(byte[] data);
+    public abstract RestfulResponse clearWrite();
 
     public RestfulResponse redirect(String path) {
         status = RestfulResponseStatus.REDIRECTION_FOUND;

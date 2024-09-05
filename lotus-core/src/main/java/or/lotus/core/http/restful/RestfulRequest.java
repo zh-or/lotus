@@ -88,7 +88,7 @@ public abstract class RestfulRequest {
         }
         if(queryString != null) {
             Pattern pattern = Pattern.compile("[&]" + name + "=([^&]*)");
-            Matcher m = pattern.matcher(queryString);
+            Matcher m = pattern.matcher("&" +queryString);
             if(m.find()){
                 try {
                     String par = m.group(1);

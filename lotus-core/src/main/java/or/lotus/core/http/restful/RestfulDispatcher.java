@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.util.Arrays;
@@ -46,13 +47,21 @@ public class RestfulDispatcher {
 
     public void dispatch(RestfulContext context, RestfulRequest request, RestfulResponse response) throws Exception {
         Class<?>[] parameterTypes = method.getParameterTypes();
+        Annotation[][] parameterTypesAnnotations = method.getParameterAnnotations();
         Object[] params = new Object[parameterTypes.length];
 
         for(int i = 0; i < parameterTypes.length; i++ ) {
-            Object o = handleParameter(context, request, response, parameterTypes[i]);
-            if(o != null) {
-                params[i] = o;
+            Parameter parameter = null;
+
+            for(Annotation ann : parameterTypesAnnotations[i]) {
+                if(ann.annotationType() == Parameter.class) {
+                    parameter = (Parameter) ann;
+                    break;
+                }
             }
+
+            params[i] = handleParameter(context, request, response, parameterTypes[i], parameter);
+
         }
 
         Object ret = method.invoke(controllerObject, params);
@@ -95,7 +104,11 @@ public class RestfulDispatcher {
         }
     }
 
-    private Object handleParameter(RestfulContext context, RestfulRequest request, RestfulResponse response, Class<?> type) throws JsonProcessingException {
+    private Object handleParameter(RestfulContext context,
+                                   RestfulRequest request,
+                                   RestfulResponse response,
+                                   Class<?> type,
+                                   Parameter parameter) throws JsonProcessingException {
         if(type.isInstance(request)) {
             return request;
         }
@@ -108,7 +121,7 @@ public class RestfulDispatcher {
             return context;
         }
 
-        Parameter parameter = type.getAnnotation(Parameter.class);
+        //Parameter parameter = type.getAnnotation(Parameter.class);
         if(parameter != null) {
             String name = parameter.value();
             RestfulHttpMethod reqMethod = request.getMethod();

@@ -9,6 +9,8 @@ import or.lotus.core.http.restful.netty.NettyRestfulServer;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.List;
 
 @RestfulController("/api")
 public class TestNettyRestfulService {
@@ -17,9 +19,10 @@ public class TestNettyRestfulService {
     String b1;
 
     @Get("/hello")
-    public String printHello(@Parameter("p") String p) {
+    public String printHello(@Parameter("p") String p,
+                             @Parameter("arr") String[] arr) {
 
-        return b1 + ":" + p;
+        return b1 + ":" + p + ":" + Arrays.toString(arr) + ":" ;
     }
 
     public static void main(String[] args) throws InterruptedException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException, URISyntaxException, IOException, ClassNotFoundException {
