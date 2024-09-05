@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
  * 4. http容器收到请求时调用dispatch方法分发请求, 返回值为需要输出的内容
  *  */
 public abstract class RestfulContext {
-    static final Logger log = LoggerFactory.getLogger(RestfulContext.class);
+    protected static final Logger log = LoggerFactory.getLogger(RestfulContext.class);
     protected InetSocketAddress bindAddress;
 
     /**key = @Bean->value | packageName*/
@@ -59,15 +59,15 @@ public abstract class RestfulContext {
         dispatcherPatternList = new ArrayList<>();
     }
 
-    public void start(int port) {
+    public void start(int port) throws InterruptedException {
         start(new InetSocketAddress(port));
     }
 
-    public void start(String host, int port) {
+    public void start(String host, int port) throws InterruptedException {
         start(new InetSocketAddress(host, port));
     }
 
-    public synchronized void start(InetSocketAddress bindAddress) {
+    public synchronized void start(InetSocketAddress bindAddress) throws InterruptedException {
         if(isRunning) {
             throw new RuntimeException("服务已启动");
         }
@@ -95,78 +95,76 @@ public abstract class RestfulContext {
         isRunning = false;
     }
 
-    protected abstract void onStart();
+    protected abstract void onStart() throws InterruptedException;
     protected abstract void onStop();
 
-    /** 业务处理完毕后会调用此方法发送返回 */
-    protected abstract void sendResponse(RestfulRequest request, RestfulResponse response);
+    /**
+     * 业务处理完毕后会调用此方法发送返回
+     * 如果开启线程池处理业务, 那么此回调则是在业务线程池中执行
+     * @param isHandle 表示是否已经处理该请求
+     * */
+    protected abstract void sendResponse(boolean isHandle, RestfulRequest request, RestfulResponse response);
 
     /** 分发请求 */
     protected void dispatch(RestfulRequest request, RestfulResponse response) {
-        if(executorService != null && !executorService.isShutdown()) {
-            executorService.execute(() -> {
-                handleDispatch(request, response);
-            });
-        } else {
-            handleDispatch(request, response);
-        }
-    }
-
-    protected void handleDispatch(RestfulRequest request, RestfulResponse response) {
-        /**
-         * 请求处理流程
-         * 1. filter->beforeRequest 过滤器
-         * 2. 普通全字匹配 controller 匹配并调用
-         * 3. 正则url controller匹配并调用
-         * 4. 匹配文件
-         * */
-        RestfulDispatcher dispatcher = null;
-        try {
-            if(filter != null && filter.beforeRequest(request, response)) {
-
-                sendResponse(request, response);
-                return;
-            }
-            // 普通请求
-            dispatcher = dispatcherAbsMap.get(request.getDispatchUrl());
-            if(dispatcher != null) {
-                callDispatcher(dispatcher, request, response);
-                return;
-            } else {
-                //正则url验证
-                for(RestfulDispatcher patternDispatcher : dispatcherPatternList) {
-                    if(patternDispatcher.checkPattern(request)) {
-                        callDispatcher(patternDispatcher, request, response);
-                        return;
+        Runnable run = () -> {
+            /**
+             * 请求处理流程并调用controller
+             * 1. filter->beforeRequest 过滤器
+             * 2. 普通全字匹配 controller 匹配并调用
+             * 3. 正则url controller匹配并调用
+             * */
+            try {
+                if(filter != null && filter.beforeRequest(request, response)) {
+                    sendResponse(true, request, response);
+                    return ;
+                }
+                // 普通请求
+                RestfulDispatcher dispatcher = getDispatcher(request);
+                if(dispatcher != null) {
+                    dispatcher.dispatch(this, request, response);
+                    if(filter != null) {
+                        filter.afterRequest(request, response);
                     }
+                    sendResponse(true, request, response);
+                    return;
+                }
+                //未匹配, 未处理当前请求
+                sendResponse(false, request, response);
+
+            } catch (Throwable e) {
+                if(filter != null && filter.exception(e, request, response)) {
+                    sendResponse(true, request, response);
+                } else {
+                    log.error("处理请求出错:", e);
                 }
             }
-            //检查是否文件请求
-            callFileHandler(request);
+        };
 
-        } catch (Throwable e) {
-            if(filter != null && filter.exception(e, request, response)) {
-                sendResponse(request, response);
-                return;
+        if(executorService != null && !executorService.isShutdown()) {
+            executorService.execute(() -> {
+                run.run();
+            });
+        } else {
+            run.run();
+        }
+    }
+
+    protected RestfulDispatcher getDispatcher(RestfulRequest request) {
+        // 普通请求
+        RestfulDispatcher dispatcher = dispatcherAbsMap.get(request.getDispatchUrl());
+        if(dispatcher != null) {
+            return dispatcher;
+        }
+
+        //正则url验证
+        for(RestfulDispatcher patternDispatcher : dispatcherPatternList) {
+            if(patternDispatcher.checkPattern(request)) {
+                return patternDispatcher;
             }
         }
-    }
 
-    protected void callFileHandler(RestfulRequest request) {
-
-        //文件请求
-        if(staticPath == null) {
-
-        }
-        String url = request.getUrl();
-    }
-
-    protected void callDispatcher(RestfulDispatcher dispatcher, RestfulRequest request, RestfulResponse response) throws Exception {
-        dispatcher.dispatch(this, request);
-        if(filter != null) {
-            filter.afterRequest(request, response);
-        }
-        sendResponse(request, response);
+        return null;
     }
 
     /** 扫描指定包名并添加拥有 @RestfulController 注解的类为 Controller, 返回扫描到的 Controller 数量
@@ -210,6 +208,9 @@ public abstract class RestfulContext {
                     } else if(m.isAnnotationPresent(Delete.class)) {
                         Delete delete = m.getAnnotation(Delete.class);
                         dispatcher = new RestfulDispatcher(url1 + delete.value(), controller, m, RestfulHttpMethod.DELETE, delete.isPattern());
+                    } else if(m.isAnnotationPresent(Request.class)) {
+                        Request map = m.getAnnotation(Request.class);
+                        dispatcher = new RestfulDispatcher(url1 + map.value(), controller, m, RestfulHttpMethod.MAP, map.isPattern());
                     }
 
                     if(dispatcher != null) {
@@ -253,12 +254,11 @@ public abstract class RestfulContext {
         tmpList.sort(Comparator.comparingInt(BeanWrapTmp::getSort).reversed());
 
         for(BeanWrapTmp tmp : tmpList) {
-            Class beanType = tmp.method.getReturnType();
-            if(beanType != null && beanType != void.class) {
-                Object beanObj = beanType.getDeclaredConstructor().newInstance();
-                beansCache.put(tmp.name, beanObj);
-                RestfulUtils.injectBeansToObject(this, beanObj);
-            }
+            //Class beanType = tmp.method.getReturnType();
+
+            Object beanObj = tmp.method.invoke(tmp.obj);
+            beansCache.put(tmp.name, beanObj);
+            RestfulUtils.injectBeansToObject(this, beanObj);
         }
 
         return tmpList.size();
@@ -270,38 +270,14 @@ public abstract class RestfulContext {
     /** 处理请求业务线程池大小 */
     protected int eventThreadPoolSize = 20;
 
-    /** 可访问静态文件目录 */
-    protected Path staticPath = null;
-
-    /** 可访问路径是否需要支持软链接 */
-    protected boolean isSupportSymbolicLink = false;
-
-    /** 当有设置静态文件目录时, 是否开启自动列出文件功能 */
-    protected boolean enableDirList = false;
-
     /** request & response buffer初始大小 */
     protected int bufferSize = 1024 * 4;
 
     /** 最大允许的请求体大小 */
     protected int maxContentLength = 1024 * 1024 * 2;
 
-    /** 当请求路径为 / 时, 默认读取的文件, 此设置只能和 dirList 二选一 */
-    protected String defaultIndexFile = null;
-
     protected boolean isEnableGZIP = false;
     protected Charset charset = Charset.forName("utf-8");
-
-    public void setSupportSymbolicLink(boolean supportSymbolicLink) {
-        isSupportSymbolicLink = supportSymbolicLink;
-    }
-
-    public void setStaticPath(Path staticPath) {
-        this.staticPath = staticPath;
-    }
-
-    public void setEnableDirList(boolean enableDirList) {
-        this.enableDirList = enableDirList;
-    }
 
     public void setBufferSize(int bufferSize) {
         this.bufferSize = bufferSize;
@@ -311,9 +287,6 @@ public abstract class RestfulContext {
         this.maxContentLength = maxContentLength;
     }
 
-    public void setDefaultIndexFile(String defaultIndexFile) {
-        this.defaultIndexFile = defaultIndexFile;
-    }
 
     public void setEnableGZIP(boolean enableGZIP) {
         isEnableGZIP = enableGZIP;
@@ -331,6 +304,26 @@ public abstract class RestfulContext {
         this.charset = charset;
     }
 
+    public RestfulFilter getFilter() {
+        return filter;
+    }
+
+    public int getBufferSize() {
+        return bufferSize;
+    }
+
+    public int getMaxContentLength() {
+        return maxContentLength;
+    }
+
+    public boolean isEnableGZIP() {
+        return isEnableGZIP;
+    }
+
+    public Charset getCharset() {
+        return charset;
+    }
+
     public Object getBean(String name) {
         return beansCache.get(name);
     }
@@ -339,11 +332,10 @@ public abstract class RestfulContext {
         this.outModelAndViewTime = outModelAndViewTime;
     }
 
-    protected String templateDir = null;
     protected TemplateEngine templateEngine = null;
-    protected FileTemplateResolver templateResolver = null;
     protected boolean outModelAndViewTime = true;
 
+    /** 启用模板引擎,启用后支持处理 controller 返回的 ModelAndView */
     public synchronized void enableTemplateEngine(String path, boolean cache) throws Exception {
         FileTemplateResolver templateResolver = new FileTemplateResolver();
         templateResolver.setTemplateMode(TemplateMode.HTML);
@@ -354,12 +346,22 @@ public abstract class RestfulContext {
 
         enableTemplateEngine(templateResolver);
     }
+
     public synchronized void enableTemplateEngine(FileTemplateResolver templateResolver) throws Exception {
         if(isRunning) {
             throw new Exception("启动后不支持再设置模板引擎");
         }
-        this.templateDir = templateResolver.getPrefix();
-        this.templateResolver = templateResolver;
+        if(templateEngine != null) {
+            try {
+                templateEngine.clearTemplateCache();
+                templateEngine.clearDialects();
+                templateEngine = null;
+            } catch(Exception e) {
+                log.warn("清理模板引擎出错:", e);
+            }
+        }
+        templateEngine = new TemplateEngine();
+        templateEngine.setTemplateResolver(templateResolver);
     }
 
 }
