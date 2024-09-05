@@ -15,6 +15,8 @@ import or.lotus.core.http.restful.support.RestfulResponseStatus;
 
 import java.io.File;
 
+import static io.netty.handler.codec.http.HttpVersion.HTTP_1_0;
+
 public class NettyRestfulServer extends RestfulContext {
 
     int responseBufferSize = 1024 * 4;
@@ -94,20 +96,25 @@ public class NettyRestfulServer extends RestfulContext {
 
         NettyRequest request = (NettyRequest) _request;
         NettyResponse response = (NettyResponse) _response;
-
+        FullHttpResponse rawRequest = response.getResponse();
         if(!isHandle) {
             //SimpleChannelInboundHandler 会自动释放如果不增加引用到下一个静态文件处理器就炸了
             //fireChannelRead不会增加引用计数
             //暂时返回404
             response.setStatus(RestfulResponseStatus.CLIENT_ERROR_NOT_FOUND);
-            request.channel.writeAndFlush(response.getResponse());
-            request.release();
             /*request.channel.fireChannelRead(request.retain());
             request.release();*/
-            return;
         }
-
-        request.channel.writeAndFlush(response.getResponse());
+        final boolean keepAlive = HttpUtil.isKeepAlive(rawRequest);
+        HttpUtil.setContentLength(rawRequest, rawRequest.content().readableBytes());
+        if (!keepAlive) {
+            // We're going to close the connection as soon as the response is sent,
+            // so we should also make it clear for the client.
+            rawRequest.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE);
+        } else if (rawRequest.protocolVersion().equals(HTTP_1_0)) {
+            rawRequest.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
+        }
+        request.channel.writeAndFlush(rawRequest);
         request.release();
     }
 

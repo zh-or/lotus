@@ -136,6 +136,14 @@ public abstract class RestfulContext {
                 if(filter != null && filter.exception(e, request, response)) {
                     sendResponse(true, request, response);
                 } else {
+                    response.setStatus(RestfulResponseStatus.SERVER_ERROR_INTERNAL_SERVER_ERROR);
+                    response.clearWrite();
+                    try {
+                        response.write(e.toString());
+                    } catch (IOException ex) {
+                        throw new RuntimeException(ex);
+                    }
+                    sendResponse(true, request, response);
                     log.error("处理请求出错:", e);
                 }
             }

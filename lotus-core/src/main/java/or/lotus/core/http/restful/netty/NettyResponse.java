@@ -44,22 +44,34 @@ public class NettyResponse extends RestfulResponse {
 
     @Override
     public void write(String str, int off, int len) throws IOException {
+        getBuffer();
         bodyBuffer.writeCharSequence(str.subSequence(off, off + len), charset);
     }
 
     @Override
     public void write(int c) throws IOException {
+        getBuffer();
         bodyBuffer.writeByte(c);
     }
 
     @Override
     public RestfulResponse write(byte[] data) {
+        getBuffer();
         bodyBuffer.writeBytes(data);
         return this;
     }
 
     @Override
+    public RestfulResponse clearWrite() {
+        if(bodyBuffer != null) {
+            bodyBuffer.clear();
+        }
+        return this;
+    }
+
+    @Override
     public void write(char[] cbuf, int off, int len) throws IOException {
+        getBuffer();
         int max = off + len;
         for(int i = off; i < max; i ++ ) {
             bodyBuffer.writeByte(cbuf[i]);
