@@ -46,6 +46,21 @@ public abstract class RestfulRequest {
 
     public abstract String getQueryString();
 
+    /** 获取url参数 index 从1开始, 顺序为从右到左 */
+    public String getPathParamByIndex(int index) {
+        String path = getUrl();
+        if(index < 1 || Utils.CheckNull(path)) {
+            return null;
+        }
+
+        String[] pars = path.split("/");
+        int len = pars.length;
+        if(len > 0 && len > index) {
+            return pars[len - index];
+        }
+        return null;
+    }
+
     public int getParameterInt(String name) {
         return getParameterInt(name, 0);
     }
@@ -62,11 +77,11 @@ public abstract class RestfulRequest {
         return getParameter(name, null);
     }
 
-    /** 从 GET -> queryString |  POSt -> URLENCODED BODY 获取数据*/
+    /** 从 GET -> queryString |  POST -> URLENCODED BODY 获取数据*/
     public String getParameter(String name, String def) {
         RestfulHttpMethod method = getMethod();
         String queryString = null;
-        if(method == RestfulHttpMethod.GET) {
+        if(method == RestfulHttpMethod.GET || method == RestfulHttpMethod.DELETE || method == RestfulHttpMethod.OPTIONS) {
             queryString = getQueryString();
         } else if(method == RestfulHttpMethod.POST && getPostBodyType() == PostBodyType.URLENCODED) {
             queryString = getBodyString();
@@ -105,15 +120,7 @@ public abstract class RestfulRequest {
         return getJSON().path(path);
     }
 
-    protected String bodyString = null;
-    public String getBodyString() {
-        if(bodyString == null) {
-            bodyString = new String(getBodyBytes(), context.charset);
-        }
-        return bodyString;
-    }
-
-    protected abstract byte[] getBodyBytes();
+    public abstract String getBodyString();
 
     public abstract RestfulHttpMethod getMethod();
 
@@ -145,5 +152,9 @@ public abstract class RestfulRequest {
 
     public abstract SocketAddress getRemoteAddress();
 
-    public abstract RestfulFormData getBodyData();
+    public abstract RestfulFormData getBodyFormData();
+
+    public RestfulContext getContext() {
+        return context;
+    }
 }

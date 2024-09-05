@@ -1,6 +1,5 @@
 package or.lotus.core.http.restful;
 
-import io.netty.handler.codec.http.HttpHeaderNames;
 import or.lotus.core.common.Utils;
 import or.lotus.core.http.restful.support.ModelAndView;
 import or.lotus.core.http.restful.support.RestfulResponseStatus;
@@ -8,6 +7,7 @@ import or.lotus.core.http.restful.support.RestfulUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.text.ParseException;
@@ -21,15 +21,16 @@ public abstract class RestfulResponse extends Writer {
     public static final int HTTP_CACHE_SECONDS = 60;
 
     protected RestfulRequest request;
+    protected HashMap<String, String> headers;
+
     public Charset charset = Charset.forName("UTF-8");
     public RestfulResponseStatus status;
-    public File file;
-    public HashMap<String, String> headers;
+
 
     public RestfulResponse(RestfulRequest request) {
         this.request = request;
-
-        headers = new HashMap<>();
+        this.headers = new HashMap<>();
+        this.charset = request.context.getCharset();
         setHeader("Server", "lotus restful");
         status = RestfulResponseStatus.SUCCESS_OK;
     }
@@ -56,7 +57,7 @@ public abstract class RestfulResponse extends Writer {
     }
 
     /** 调用此方法后其他write就没有意义了 */
-    public RestfulResponse writeFile(File file) {
+    /*public RestfulResponse writeFile(File file) {
         this.file = file;
 
         String ifModifiedSince = request.getHeader("if-modified-since");
@@ -91,30 +92,33 @@ public abstract class RestfulResponse extends Writer {
         setHeader("Last-Modified", dateFormatter.format(new Date(file.lastModified())));
 
         return this;
-    }
+    }*/
 
+    public abstract void write(String str, int off, int len) throws IOException;
+    public abstract void write(int c) throws IOException;
     public abstract RestfulResponse write(byte[] data);
 
     public RestfulResponse redirect(String path) {
         status = RestfulResponseStatus.REDIRECTION_FOUND;
-        headers.put("Location", path);
+        setHeader("Location", path);
         return this;
     }
 
-    public boolean isFileResponse() {
-        return file != null;
+    public RestfulResponse setStatus(RestfulResponseStatus status) {
+        this.status = status;
+        return this;
     }
 
     public String getHeader(String key) {
         return headers.get(key);
     }
 
-    public RestfulResponse setHeader(String key, String value){
+    public RestfulResponse setHeader(String key, String value) {
         headers.put(key, value);
         return this;
     }
 
-    public RestfulResponse removeHeader(String key){
+    public RestfulResponse removeHeader(String key) {
         headers.remove(key);
         return this;
     }
