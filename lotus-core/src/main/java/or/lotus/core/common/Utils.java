@@ -10,6 +10,7 @@ import java.net.UnknownHostException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
+import java.util.regex.Pattern;
 
 public class Utils {
 
@@ -430,7 +431,9 @@ public class Utils {
      */
     public static String BuildPath(String path) {
         int b = 0;
-        String[] dirs = path.split("/");
+        path = path.replace("\\", "/");
+        path = path.replace('/', File.separatorChar);
+        String[] dirs = path.split(Pattern.quote(String.valueOf(File.separatorChar)));
         String[] build = new String[dirs.length];
 
         for(String dir : dirs){
@@ -448,10 +451,10 @@ public class Utils {
         for(String dir : build){
             if(dir != null){
                 sb.append(dir);
-                sb.append("/");
+                sb.append(File.separatorChar);
             }
         }
-        if(sb.charAt(sb.length() - 1) == '/') sb.delete(sb.length() - 1, sb.length());
+        if(sb.charAt(sb.length() - 1) == File.separatorChar) sb.delete(sb.length() - 1, sb.length());
         return sb.toString();
     }
 
