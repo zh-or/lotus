@@ -1,14 +1,14 @@
-package or.lotus.core.http.restful.netty;
+package or.lotus.core.http.netty;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.QueryStringDecoder;
+import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
 import or.lotus.core.http.restful.RestfulContext;
 import or.lotus.core.http.restful.RestfulFormData;
 import or.lotus.core.http.restful.RestfulRequest;
 import or.lotus.core.http.restful.support.RestfulHttpMethod;
 
-import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 
 public class NettyRequest extends RestfulRequest {
@@ -21,6 +21,10 @@ public class NettyRequest extends RestfulRequest {
         this.channel = channel;
         this.msg = msg;
         qsd = new QueryStringDecoder(msg.uri());
+    }
+
+    FullHttpRequest rawRequest() {
+        return msg;
     }
 
     private int useCount = 0;
@@ -58,8 +62,13 @@ public class NettyRequest extends RestfulRequest {
     }
 
     @Override
+    public boolean isMultipart() {
+        return HttpPostRequestDecoder.isMultipart(msg);
+    }
+
+    @Override
     public RestfulFormData getBodyFormData() {
-        return null;
+        return new NettyFormData(this);
     }
 
     @Override
@@ -67,7 +76,7 @@ public class NettyRequest extends RestfulRequest {
         try {
             return RestfulHttpMethod.valueOf(msg.method().name());
         } catch (Throwable e) {
-            return RestfulHttpMethod.MAP;
+            return RestfulHttpMethod.REQUEST;
         }
     }
 

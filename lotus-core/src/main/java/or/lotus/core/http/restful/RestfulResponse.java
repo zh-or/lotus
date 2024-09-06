@@ -1,25 +1,16 @@
 package or.lotus.core.http.restful;
 
-import or.lotus.core.common.Utils;
 import or.lotus.core.http.restful.support.ModelAndView;
 import or.lotus.core.http.restful.support.RestfulResponseStatus;
-import or.lotus.core.http.restful.support.RestfulUtils;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.nio.charset.Charset;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
 
 
 public abstract class RestfulResponse extends Writer {
-    public static final String HTTP_DATE_FORMAT = "EEE, dd MMM yyyy HH:mm:ss zzz";
-    public static final String HTTP_DATE_GMT_TIMEZONE = "GMT";
-    public static final int HTTP_CACHE_SECONDS = 60;
-
     protected RestfulRequest request;
     protected HashMap<String, String> headers;
 
@@ -31,7 +22,11 @@ public abstract class RestfulResponse extends Writer {
         this.request = request;
         this.headers = new HashMap<>();
         this.charset = request.context.getCharset();
-        setHeader("Server", "lotus restful");
+        setHeader("Server", RestfulContext.TAG);
+
+        Date time = new Date();
+        setHeader("Expires", time.toString());
+        setHeader("Date", time.toString());
         status = RestfulResponseStatus.SUCCESS_OK;
     }
 

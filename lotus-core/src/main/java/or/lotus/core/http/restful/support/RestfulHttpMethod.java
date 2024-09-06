@@ -6,5 +6,5 @@ public enum RestfulHttpMethod {
     PUT,
     DELETE,
     OPTIONS,
-    MAP//其他请求
+    REQUEST//其他请求
 }
