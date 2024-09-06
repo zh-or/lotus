@@ -1,4 +1,4 @@
-package or.lotus.core.http.netty;
+package or.lotus.http.netty;
 
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
@@ -6,7 +6,6 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
-import or.lotus.core.http.server.WebSocketMessageHandler;
 
 public class NettyWebSocketSession {
     private QueryStringDecoder qsd;

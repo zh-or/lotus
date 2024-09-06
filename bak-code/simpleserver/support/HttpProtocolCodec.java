@@ -34,7 +34,7 @@ public class HttpProtocolCodec implements ProtocolCodec {
         }
 
         switch (status) {
-            case HEAD:
+            case HttpStatus.HEAD:
             {
                 /*if((context.getServerType() & HttpServer.SERVER_TYPE_HTTPS) > 0 &&  HttpsProtocolCodec.checkHTTPS(session, in, out)) {
                     HttpsProtocolCodec newdec = new HttpsProtocolCodec(context);
@@ -107,7 +107,7 @@ public class HttpProtocolCodec implements ProtocolCodec {
                 in.reset();
             }
                 break;
-            case BODY:
+            case HttpStatus.BODY:
             {
                 final int contentLength = (Integer) session.getAttr(CONTENT_LENGTH, 0);
                 if(contentLength > 0){
@@ -129,7 +129,7 @@ public class HttpProtocolCodec implements ProtocolCodec {
                 }
             }
                 break;
-            case FORMDATA:
+            case HttpStatus.FORMDATA:
             {
                 final int contentLength = (Integer) session.getAttr(CONTENT_LENGTH, 0);
                 final HttpRequest req = (HttpRequest) session.getAttr(REQUEST);

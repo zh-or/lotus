@@ -1,7 +1,6 @@
-package or.lotus.core.http.netty;
+package or.lotus.http.netty;
 
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
@@ -11,34 +10,14 @@ import io.netty.handler.codec.http.websocketx.*;
 import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
-import io.netty.handler.ssl.SslHandler;
-import io.netty.handler.stream.ChunkedFile;
 import io.netty.util.AttributeKey;
-import io.netty.util.CharsetUtil;
-import or.lotus.core.common.Utils;
 import or.lotus.core.http.restful.RestfulContext;
 import or.lotus.core.http.restful.RestfulRequest;
 import or.lotus.core.http.restful.RestfulResponse;
-import or.lotus.core.http.restful.support.RestfulResponseStatus;
-import or.lotus.core.http.restful.support.RestfulUtils;
-import or.lotus.core.http.server.*;
 
 import java.io.File;
-import java.io.RandomAccessFile;
-import java.net.URI;
-import java.net.URLDecoder;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-
-import static io.netty.handler.codec.http.HttpMethod.GET;
-import static io.netty.handler.codec.http.HttpResponseStatus.*;
-import static io.netty.handler.codec.http.HttpVersion.HTTP_1_0;
-import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
+import java.util.HashMap;
+import java.util.Map;
 
 public class NettyHttpServer extends RestfulContext {
 
@@ -249,7 +228,7 @@ public class NettyHttpServer extends RestfulContext {
             bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();
         } catch (Exception e) {
-            log.error("停止服务器失败:", e);
+            RestfulContext.log.error("停止服务器失败:", e);
         }
     }
 
@@ -281,7 +260,7 @@ public class NettyHttpServer extends RestfulContext {
         HttpUtil.setContentLength(rawRequest, rawRequest.content().readableBytes());
         if (keepAlive) {
             rawRequest.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
-        } else if (rawRequest.protocolVersion().equals(HTTP_1_0)) {
+        } else if (rawRequest.protocolVersion().equals(HttpVersion.HTTP_1_0)) {
             rawRequest.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE);
         }
         ChannelFuture flushPromise = request.channel.writeAndFlush(rawRequest);

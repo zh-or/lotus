@@ -99,14 +99,14 @@ public class SSLState {
             }
 
             switch(status) {
-                case NEED_UNWRAP:
+                case HandshakeStatus.NEED_UNWRAP:
                     if(!unwrap(netInBuffer, appInBuffer)) {
                         netInBuffer.compact();
                         session.readFromChannel(netInBuffer);
                         netInBuffer.flip();
                     }
                     break;
-                case NEED_WRAP:
+                case HandshakeStatus.NEED_WRAP:
                     netOutBuffer.clear();
                     wrap(emptyBuff, netOutBuffer);
                     netOutBuffer.flip();
@@ -114,14 +114,14 @@ public class SSLState {
                         session.writeToChannel(netOutBuffer);
                     }
                     break;
-                case NEED_TASK:
+                case HandshakeStatus.NEED_TASK:
                     Runnable run;
                     while((run = engine.getDelegatedTask()) != null) {
                         run.run();
                     }
                     break;
-                case FINISHED:
-                case NOT_HANDSHAKING:
+                case HandshakeStatus.FINISHED:
+                case HandshakeStatus.NOT_HANDSHAKING:
                     //free buffer
                     session.putWriteCacheBuffer(appInBuffer);
                     session.putWriteCacheBuffer(netOutBuffer);

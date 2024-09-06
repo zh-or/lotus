@@ -17,6 +17,7 @@
 
     <modules>
         <module>lotus-core</module>
+        <module>lotus-netty-http</module>
         <module>lotus-mybatis</module>
         <module>lotus-mybatis-generator</module>
         <module>lotus-wx</module>

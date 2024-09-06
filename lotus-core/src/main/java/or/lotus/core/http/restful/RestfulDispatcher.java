@@ -73,6 +73,7 @@ public class RestfulDispatcher {
         }
     }
 
+    /** 检查当前正则是否匹配url */
     public boolean checkPattern(RestfulRequest request) {
         if(!isPattern) {
             return false;
@@ -81,7 +82,7 @@ public class RestfulDispatcher {
         return Pattern.matches(url, request.getUrl());
     }
 
-    public void dispatch(RestfulContext context, RestfulRequest request, RestfulResponse response) throws Exception {
+    public Object dispatch(RestfulContext context, RestfulRequest request, RestfulResponse response) throws Exception {
         Object[] params = new Object[parameterTypes.length];
 
         for(int i = 0; i < parameterTypes.length; i++ ) {
@@ -96,45 +97,7 @@ public class RestfulDispatcher {
                     parameter);
         }
 
-        Object ret = method.invoke(controllerObject, params);
-
-        if(ret == null) {
-
-        } else if(ret instanceof ModelAndView) {
-            if(context.templateEngine == null) {
-                throw new IllegalStateException("你返回了ModelAndView, 但是并没有启用模板引擎.");
-            }
-            ModelAndView mv = (ModelAndView) ret;
-
-            if(mv.isRedirect) {//302跳转
-                response.redirect(mv.getViewName());
-            } else {
-                try {
-                    context.templateEngine.process(
-                            mv.getViewName(),
-                            mv.values,
-                            response
-                    );
-                } catch(Exception e) {
-                    if (context.filter != null) {
-                        response.clearWrite();
-                        context.filter.exception(e, request, response);
-                    } else {
-                        log.error("处理模板出错:", e);
-                    }
-                    return ;
-                }
-
-                if(context.outModelAndViewTime) {
-                    try {
-                        response.write("<!-- handle time: " + ((System.nanoTime() - mv.createTime) / 1_000_000) + "ms -->");
-                    } catch (IOException e) {}
-                }
-                response.setHeader("Content-Type", "text/html; charset=" + response.charset.displayName());
-            }
-        } else {
-            response.write(ret.toString());
-        }
+        return method.invoke(controllerObject, params);
     }
 
     private Object handleParameter(RestfulContext context,

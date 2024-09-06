@@ -1,4 +1,4 @@
-package or.lotus.core.http.netty;
+package or.lotus.http.netty;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -8,6 +8,8 @@ import or.lotus.core.http.restful.RestfulContext;
 import or.lotus.core.http.restful.RestfulFormData;
 import or.lotus.core.http.restful.RestfulRequest;
 import or.lotus.core.http.restful.support.RestfulHttpMethod;
+import or.lotus.http.netty.exception.NettyParameterException;
+
 
 import java.net.SocketAddress;
 
@@ -21,6 +23,12 @@ public class NettyRequest extends RestfulRequest {
         this.channel = channel;
         this.msg = msg;
         qsd = new QueryStringDecoder(msg.uri());
+    }
+
+    public void checkParameter(String name, String exceptionMsg) {
+        if(getParameter(name) == null) {
+            throw new NettyParameterException(exceptionMsg);
+        }
     }
 
     FullHttpRequest rawRequest() {

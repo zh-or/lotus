@@ -121,10 +121,51 @@ public abstract class RestfulContext {
                 // 普通请求
                 RestfulDispatcher dispatcher = getDispatcher(request);
                 if(dispatcher != null) {
-                    dispatcher.dispatch(this, request, response);
+                    Object ret = dispatcher.dispatch(this, request, response);
                     if(filter != null) {
-                        filter.afterRequest(request, response);
+                        if(filter.afterRequest(request, response, ret)) {
+                            return;
+                        }
                     }
+
+                    if(ret == null) {
+
+                    } else if(ret instanceof ModelAndView) {
+                        if(templateEngine == null) {
+                            throw new IllegalStateException("你返回了ModelAndView, 但是并没有启用模板引擎.");
+                        }
+                        ModelAndView mv = (ModelAndView) ret;
+
+                        if(mv.isRedirect) {//302跳转
+                            response.redirect(mv.getViewName());
+                        } else {
+                            try {
+                                templateEngine.process(
+                                        mv.getViewName(),
+                                        mv.values,
+                                        response
+                                );
+                            } catch(Exception e) {
+                                if (filter != null) {
+                                    response.clearWrite();
+                                    filter.exception(e, request, response);
+                                } else {
+                                    log.error("处理模板出错:", e);
+                                }
+                                return ;
+                            }
+
+                            if(outModelAndViewTime) {
+                                try {
+                                    response.write("<!-- handle time: " + ((System.nanoTime() - mv.createTime) / 1_000_000) + "ms -->");
+                                } catch (IOException e) {}
+                            }
+                            response.setHeader("Content-Type", "text/html; charset=" + response.charset.displayName());
+                        }
+                    } else {
+                        response.write(ret.toString());
+                    }
+
                     sendResponse(true, request, response);
                     return;
                 }
