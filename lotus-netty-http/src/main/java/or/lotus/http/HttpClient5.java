@@ -1,4 +1,4 @@
-package or.lotus.core.http;
+package or.lotus.http;
 
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.classic.methods.HttpPost;

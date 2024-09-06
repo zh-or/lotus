@@ -1,11 +1,10 @@
-package or.lotus.core.http.netty;
+package or.lotus.http.netty;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.ContinuationWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
-import or.lotus.core.http.server.WebSocketSession;
 
 public abstract class NettyWebSocketMessageHandler {
     private String path;

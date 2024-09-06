@@ -11,7 +11,6 @@ import or.lotus.core.http.simpleserver.support.HttpRequest;
 import or.lotus.core.http.simpleserver.support.HttpResponse;
 import or.lotus.core.http.simpleserver.support.ResponseStatus;
 import or.lotus.core.http.WebSocketFrame;
-import or.lotus.core.nio.Session;
 import or.lotus.core.common.Utils;
 
 
@@ -20,28 +19,28 @@ public abstract class HttpHandler {
 
     public void service(HttpMethod methed, HttpRequest request, HttpResponse response) throws Exception {
         switch (methed) {
-            case GET:
+            case HttpMethod.GET:
                 this.get(request, response);
                 break;
-            case POST:
+            case HttpMethod.POST:
                 this.post(request, response);
                 break;
-            case CONNECT:
+            case HttpMethod.CONNECT:
                 this.connect(request, response);
                 break;
-            case DELETE:
+            case HttpMethod.DELETE:
                 this.delete(request, response);
                 break;
-            case HEAD:
+            case HttpMethod.HEAD:
                 this.head(request, response);
                 break;
-            case OPTIONS:
+            case HttpMethod.OPTIONS:
                 this.options(request, response);
                 break;
-            case PUT:
+            case HttpMethod.PUT:
                 this.put(request, response);
                 break;
-            case TRACE:
+            case HttpMethod.TRACE:
                 this.trace(request, response);
                 break;
         }

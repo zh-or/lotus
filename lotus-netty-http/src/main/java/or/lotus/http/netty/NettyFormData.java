@@ -1,4 +1,4 @@
-package or.lotus.core.http.netty;
+package or.lotus.http.netty;
 
 import io.netty.handler.codec.http.multipart.DefaultHttpDataFactory;
 import io.netty.handler.codec.http.multipart.HttpDataFactory;

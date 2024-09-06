@@ -447,7 +447,7 @@ public class Utils {
                 b++;
             }
         }
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(path.length());
         for(String dir : build){
             if(dir != null){
                 sb.append(dir);
