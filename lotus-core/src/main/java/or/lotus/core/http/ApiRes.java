@@ -7,7 +7,7 @@ public class ApiRes {
     public static final int C_ERROR           =   500;//未知错误
     public static final int C_AUTH_NOT_FOUND  =   401;//无token
     public static final int C_AUTH_FAIL       =   402;//token所属ip错误
-    public static final int C_AUTH_PERMISSION_FAIL =   404;//权限不足
+    public static final int C_AUTH_PERMISSION_FAIL =   403;//权限不足
 
 
     public int code;

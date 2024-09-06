@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -24,17 +25,52 @@ public class RestfulDispatcher {
     public String url;
     public String dispatcherUrl;
     public boolean isPattern;
+    public RestfulHttpMethod httpMethod;
     public Object controllerObject;
     public Method method;
-    public RestfulHttpMethod httpMethod;
+    private Class[] parameterTypes;
+    private Parameter[] parameterAnnotations;
+    private Class[] genericTypes;
 
     public RestfulDispatcher(String url, Object controllerObject, Method method, RestfulHttpMethod httpMethod, boolean isPattern) {
         this.url = url.replaceAll("//", "/");
         this.dispatcherUrl = url + httpMethod.name();
-        this.controllerObject = controllerObject;
-        this.method = method;
         this.httpMethod = httpMethod;
         this.isPattern = isPattern;
+
+        this.controllerObject = controllerObject;
+        this.method = method;
+
+        parameterTypes = method.getParameterTypes();
+        Annotation[][] parameterTypesAnnotations = method.getParameterAnnotations();
+        int size = parameterTypes.length;
+        parameterAnnotations = new Parameter[size];
+        genericTypes = new Class[size];
+
+
+        java.lang.reflect.Parameter[] parameters = method.getParameters();
+
+        for(int i = 0; i < size; i++) {
+            parameterAnnotations[i] = null;//参数名字注解
+            for(Annotation ann : parameterTypesAnnotations[i]) {
+                if(ann.annotationType() == Parameter.class) {
+                    parameterAnnotations[i] = (Parameter) ann;
+                    break;
+                }
+            }
+
+            genericTypes[i] = null;//泛型类型
+            java.lang.reflect.Type gt = parameters[i].getParameterizedType();
+            if(gt != null && gt instanceof ParameterizedType) {
+                ParameterizedType pt = (ParameterizedType) gt;
+                java.lang.reflect.Type[] actualTypeArguments = pt.getActualTypeArguments();
+
+                if(actualTypeArguments != null & actualTypeArguments.length > 0) {
+                    genericTypes[i] = (Class) actualTypeArguments[0];//取第一个
+                }
+
+            }
+        }
     }
 
     public boolean checkPattern(RestfulRequest request) {
@@ -46,22 +82,18 @@ public class RestfulDispatcher {
     }
 
     public void dispatch(RestfulContext context, RestfulRequest request, RestfulResponse response) throws Exception {
-        Class<?>[] parameterTypes = method.getParameterTypes();
-        Annotation[][] parameterTypesAnnotations = method.getParameterAnnotations();
         Object[] params = new Object[parameterTypes.length];
 
         for(int i = 0; i < parameterTypes.length; i++ ) {
-            Parameter parameter = null;
+            Parameter parameter = parameterAnnotations[i];
 
-            for(Annotation ann : parameterTypesAnnotations[i]) {
-                if(ann.annotationType() == Parameter.class) {
-                    parameter = (Parameter) ann;
-                    break;
-                }
-            }
-
-            params[i] = handleParameter(context, request, response, parameterTypes[i], parameter);
-
+            params[i] = handleParameter(
+                    context,
+                    request,
+                    response,
+                    parameterTypes[i],
+                    genericTypes[i],
+                    parameter);
         }
 
         Object ret = method.invoke(controllerObject, params);
@@ -85,6 +117,7 @@ public class RestfulDispatcher {
                     );
                 } catch(Exception e) {
                     if (context.filter != null) {
+                        response.clearWrite();
                         context.filter.exception(e, request, response);
                     } else {
                         log.error("处理模板出错:", e);
@@ -108,18 +141,8 @@ public class RestfulDispatcher {
                                    RestfulRequest request,
                                    RestfulResponse response,
                                    Class<?> type,
+                                   Class childType,//泛型类型
                                    Parameter parameter) throws JsonProcessingException {
-        if(type.isInstance(request)) {
-            return request;
-        }
-
-        if(type.isInstance(response)) {
-            return response;
-        }
-
-        if(type.isInstance(context)) {
-            return context;
-        }
 
         //Parameter parameter = type.getAnnotation(Parameter.class);
         if(parameter != null) {
@@ -147,12 +170,12 @@ public class RestfulDispatcher {
                     }
 
                     if(type.isArray()) {
-                        return RestfulUtils.valueToArray(
+                        return  RestfulUtils.valueToArray(
                                 type.getComponentType(),
                                 val.split(","));
                     }
                     if(type.isAssignableFrom(List.class)) {
-                        Class childType = (Class) ((ParameterizedType) type.getGenericSuperclass()).getActualTypeArguments()[0];
+
                         Object[] res = RestfulUtils.valueToArray(
                                 childType,
                                 val.split(","));
@@ -164,6 +187,19 @@ public class RestfulDispatcher {
                     return RestfulUtils.valueToType(type, request.getJsonNodeForPath(name).asText());
                 }
             }
+        } else {
+            if(type.isInstance(request)) {
+                return request;
+            }
+
+            if(type.isInstance(response)) {
+                return response;
+            }
+
+            if(type.isInstance(context)) {
+                return context;
+            }
+
         }
         return null;
     }

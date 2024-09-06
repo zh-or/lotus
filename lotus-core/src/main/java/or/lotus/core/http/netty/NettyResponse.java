@@ -1,4 +1,4 @@
-package or.lotus.core.http.restful.netty;
+package or.lotus.core.http.netty;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -6,7 +6,6 @@ import io.netty.handler.codec.http.*;
 import or.lotus.core.http.restful.RestfulResponse;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 
 public class NettyResponse extends RestfulResponse {

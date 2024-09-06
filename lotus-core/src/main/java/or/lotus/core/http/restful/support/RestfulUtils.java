@@ -6,10 +6,12 @@ import or.lotus.core.http.restful.ann.Autowired;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.sql.Time;
+import java.util.Arrays;
 import java.util.Date;
 
 public class RestfulUtils {
@@ -17,7 +19,7 @@ public class RestfulUtils {
         Utils.assets(value == null, "value 为空");
         Utils.assets(type == null, "type 为空");
 
-        Object[] res = new Object[value.length];
+        Object[] res = (Object[]) Array.newInstance(type, value.length);
         for(int i = 0; i < value.length; i++) {
             res[i] = valueToType(type, value[i]);
         }

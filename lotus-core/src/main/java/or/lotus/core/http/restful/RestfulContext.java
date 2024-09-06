@@ -11,13 +11,11 @@ import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.templateresolver.FileTemplateResolver;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -34,6 +32,7 @@ import java.util.concurrent.TimeUnit;
  * 4. http容器收到请求时调用dispatch方法分发请求, 返回值为需要输出的内容
  *  */
 public abstract class RestfulContext {
+    public static final String TAG = "Lotus Restful";
     protected static final Logger log = LoggerFactory.getLogger(RestfulContext.class);
     protected InetSocketAddress bindAddress;
 
@@ -132,12 +131,14 @@ public abstract class RestfulContext {
                 //未匹配, 未处理当前请求
                 sendResponse(false, request, response);
 
-            } catch (Throwable e) {
+            } catch (Throwable rawException) {
+                response.clearWrite();
+                Throwable e = rawException instanceof InvocationTargetException ? ((InvocationTargetException) rawException).getTargetException() : rawException;
                 if(filter != null && filter.exception(e, request, response)) {
                     sendResponse(true, request, response);
                 } else {
                     response.setStatus(RestfulResponseStatus.SERVER_ERROR_INTERNAL_SERVER_ERROR);
-                    response.clearWrite();
+
                     try {
                         response.write(e.toString());
                     } catch (IOException ex) {
@@ -202,23 +203,23 @@ public abstract class RestfulContext {
 
                 Method[] methods = c.getMethods();
 
-                for(Method m : methods) {
+                for(Method method : methods) {
                     RestfulDispatcher dispatcher = null;
-                    if(m.isAnnotationPresent(Get.class)) {
-                        Get get = m.getAnnotation(Get.class);
-                        dispatcher = new RestfulDispatcher(url1 + get.value(), controller, m, RestfulHttpMethod.GET, get.isPattern());
-                    } else if(m.isAnnotationPresent(Post.class)) {
-                        Post post = m.getAnnotation(Post.class);
-                        dispatcher = new RestfulDispatcher(url1 + post.value(), controller, m, RestfulHttpMethod.POST, post.isPattern());
-                    } else if(m.isAnnotationPresent(Put.class)) {
-                        Put put = m.getAnnotation(Put.class);
-                        dispatcher = new RestfulDispatcher(url1 + put.value(), controller, m, RestfulHttpMethod.PUT, put.isPattern());
-                    } else if(m.isAnnotationPresent(Delete.class)) {
-                        Delete delete = m.getAnnotation(Delete.class);
-                        dispatcher = new RestfulDispatcher(url1 + delete.value(), controller, m, RestfulHttpMethod.DELETE, delete.isPattern());
-                    } else if(m.isAnnotationPresent(Request.class)) {
-                        Request map = m.getAnnotation(Request.class);
-                        dispatcher = new RestfulDispatcher(url1 + map.value(), controller, m, RestfulHttpMethod.MAP, map.isPattern());
+                    if(method.isAnnotationPresent(Get.class)) {
+                        Get get = method.getAnnotation(Get.class);
+                        dispatcher = new RestfulDispatcher(url1 + get.value(), controller, method, RestfulHttpMethod.GET, get.isPattern());
+                    } else if(method.isAnnotationPresent(Post.class)) {
+                        Post post = method.getAnnotation(Post.class);
+                        dispatcher = new RestfulDispatcher(url1 + post.value(), controller, method, RestfulHttpMethod.POST, post.isPattern());
+                    } else if(method.isAnnotationPresent(Put.class)) {
+                        Put put = method.getAnnotation(Put.class);
+                        dispatcher = new RestfulDispatcher(url1 + put.value(), controller, method, RestfulHttpMethod.PUT, put.isPattern());
+                    } else if(method.isAnnotationPresent(Delete.class)) {
+                        Delete delete = method.getAnnotation(Delete.class);
+                        dispatcher = new RestfulDispatcher(url1 + delete.value(), controller, method, RestfulHttpMethod.DELETE, delete.isPattern());
+                    } else if(method.isAnnotationPresent(Request.class)) {
+                        Request map = method.getAnnotation(Request.class);
+                        dispatcher = new RestfulDispatcher(url1 + map.value(), controller, method, RestfulHttpMethod.REQUEST, map.isPattern());
                     }
 
                     if(dispatcher != null) {
@@ -238,8 +239,8 @@ public abstract class RestfulContext {
     }
 
     /** 执行参数中 beans 的带有 Bean 注解的方法, 并将返回值缓存, 在 Controller 中使用 Autowired 注解时自动注入该缓存*/
-    public int addBeans(Object... beans) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
-        ArrayList<BeanWrapTmp> tmpList = new ArrayList<>();
+    public int addBeans(Object... beans) throws InvocationTargetException, IllegalAccessException {
+        ArrayList<BeanSortWrap> tmpList = new ArrayList<>();
 
         for(Object beanParent : beans) {
             Class clazz = beanParent.getClass();
@@ -253,17 +254,15 @@ public abstract class RestfulContext {
                         name = clazz.getName();
                     }
 
-                    BeanWrapTmp tmp = new BeanWrapTmp(beanParent, name, b.order(), method);
+                    BeanSortWrap tmp = new BeanSortWrap(beanParent, name, b.order(), method);
                     tmpList.add(tmp);
                 }
             }
         }
         //根据order排序, 否则交叉引用时会出问题
-        tmpList.sort(Comparator.comparingInt(BeanWrapTmp::getSort).reversed());
+        tmpList.sort(Comparator.comparingInt(BeanSortWrap::getSort).reversed());
 
-        for(BeanWrapTmp tmp : tmpList) {
-            //Class beanType = tmp.method.getReturnType();
-
+        for(BeanSortWrap tmp : tmpList) {
             Object beanObj = tmp.method.invoke(tmp.obj);
             beansCache.put(tmp.name, beanObj);
             RestfulUtils.injectBeansToObject(this, beanObj);
