@@ -30,6 +30,7 @@ public class FileQueue implements AutoCloseable {
         this.autoGcSize = size;
     }
 
+    /** 设置读写位置为文件起始位置, 并设置文件长度为0 */
     public synchronized void gc() throws IOException {
         fileLen = raf.length();
         raf.seek(fileLen);
