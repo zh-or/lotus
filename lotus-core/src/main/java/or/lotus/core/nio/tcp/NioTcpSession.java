@@ -1,7 +1,7 @@
 package or.lotus.core.nio.tcp;
 
 
-import or.lotus.core.nio.ProtocolCodec;
+import or.lotus.core.nio.support.ProtocolCodec;
 
 import java.io.IOException;
 import java.net.SocketAddress;
