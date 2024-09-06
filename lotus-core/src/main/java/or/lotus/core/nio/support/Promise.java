@@ -1,4 +1,4 @@
-package or.lotus.core.nio;
+package or.lotus.core.nio.support;
 
 public class Promise {
     private PromiseRunner then;

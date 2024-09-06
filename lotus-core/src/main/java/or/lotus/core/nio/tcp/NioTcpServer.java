@@ -1,7 +1,7 @@
 package or.lotus.core.nio.tcp;
 
 import or.lotus.core.nio.LotusPooledByteBuffer;
-import or.lotus.core.nio.PromiseWrap;
+import or.lotus.core.nio.support.PromiseWrap;
 
 import java.net.InetSocketAddress;
 import java.nio.channels.ServerSocketChannel;

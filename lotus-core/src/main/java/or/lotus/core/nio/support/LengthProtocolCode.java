@@ -1,6 +1,7 @@
-package or.lotus.core.nio;
+package or.lotus.core.nio.support;
 
 import or.lotus.core.common.Utils;
+import or.lotus.core.nio.LotusByteBuffer;
 
 import java.nio.ByteBuffer;
 
@@ -13,7 +14,7 @@ import java.nio.ByteBuffer;
 public class LengthProtocolCode implements ProtocolCodec{
 
 	@Override
-	public boolean decode(Session session, ByteBuffer in, ProtocolDecoderOutput out) throws Exception {
+	public boolean decode(NioSession session, ByteBuffer in, ProtocolDecoderOutput out) throws Exception {
 		int total = in.remaining();
 		if(total > 3){
 			in.mark();
@@ -51,7 +52,7 @@ public class LengthProtocolCode implements ProtocolCodec{
 	}
 
 	@Override
-	public boolean encode(Session session, Object msg, LotusIOBuffer out) throws Exception {
+	public boolean encode(NioSession session, Object msg, LotusByteBuffer out) throws Exception {
 
         byte[] content = (byte[]) msg;
         int len = content.length + 2 + 2;
