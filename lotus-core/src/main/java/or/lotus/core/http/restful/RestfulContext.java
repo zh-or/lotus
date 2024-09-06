@@ -174,11 +174,11 @@ public abstract class RestfulContext {
 
             } catch (Throwable rawException) {
                 response.clearWrite();
+                response.setStatus(RestfulResponseStatus.SERVER_ERROR_INTERNAL_SERVER_ERROR);
                 Throwable e = rawException instanceof InvocationTargetException ? ((InvocationTargetException) rawException).getTargetException() : rawException;
                 if(filter != null && filter.exception(e, request, response)) {
                     sendResponse(true, request, response);
                 } else {
-                    response.setStatus(RestfulResponseStatus.SERVER_ERROR_INTERNAL_SERVER_ERROR);
 
                     try {
                         response.write(e.toString());
@@ -277,6 +277,12 @@ public abstract class RestfulContext {
         }
 
         return dispatcherPatternList.size() + dispatcherPatternList.size();
+    }
+
+    public RestfulContext addBean(String name, Object bean) throws IllegalAccessException {
+        beansCache.put(name, bean);
+        RestfulUtils.injectBeansToObject(this, bean);
+        return this;
     }
 
     /** 执行参数中 beans 的带有 Bean 注解的方法, 并将返回值缓存, 在 Controller 中使用 Autowired 注解时自动注入该缓存*/
