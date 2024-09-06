@@ -12,7 +12,9 @@
     <version>${revision}</version>
     <packaging>pom</packaging>
     <name>lotus</name>
-    <description>http-server, nio-server, mybatis, orm, wx-lib</description>
+    <description>
+        http-server, mybatis, orm, wx-lib
+    </description>
     <url>https://github.com/zh-or/lotus</url>
 
     <modules>

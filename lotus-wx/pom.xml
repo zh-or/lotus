@@ -17,6 +17,11 @@
             <version>${revision}</version>
         </dependency>
         <dependency>
+            <groupId>io.github.zh-or</groupId>
+            <artifactId>lotus-netty-http</artifactId>
+            <version>${revision}</version>
+        </dependency>
+        <dependency>
             <groupId>com.github.wechatpay-apiv3</groupId>
             <artifactId>wechatpay-java</artifactId>
             <version>0.2.12</version>
