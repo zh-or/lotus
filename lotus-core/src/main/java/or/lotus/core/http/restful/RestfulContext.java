@@ -363,8 +363,14 @@ public abstract class RestfulContext {
         this.eventThreadPoolSize = eventThreadPoolSize;
     }
 
+    /** 会在filter内注入bean */
     public void setFilter(RestfulFilter filter) {
         this.filter = filter;
+        try {
+            RestfulUtils.injectBeansToObject(this, filter);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void setCharset(Charset charset) {

@@ -14,6 +14,7 @@ import io.netty.util.AttributeKey;
 import or.lotus.core.http.restful.RestfulContext;
 import or.lotus.core.http.restful.RestfulRequest;
 import or.lotus.core.http.restful.RestfulResponse;
+import or.lotus.core.http.restful.support.RestfulUtils;
 
 import java.io.File;
 import java.util.HashMap;
@@ -36,8 +37,14 @@ public class NettyHttpServer extends RestfulContext {
         sslContext = SslContextBuilder.forServer(new File(keystore), null, password).build();
     }
 
+    /** 会在filter内注入bean */
     public void setFileFilter(NettyFileFilter fileFilter) {
         this.fileFilter = fileFilter;
+        try {
+            RestfulUtils.injectBeansToObject(this, fileFilter);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void setWebSocketMessageHandler(NettyWebSocketMessageHandler webSocketMessageHandler) {
