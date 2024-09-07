@@ -125,13 +125,15 @@ public abstract class RestfulContext {
              * 3. 正则url controller匹配并调用
              * */
             try {
-                if(filter != null && filter.beforeRequest(request, response)) {
-                    sendResponse(true, request, response);
-                    return ;
-                }
                 // 普通请求
                 RestfulDispatcher dispatcher = getDispatcher(request);
                 if(dispatcher != null) {
+
+                    if(filter != null && filter.beforeRequest(dispatcher, request, response)) {
+                        sendResponse(true, request, response);
+                        return ;
+                    }
+
                     Object ret = dispatcher.dispatch(this, request, response);
                     if(filter != null) {
                         if(filter.afterRequest(request, response, ret)) {
