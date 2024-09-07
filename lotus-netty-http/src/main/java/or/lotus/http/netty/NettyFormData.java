@@ -21,7 +21,7 @@ public class NettyFormData extends RestfulFormData {
     }
 
     @Override
-    public RestfulFormDataItem getFormDataItem(String name) {
+    public NettyFormDataItem getFormDataItem(String name) {
         if(request.isMultipart()) {
             InterfaceHttpData item = decoder.getBodyHttpData(name);
             if(item != null) {
