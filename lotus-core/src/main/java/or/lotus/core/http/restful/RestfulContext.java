@@ -292,14 +292,39 @@ public abstract class RestfulContext {
         return dispatcherPatternList.size() + dispatcherPatternList.size();
     }
 
+    /** 手动注册Bean */
+    public RestfulContext addBean(Object bean) throws IllegalAccessException {
+        Utils.assets(bean == null, "bean 不能为空");
+        return addBean(bean.getClass().getName(), bean);
+    }
+
+    /** 手动注册Bean */
     public RestfulContext addBean(String name, Object bean) throws IllegalAccessException {
         beansCache.put(name, bean);
         RestfulUtils.injectBeansToObject(this, bean);
         return this;
     }
 
+    /** 1. 扫描指定包名
+     * 2. 实例化所有带有Bean注解的类
+     * 3. 注入Bean
+     * 4. 添加该类到Bean缓存
+     * */
+    public int addBeansFromPackage(String packageName) throws Exception {
+        Utils.assets(packageName, "包名不能为空");
+        List<String> clazzs = BeanUtils.getClassPathByPackage(packageName);
+        for (String path : clazzs) {
+            Class<?> c = Thread.currentThread().getContextClassLoader().loadClass(path);
+            Object obj = c.getDeclaredConstructor().newInstance();
+            //注入bean
+            RestfulUtils.injectBeansToObject(this, obj);
+            addBean(obj);
+        }
+        return clazzs.size();
+    }
+
     /** 执行参数中 beans 的带有 Bean 注解的方法, 并将返回值缓存, 在 Controller 中使用 Autowired 注解时自动注入该缓存*/
-    public int addBeans(Object... beans) throws InvocationTargetException, IllegalAccessException {
+    public int addBeansFromMethodReturn(Object... beans) throws InvocationTargetException, IllegalAccessException {
         ArrayList<BeanSortWrap> tmpList = new ArrayList<>();
 
         for(Object beanParent : beans) {
