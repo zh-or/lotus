@@ -91,6 +91,17 @@ public abstract class RestfulContext {
                 log.error("等待业务线程池退出失败:", e);
             }
         }
+        for(Object b : beansCache.values()) {
+            try {
+                if(b.getClass().isAssignableFrom(AutoCloseable.class)) {
+                    AutoCloseable closeable = (AutoCloseable) b;
+                    closeable.close();
+                }
+            } catch (Exception e) {
+                log.error("关闭bean失败:" + b, e);
+            }
+        }
+
         isRunning = false;
     }
 
