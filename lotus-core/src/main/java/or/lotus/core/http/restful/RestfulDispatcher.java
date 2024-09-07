@@ -1,13 +1,12 @@
 package or.lotus.core.http.restful;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import or.lotus.core.common.BeanUtils;
 import or.lotus.core.common.Utils;
+import or.lotus.core.http.restful.ann.Attr;
 import or.lotus.core.http.restful.ann.Parameter;
-import or.lotus.core.http.restful.support.ModelAndView;
-import or.lotus.core.http.restful.support.PostBodyType;
-import or.lotus.core.http.restful.support.RestfulHttpMethod;
-import or.lotus.core.http.restful.support.RestfulUtils;
+import or.lotus.core.http.restful.support.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +29,7 @@ public class RestfulDispatcher {
     public Method method;
     private Class[] parameterTypes;
     private Parameter[] parameterAnnotations;
+    private Attr[] attrs;
     private Class[] genericTypes;
 
     public RestfulDispatcher(String url, Object controllerObject, Method method, RestfulHttpMethod httpMethod, boolean isPattern) {
@@ -46,7 +46,7 @@ public class RestfulDispatcher {
         int size = parameterTypes.length;
         parameterAnnotations = new Parameter[size];
         genericTypes = new Class[size];
-
+        attrs = new Attr[size];
 
         java.lang.reflect.Parameter[] parameters = method.getParameters();
 
@@ -68,7 +68,14 @@ public class RestfulDispatcher {
                 if(actualTypeArguments != null & actualTypeArguments.length > 0) {
                     genericTypes[i] = (Class) actualTypeArguments[0];//取第一个
                 }
+            }
 
+            attrs[i] = null;//参数名字注解
+            for(Annotation ann : parameterTypesAnnotations[i]) {
+                if(ann.annotationType() == Attr.class) {
+                    attrs[i] = (Attr) ann;
+                    break;
+                }
             }
         }
     }
@@ -86,7 +93,6 @@ public class RestfulDispatcher {
         Object[] params = new Object[parameterTypes.length];
 
         for(int i = 0; i < parameterTypes.length; i++ ) {
-            Parameter parameter = parameterAnnotations[i];
 
             params[i] = handleParameter(
                     context,
@@ -94,7 +100,8 @@ public class RestfulDispatcher {
                     response,
                     parameterTypes[i],
                     genericTypes[i],
-                    parameter);
+                    parameterAnnotations[i],
+                    attrs[i]);
         }
 
         return method.invoke(controllerObject, params);
@@ -105,7 +112,8 @@ public class RestfulDispatcher {
                                    RestfulResponse response,
                                    Class<?> type,
                                    Class childType,//泛型类型
-                                   Parameter parameter) throws JsonProcessingException {
+                                   Parameter parameter,
+                                   Attr attr) throws JsonProcessingException {
 
         //Parameter parameter = type.getAnnotation(Parameter.class);
         if(parameter != null) {
@@ -116,6 +124,14 @@ public class RestfulDispatcher {
                 if(reqMethod == RestfulHttpMethod.POST && request.getPostBodyType() == PostBodyType.JSON) {
                     /** post json 并且参数是对象尝试直接转换 */
                     if(!RestfulUtils.isBaseType(type)) {
+
+                        if(type.isAssignableFrom(List.class)) {
+                            //todo 需要测试
+                            return BeanUtils.JsonToObj(
+                                    new TypeReferenceDynamicList<List>(childType),
+                                    request.getBodyString());
+                        }
+
                         return BeanUtils.JsonToObj(type, request.getBodyString());
                     }
                 }
@@ -150,6 +166,9 @@ public class RestfulDispatcher {
                     return RestfulUtils.valueToType(type, request.getJsonNodeForPath(name).asText());
                 }
             }
+        } if(attr != null) {
+            //attr 的 value 必填
+            return request.getAttribute(attr.value());
         } else {
             if(type.isInstance(request)) {
                 return request;
