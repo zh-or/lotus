@@ -75,7 +75,7 @@ public class NettyRequest extends RestfulRequest {
     }
 
     @Override
-    public RestfulFormData getBodyFormData() {
+    public NettyFormData getBodyFormData() {
         return new NettyFormData(this);
     }
 
