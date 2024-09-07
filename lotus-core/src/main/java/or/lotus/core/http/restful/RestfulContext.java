@@ -310,7 +310,7 @@ public abstract class RestfulContext {
      * 3. 注入Bean
      * 4. 添加该类到Bean缓存
      * */
-    public int addBeansFromPackage(String packageName) throws Exception {
+    public List<String> addBeansFromPackage(String packageName) throws Exception {
         Utils.assets(packageName, "包名不能为空");
         List<String> clazzs = BeanUtils.getClassPathByPackage(packageName);
         for (String path : clazzs) {
@@ -320,13 +320,13 @@ public abstract class RestfulContext {
             RestfulUtils.injectBeansToObject(this, obj);
             addBean(obj);
         }
-        return clazzs.size();
+        return clazzs;
     }
 
-    /** 执行参数中 beans 的带有 Bean 注解的方法, 并将返回值缓存, 在 Controller 中使用 Autowired 注解时自动注入该缓存*/
-    public int addBeansFromMethodReturn(Object... beans) throws InvocationTargetException, IllegalAccessException {
+    /** 执行参数中 beans 的带有 Bean 注解的方法, 并将返回值缓存, 在 Controller 中使用 Autowired 注解时自动注入该缓存 */
+    public List<String> addBeansFromMethodReturn(Object... beans) throws InvocationTargetException, IllegalAccessException {
         ArrayList<BeanSortWrap> tmpList = new ArrayList<>();
-
+        List<String> addedBeans = new ArrayList<>();
         for(Object beanParent : beans) {
             Class clazz = beanParent.getClass();
             Method[] methods = clazz.getDeclaredMethods();
@@ -338,7 +338,7 @@ public abstract class RestfulContext {
                     if(Utils.CheckNull(name)) {
                         name = clazz.getName();
                     }
-
+                    addedBeans.add(name);
                     BeanSortWrap tmp = new BeanSortWrap(beanParent, name, b.order(), method);
                     tmpList.add(tmp);
                 }
@@ -353,7 +353,7 @@ public abstract class RestfulContext {
             RestfulUtils.injectBeansToObject(this, beanObj);
         }
 
-        return tmpList.size();
+        return addedBeans;
     }
 
 
