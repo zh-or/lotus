@@ -127,6 +127,10 @@ public abstract class RestfulRequest {
     /** 需要在此方法内处理大小写问题 */
     public abstract String getHeader(String name);
 
+    public String getCookieValue(String key) {
+        return getCookie(key).value;
+    }
+
     public synchronized RestfulCookie getCookie(String key) {
         RestfulCookie cookie = null;
         if(cookies == null) {
