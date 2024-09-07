@@ -12,5 +12,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Autowired {
     /**如果不填值则默认为类名如: com.a.b.User, 与 @Bean 对应*/
-    String value();
+    String value() default "";
 }
