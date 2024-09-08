@@ -1,5 +1,7 @@
 package or.lotus.core.http.restful.support;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import or.lotus.core.common.Utils;
 import or.lotus.core.http.restful.RestfulContext;
 import or.lotus.core.http.restful.ann.Autowired;
@@ -9,6 +11,7 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.file.Files;
 import java.sql.Time;
 import java.util.Arrays;
@@ -45,6 +48,43 @@ public class RestfulUtils {
             return Double.valueOf(value.toString());
         } else if (BigDecimal.class == type) {
             return new BigDecimal(value.toString());
+        } else if (java.sql.Date.class == type) {
+            return new Date(value.toString());
+        } else if (java.sql.Time.class == type) {
+            return Time.valueOf(value.toString());
+        } /*else if (java.sql.Timestamp.class == type || java.util.Date.class == type) {
+            return rs.getTimestamp(index);
+        } */else if (type.isEnum()) {
+            return Enum.valueOf(type, value.toString());
+        }
+
+        return null;
+    }
+
+    public static Object jsonValueToType(Class type, JsonNode value) {
+        if(value.isMissingNode()) {
+            return null;
+        }
+        if (String.class == type) {
+            return value.asText();
+        } else if (boolean.class == type || Boolean.class == type) {
+            return value.asBoolean();
+        } else if (byte.class == type || Byte.class == type) {
+            return Byte.valueOf(value.asText());
+        } else if (short.class == type || Short.class == type) {
+            return Short.valueOf((short) value.asInt());
+        } else if (int.class == type || Integer.class == type) {
+            return value.asInt();
+        } else if (long.class == type || Long.class == type) {
+            return value.asLong();
+        } else if (float.class == type || Float.class == type) {
+            return (float) value.asDouble();
+        } else if (double.class == type || Double.class == type) {
+            return value.asDouble();
+        } else if (BigDecimal.class == type) {
+            return value.decimalValue();
+        } else if(BigInteger.class == type) {
+            return value.bigIntegerValue();
         } else if (java.sql.Date.class == type) {
             return new Date(value.toString());
         } else if (java.sql.Time.class == type) {
