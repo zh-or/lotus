@@ -3,6 +3,7 @@ package or.lotus.core.http.restful;
 import or.lotus.core.http.restful.support.ModelAndView;
 import or.lotus.core.http.restful.support.RestfulResponseStatus;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 import java.nio.charset.Charset;
@@ -93,6 +94,20 @@ public abstract class RestfulResponse extends Writer {
     public abstract void write(int c) throws IOException;
     public abstract RestfulResponse write(byte[] data);
     public abstract RestfulResponse clearWrite();
+
+    protected File file;
+    public RestfulResponse write(File file) {
+        this.file = file;
+        return this;
+    }
+
+    public boolean isFileResponse() {
+        return file != null;
+    }
+
+    public File getFile() {
+        return file;
+    }
 
     public RestfulResponse redirect(String path) {
         status = RestfulResponseStatus.REDIRECTION_FOUND;

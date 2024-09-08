@@ -10,6 +10,7 @@ import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.templateresolver.FileTemplateResolver;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -175,6 +176,9 @@ public abstract class RestfulContext {
                             }
                             response.setHeader("Content-Type", "text/html; charset=" + response.charset.displayName());
                         }
+                    } else if(ret instanceof File) {
+                        response.write((File) ret);
+
                     } else {
                         response.write(ret.toString());
                     }
