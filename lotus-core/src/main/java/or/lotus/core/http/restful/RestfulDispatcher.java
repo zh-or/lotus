@@ -123,8 +123,10 @@ public class RestfulDispatcher {
             if(Utils.CheckNull(name)) {
                 if(reqMethod == RestfulHttpMethod.POST && request.getPostBodyType() == PostBodyType.JSON) {
                     /** post json 并且参数是对象尝试直接转换 */
-                    if(!RestfulUtils.isBaseType(type)) {
-
+                    if(RestfulUtils.isBaseType(type)) {
+                        //todo 需要测试
+                        return RestfulUtils.jsonValueToType(type, request.getJSON().path(name));
+                    } else {
                         if(type.isAssignableFrom(List.class)) {
                             //todo 需要测试
                             return BeanUtils.JsonToObj(
