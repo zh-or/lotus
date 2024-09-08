@@ -11,9 +11,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.URI;
 import java.net.URLDecoder;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -59,17 +61,17 @@ public class NettyStaticFileHandler extends SimpleChannelInboundHandler<FullHttp
     @Override
     public void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
         if(this.server.fileFilter != null && this.server.fileFilter.before(request)) {
-            sendError(ctx, request, HttpResponseStatus.NOT_FOUND);
+            sendError(ctx, request, HttpResponseStatus.NOT_FOUND, this.server.getCharset());
             return;
         }
 
         if (!request.decoderResult().isSuccess()) {
-            sendError(ctx, request, HttpResponseStatus.BAD_REQUEST);
+            sendError(ctx, request, HttpResponseStatus.BAD_REQUEST, this.server.getCharset());
             return;
         }
 
         if (!HttpMethod.GET.equals(request.method())) {
-            sendError(ctx, request, HttpResponseStatus.METHOD_NOT_ALLOWED);
+            sendError(ctx, request, HttpResponseStatus.METHOD_NOT_ALLOWED, this.server.getCharset());
             return;
         }
 
@@ -77,7 +79,7 @@ public class NettyStaticFileHandler extends SimpleChannelInboundHandler<FullHttp
         final String path = sanitizeUri(uri);
 
         if (path == null) {
-            sendError(ctx, request, HttpResponseStatus.FORBIDDEN);
+            sendError(ctx, request, HttpResponseStatus.FORBIDDEN, this.server.getCharset());
             return;
         }
 
@@ -88,7 +90,7 @@ public class NettyStaticFileHandler extends SimpleChannelInboundHandler<FullHttp
         if(Files.isSymbolicLink(p2)) {
             /**检查配置是否启用支持软链接*/
             if(!server.isSupportSymbolicLink) {
-                sendError(ctx, request, HttpResponseStatus.FORBIDDEN);
+                sendError(ctx, request, HttpResponseStatus.FORBIDDEN, this.server.getCharset());
                 return ;
             }
 
@@ -99,17 +101,17 @@ public class NettyStaticFileHandler extends SimpleChannelInboundHandler<FullHttp
         }
 
         if(file.isHidden() || !file.exists()) {
-            sendError(ctx, request, HttpResponseStatus.NOT_FOUND);
+            sendError(ctx, request, HttpResponseStatus.NOT_FOUND, this.server.getCharset());
             return ;
         }
 
         if (file.isDirectory()) {
-            sendError(ctx, request, HttpResponseStatus.NOT_FOUND);
+            sendError(ctx, request, HttpResponseStatus.NOT_FOUND, this.server.getCharset());
             return;
         }
 
         if (!file.isFile()) {
-            sendError(ctx, request, HttpResponseStatus.FORBIDDEN);
+            sendError(ctx, request, HttpResponseStatus.FORBIDDEN, this.server.getCharset());
             return;
         }
         final boolean keepAlive = HttpUtil.isKeepAlive(request);
@@ -130,7 +132,7 @@ public class NettyStaticFileHandler extends SimpleChannelInboundHandler<FullHttp
             } catch (ParseException e) {
                 //格式化时间出错
                 log.error("格式化请求时间出错:" ,e);
-                sendError(ctx, request, HttpResponseStatus.FORBIDDEN);
+                sendError(ctx, request, HttpResponseStatus.FORBIDDEN, this.server.getCharset());
                 return;
             }
         }
@@ -145,17 +147,21 @@ public class NettyStaticFileHandler extends SimpleChannelInboundHandler<FullHttp
             return;
         }
 
+        sendFile(file, request, response, ctx, this.server.getCharset());
+    }
+
+    public static void sendFile(File file, FullHttpRequest request, HttpResponse response, ChannelHandlerContext ctx, Charset charset) {
         RandomAccessFile raf;
         long fileLength = 0;
         try {
             raf = new RandomAccessFile(file, "r");
             fileLength = raf.length();
         } catch (Exception ignore) {
-            sendError(ctx, request, HttpResponseStatus.NOT_FOUND);
+            sendError(ctx, request, HttpResponseStatus.NOT_FOUND, charset);
             return;
         }
         HttpUtil.setContentLength(response, fileLength);
-        response.headers().set(HttpHeaderNames.CONTENT_TYPE, RestfulUtils.getMimeType(this.server.getCharset().displayName(), file));
+        response.headers().set(HttpHeaderNames.CONTENT_TYPE, RestfulUtils.getMimeType(charset.displayName(), file));
 
         SimpleDateFormat dateFormatter = new SimpleDateFormat(HTTP_DATE_FORMAT, Locale.US);
         dateFormatter.setTimeZone(TimeZone.getTimeZone(HTTP_DATE_GMT_TIMEZONE));
@@ -170,7 +176,7 @@ public class NettyStaticFileHandler extends SimpleChannelInboundHandler<FullHttp
         headers.set(HttpHeaderNames.EXPIRES, dateFormatter.format(time.getTime()));
         headers.set(HttpHeaderNames.CACHE_CONTROL, "private, max-age=" + HTTP_CACHE_SECONDS);
         headers.set(HttpHeaderNames.LAST_MODIFIED, dateFormatter.format(new Date(file.lastModified())));
-        if (!keepAlive) {
+        if (!HttpUtil.isKeepAlive(request)) {
             response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE);
         } else if (request.protocolVersion().equals(HttpVersion.HTTP_1_0)) {
             response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
@@ -187,13 +193,18 @@ public class NettyStaticFileHandler extends SimpleChannelInboundHandler<FullHttp
             lastContentFuture = ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
 
         } else {
-            sendFileFuture = ctx.writeAndFlush(new HttpChunkedInput(new ChunkedFile(raf, 0, fileLength, 8192)), ctx.newProgressivePromise());
+            try {
+                sendFileFuture = ctx.writeAndFlush(new HttpChunkedInput(new ChunkedFile(raf, 0, fileLength, 8192)), ctx.newProgressivePromise());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
             // HttpChunkedInput will write the end marker (LastHttpContent) for us.
             lastContentFuture = sendFileFuture;
         }
     }
 
-    public void sendNotModified(ChannelHandlerContext ctx, FullHttpRequest request) {
+
+    public static void sendNotModified(ChannelHandlerContext ctx, FullHttpRequest request) {
         FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.NOT_MODIFIED, Unpooled.EMPTY_BUFFER);
 
         SimpleDateFormat dateFormatter = new SimpleDateFormat(HTTP_DATE_FORMAT, Locale.US);
@@ -205,13 +216,20 @@ public class NettyStaticFileHandler extends SimpleChannelInboundHandler<FullHttp
         sendAndCleanupConnection(ctx, request, response);
     }
 
-    private void sendError(ChannelHandlerContext ctx, final FullHttpRequest request, HttpResponseStatus status) {
-        FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status, Unpooled.copiedBuffer("Failure: " + status + "\r\n", server.getCharset()));
-        response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain; charset=" + server.getCharset().displayName());
+    public static void sendError(ChannelHandlerContext ctx, final FullHttpRequest request, HttpResponseStatus status, Charset charset) {
+        FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status,
+                Unpooled.copiedBuffer("<html>\n" +
+                        "<head><title>" + status.code() + "</title></head>\n" +
+                        "<body>\n" +
+                        "<center><h1>" + status.code() + "</h1></center>\n" +
+                        "<hr><center>" + status.reasonPhrase() + "</center>\n" +
+                        "</body>\n" +
+                        "</html>", charset));
+        response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain; charset=" + charset.displayName());
         sendAndCleanupConnection(ctx, request, response);
     }
 
-    private void sendAndCleanupConnection(ChannelHandlerContext ctx, final FullHttpRequest request, FullHttpResponse response) {
+    public static void sendAndCleanupConnection(ChannelHandlerContext ctx, final FullHttpRequest request, FullHttpResponse response) {
         HttpUtil.setContentLength(response, response.content().readableBytes());
         boolean keepAlive = false;
         if(request != null) {

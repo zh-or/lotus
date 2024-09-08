@@ -247,7 +247,6 @@ public class NettyHttpServer extends RestfulContext {
             //SimpleChannelInboundHandler 会自动释放如果不增加引用到下一个静态文件处理器就炸了
             //fireChannelRead不会增加引用计数
             request.channel.fireChannelRead(request.rawRequest().retain());
-            return;
             /*
             //暂时返回404
             *  response.setStatus(RestfulResponseStatus.CLIENT_ERROR_NOT_FOUND);
@@ -261,19 +260,22 @@ public class NettyHttpServer extends RestfulContext {
                         "</html>");
             } catch(Exception e) {}
             * */
-        }
-        FullHttpResponse rawRequest = response.getResponse();
-        final boolean keepAlive = HttpUtil.isKeepAlive(rawRequest);
-        HttpUtil.setContentLength(rawRequest, rawRequest.content().readableBytes());
-        if (keepAlive) {
-            rawRequest.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
-        } else if (rawRequest.protocolVersion().equals(HttpVersion.HTTP_1_0)) {
-            rawRequest.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE);
-        }
-        ChannelFuture flushPromise = request.channel.writeAndFlush(rawRequest);
+        } else if(response.isFileResponse()) {
+            NettyStaticFileHandler.sendFile(response.getFile(), request.rawRequest(), response.getResponse(), request.channel, charset);
+        } else {
+            FullHttpResponse rawRequest = response.getResponse();
+            final boolean keepAlive = HttpUtil.isKeepAlive(rawRequest);
+            HttpUtil.setContentLength(rawRequest, rawRequest.content().readableBytes());
+            if (keepAlive) {
+                rawRequest.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
+            } else if (rawRequest.protocolVersion().equals(HttpVersion.HTTP_1_0)) {
+                rawRequest.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE);
+            }
+            ChannelFuture flushPromise = request.channel.writeAndFlush(rawRequest);
 
-        if (!keepAlive) {
-            flushPromise.addListener(ChannelFutureListener.CLOSE);
+            if (!keepAlive) {
+                flushPromise.addListener(ChannelFutureListener.CLOSE);
+            }
         }
 
         request.release();
