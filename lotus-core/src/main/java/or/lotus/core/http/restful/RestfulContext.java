@@ -13,6 +13,7 @@ import org.thymeleaf.templateresolver.FileTemplateResolver;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
@@ -42,7 +43,7 @@ public abstract class RestfulContext {
     protected ConcurrentHashMap<String, Object> beansCache;
 
     /** key = url + http-method-str*/
-    protected ConcurrentHashMap<String, RestfulDispatcher> dispatcherAbsMap;
+    protected ConcurrentHashMap<String, RestfulDispatchMapper> dispatcherAbsMap;
     protected ArrayList<RestfulDispatcher> dispatcherPatternList;
 
     /** 业务线程池 */
@@ -127,15 +128,23 @@ public abstract class RestfulContext {
              * 3. 正则url controller匹配并调用
              * */
             try {
+
                 // 普通请求
-                RestfulDispatcher dispatcher = getDispatcher(request);
-                if(dispatcher != null) {
+                RestfulDispatchMapper mapper = getDispatcher(request);
+                if(mapper != null) {
+                    RestfulDispatcher dispatcher = mapper.getDispatcher(request.getMethod());
 
                     if(filter != null && filter.beforeRequest(dispatcher, request, response)) {
                         sendResponse(true, request, response);
                         return ;
                     }
 
+                    if(dispatcher == null) {
+                        response.setStatus(RestfulResponseStatus.CLIENT_ERROR_METHOD_NOT_ALLOWED);
+                        //response.clearWrite().write("");
+                        sendResponse(true, request, response);
+                        return ;
+                    }
                     Object ret = dispatcher.dispatch(this, request, response);
                     if(filter != null) {
                         if(filter.afterRequest(request, response, ret)) {
@@ -220,17 +229,17 @@ public abstract class RestfulContext {
         }
     }
 
-    protected RestfulDispatcher getDispatcher(RestfulRequest request) {
+    protected RestfulDispatchMapper getDispatcher(RestfulRequest request) {
         // 普通请求
-        RestfulDispatcher dispatcher = dispatcherAbsMap.get(request.getDispatchUrl());
-        if(dispatcher != null) {
-            return dispatcher;
+        RestfulDispatchMapper mapper = dispatcherAbsMap.get(request.getUrl());
+        if(mapper != null) {
+            return mapper;
         }
 
         //正则url验证
-        for(RestfulDispatcher patternDispatcher : dispatcherPatternList) {
-            if(patternDispatcher.checkPattern(request)) {
-                return patternDispatcher;
+        for(RestfulDispatcher dispatcher : dispatcherPatternList) {
+            if(dispatcher.checkPattern(request)) {
+                return new RestfulDispatchMapper(dispatcher);
             }
         }
 
@@ -254,7 +263,9 @@ public abstract class RestfulContext {
             RestfulController annotation = c.getAnnotation(RestfulController.class);
             if(annotation != null) {
                 //controller 只创建一次
-                Object controller = c.getDeclaredConstructor().newInstance();
+                Constructor constructor = c.getDeclaredConstructor();
+                constructor.setAccessible(true);
+                Object controller = constructor.newInstance();
 
                 //注入bean
                 RestfulUtils.injectBeansToObject(this, controller);
@@ -284,10 +295,16 @@ public abstract class RestfulContext {
                     }
 
                     if(dispatcher != null) {
+
                         if(dispatcher.isPattern) {
                             dispatcherPatternList.add(dispatcher);
                         } else {
-                            dispatcherAbsMap.put(dispatcher.dispatcherUrl, dispatcher);
+                            RestfulDispatchMapper old = dispatcherAbsMap.get(dispatcher.url);
+                            if(old == null) {
+                                old = new RestfulDispatchMapper();
+                                dispatcherAbsMap.put(dispatcher.url, old);
+                            }
+                            old.setDispatcher(dispatcher);
                         }
                     }
                 }
@@ -316,13 +333,17 @@ public abstract class RestfulContext {
      * 2. 实例化所有带有Bean注解的类
      * 3. 注入Bean
      * 4. 添加该类到Bean缓存
+     * 注意: 该方法只适合没有构造参数的类, 否则会报错
      * */
     public List<String> addBeansFromPackage(String packageName) throws Exception {
         Utils.assets(packageName, "包名不能为空");
         List<String> clazzs = BeanUtils.getClassPathByPackage(packageName);
         for (String path : clazzs) {
             Class<?> c = Thread.currentThread().getContextClassLoader().loadClass(path);
-            Object obj = c.getDeclaredConstructor().newInstance();
+
+            Constructor constructor = c.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            Object obj = constructor.newInstance();
             //注入bean
             RestfulUtils.injectBeansToObject(this, obj);
             addBean(obj);
@@ -343,7 +364,8 @@ public abstract class RestfulContext {
                 if(b != null) {
                     String name = b.value();
                     if(Utils.CheckNull(name)) {
-                        name = clazz.getName();
+                        //获取返回值的全限定名
+                        name = method.getReturnType().getName();
                     }
                     addedBeans.add(name);
                     BeanSortWrap tmp = new BeanSortWrap(beanParent, name, b.order(), method);

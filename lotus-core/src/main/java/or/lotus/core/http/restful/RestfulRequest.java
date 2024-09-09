@@ -41,10 +41,6 @@ public abstract class RestfulRequest {
 
     public abstract String getUrl();
 
-    public String getDispatchUrl() {
-        return getUrl() + getMethod().name();
-    }
-
     public abstract String getQueryString();
 
     /** 获取url参数 index 从1开始, 顺序为从右到左 */
