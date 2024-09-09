@@ -33,15 +33,17 @@ public abstract class RestfulResponse extends Writer {
     }
 
     /** 支持 String, Object -> toString, ModelAndView */
-    public RestfulResponse writeObject(Object object) throws IOException {
-        if(object instanceof ModelAndView) {
-            request.context.handleModelAndView(request, this, (ModelAndView) object);
-            return this;
-        }
-        if(object instanceof ApiRes) {
+    public RestfulResponse writeObject(Object object) {
+        try {
+            if(object instanceof ModelAndView) {
+                request.context.handleModelAndView(request, this, (ModelAndView) object);
+                return this;
+            }
 
+            write(object.toString());
+        } catch(Exception e) {
+            throw new RuntimeException(e);
         }
-        write(object.toString());
         return this;
     }
 

@@ -12,7 +12,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.net.JarURLConnection;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -82,10 +84,14 @@ public class BeanUtils {
      * @throws IllegalAccessException
      * @throws ClassNotFoundException
      */
-    public static <E> E loadClassByPath(Class<E> obj, String classPath) throws InstantiationException, IllegalAccessException, ClassNotFoundException {
+    public static <E> E loadClassByPath(Class<E> obj, String classPath) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         Class<?> c = Thread.currentThread().getContextClassLoader().loadClass(classPath);
         if(obj.isAssignableFrom(c)) {
-            return (E) c.newInstance();
+
+            Constructor<E> constructor = (Constructor<E>) c.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            return constructor.newInstance();
+
         }
         return null;
     }

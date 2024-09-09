@@ -1,5 +1,6 @@
 package or.lotus.core.json;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 
@@ -40,7 +41,10 @@ public class BeanBase {
      * @throws NoSuchMethodException
      */
     public static <E> E JsonToObj(Class<E> obj, JSONObject json) throws Exception {
-        E e = obj.newInstance();
+
+        Constructor<E> constructor = obj.getDeclaredConstructor();
+        constructor.setAccessible(true);
+        E e = constructor.newInstance();
         Field[] fields = obj.getDeclaredFields();
         for (Field f : fields) {
             String name = f.getName();

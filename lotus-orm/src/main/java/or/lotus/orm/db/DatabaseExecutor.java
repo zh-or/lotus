@@ -6,7 +6,9 @@ import or.lotus.core.http.Page;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.sql.*;
 import java.util.*;
@@ -640,7 +642,9 @@ public class DatabaseExecutor<T> {
             List<T> resObj = new ArrayList<T>();
             while(rs.next()) {
 
-                T obj = clazz.newInstance();
+                Constructor constructor = clazz.getDeclaredConstructor();
+                constructor.setAccessible(true);
+                T obj = (T) constructor.newInstance();
                 Class<?> newClazz = obj.getClass();
 
                 for(int i = 1; i <= columnCount; i++) {
@@ -669,7 +673,7 @@ public class DatabaseExecutor<T> {
                 }
             }
             return resObj;
-        } catch (InstantiationException | IllegalAccessException e) {
+        } catch (Exception e) {
             log.error("执行查询出错: ", e);
         } finally {
             JdbcUtils.closeResultSet(rs);

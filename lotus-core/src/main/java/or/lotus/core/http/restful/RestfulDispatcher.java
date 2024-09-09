@@ -22,7 +22,6 @@ import java.util.regex.Pattern;
 public class RestfulDispatcher {
     static final Logger log = LoggerFactory.getLogger(RestfulDispatcher.class);
     public String url;
-    public String dispatcherUrl;
     public boolean isPattern;
     public RestfulHttpMethod httpMethod;
     public Object controllerObject;
@@ -34,7 +33,6 @@ public class RestfulDispatcher {
 
     public RestfulDispatcher(String url, Object controllerObject, Method method, RestfulHttpMethod httpMethod, boolean isPattern) {
         this.url = url.replaceAll("//", "/");
-        this.dispatcherUrl = url + httpMethod.name();
         this.httpMethod = httpMethod;
         this.isPattern = isPattern;
 

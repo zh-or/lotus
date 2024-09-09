@@ -5,6 +5,7 @@ import or.lotus.core.http.RestfulApiException;
 import or.lotus.core.http.restful.RestfulDispatcher;
 import or.lotus.core.http.restful.RestfulRequest;
 import or.lotus.core.http.restful.RestfulResponse;
+import or.lotus.core.http.restful.support.RestfulDispatchMapper;
 
 import java.io.IOException;
 

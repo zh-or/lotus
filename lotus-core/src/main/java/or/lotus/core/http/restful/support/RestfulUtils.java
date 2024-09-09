@@ -166,7 +166,7 @@ public class RestfulUtils {
                 String name = autowired.value();
                 if(Utils.CheckNull(name)) {
                     //使用全限定名
-                    name = field.getDeclaringClass().getName();
+                    name = field.getType().getName();
                 }
 
                 Object bean = context.getBean(name);
@@ -175,7 +175,7 @@ public class RestfulUtils {
                     field.set(obj, bean);
                 } else {
                     throw new RuntimeException(String.format(
-                            "%s 注入 %s 时 %s 还未注册, 请检查是否在 addBeans 方法之前调用了 scanController ",
+                            "%s 注入 %s 时 %s 还未注册, 请调整 Bean 的 order ",
                             clazz.getName(),
                             name,
                             name
