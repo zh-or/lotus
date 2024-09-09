@@ -47,25 +47,15 @@ public class RestfulUtils {
     }
 
     public static Object valueToType(Class type, Object value) {
+        if(value == null) {
+            return null;
+        }
+
         if (String.class == type) {
             return value.toString();
         } else if (boolean.class == type || Boolean.class == type) {
             return Boolean.parseBoolean(value.toString());
-        } else if (byte.class == type || Byte.class == type) {
-            return Byte.valueOf(value.toString());
-        } else if (short.class == type || Short.class == type) {
-            return Short.valueOf(value.toString());
-        } else if (int.class == type || Integer.class == type) {
-            return Integer.valueOf(value.toString());
-        } else if (long.class == type || Long.class == type) {
-            return Long.valueOf(value.toString());
-        } else if (float.class == type || Float.class == type) {
-            return Float.valueOf(value.toString());
-        } else if (double.class == type || Double.class == type) {
-            return Double.valueOf(value.toString());
-        } else if (BigDecimal.class == type) {
-            return new BigDecimal(value.toString());
-        } else if (java.sql.Date.class == type) {
+        }  else if (java.sql.Date.class == type) {
             return new Date(value.toString());
         } else if (java.sql.Time.class == type) {
             return Time.valueOf(value.toString());
@@ -73,13 +63,34 @@ public class RestfulUtils {
             return rs.getTimestamp(index);
         } */else if (type.isEnum()) {
             return Enum.valueOf(type, value.toString());
+        } else {
+            String val = value.toString();
+            if(val.length() < 1) {
+                return null;
+            }
+            if (byte.class == type || Byte.class == type) {
+                return Byte.valueOf(val);
+            } else if (short.class == type || Short.class == type) {
+
+                return Short.valueOf(val);
+            } else if (int.class == type || Integer.class == type) {
+                return Integer.valueOf(val);
+            } else if (long.class == type || Long.class == type) {
+                return Long.valueOf(val);
+            } else if (float.class == type || Float.class == type) {
+                return Float.valueOf(val);
+            } else if (double.class == type || Double.class == type) {
+                return Double.valueOf(val);
+            } else if (BigDecimal.class == type) {
+                return new BigDecimal(val);
+            }
         }
 
         return null;
     }
 
     public static Object jsonValueToType(Class type, JsonNode value) {
-        if(value.isMissingNode()) {
+        if(value.isMissingNode() || value.size() < 1) {
             return null;
         }
         if (String.class == type) {

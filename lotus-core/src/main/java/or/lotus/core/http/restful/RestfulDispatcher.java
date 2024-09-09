@@ -2,6 +2,7 @@ package or.lotus.core.http.restful;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import or.lotus.core.common.BeanUtils;
 import or.lotus.core.common.Utils;
 import or.lotus.core.http.restful.ann.Attr;
@@ -18,6 +19,8 @@ import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
+
+import static or.lotus.core.http.restful.ann.Parameter.NULL_DEF_VALUE;
 
 public class RestfulDispatcher {
     static final Logger log = LoggerFactory.getLogger(RestfulDispatcher.class);
@@ -92,14 +95,18 @@ public class RestfulDispatcher {
 
         for(int i = 0; i < parameterTypes.length; i++ ) {
 
-            params[i] = handleParameter(
-                    context,
-                    request,
-                    response,
-                    parameterTypes[i],
-                    genericTypes[i],
-                    parameterAnnotations[i],
-                    attrs[i]);
+            try {
+                params[i] = handleParameter(
+                        context,
+                        request,
+                        response,
+                        parameterTypes[i],
+                        genericTypes[i],
+                        parameterAnnotations[i],
+                        attrs[i]);
+            } catch (Throwable e) {
+                throw new RuntimeException("处理参数出错:" + controllerObject + "\n" + method, e);
+            }
         }
 
         return method.invoke(controllerObject, params);
@@ -119,21 +126,17 @@ public class RestfulDispatcher {
             RestfulHttpMethod reqMethod = request.getMethod();
 
             if(Utils.CheckNull(name)) {
+                /** post-> json 直接转换为对象 */
                 if(reqMethod == RestfulHttpMethod.POST && request.getPostBodyType() == PostBodyType.JSON) {
-                    /** post json 并且参数是对象尝试直接转换 */
-                    if(RestfulUtils.isBaseType(type)) {
+                    if(type.isAssignableFrom(List.class)) {
                         //todo 需要测试
-                        return RestfulUtils.jsonValueToType(type, request.getJSON().path(name));
-                    } else {
-                        if(type.isAssignableFrom(List.class)) {
-                            //todo 需要测试
-                            return BeanUtils.JsonToObj(
-                                    new TypeReferenceDynamicList<List>(childType),
-                                    request.getBodyString());
-                        }
-
-                        return BeanUtils.JsonToObj(type, request.getBodyString());
+                        return BeanUtils.JsonToObj(
+                                new TypeReferenceDynamicList<List>(childType),
+                                request.getBodyString());
                     }
+
+                    return BeanUtils.JsonToObj(type, request.getBodyString());
+
                 }
                 return null;
             } else  {
@@ -145,7 +148,10 @@ public class RestfulDispatcher {
                 ) {
                     String val = request.getParameter(name);
                     if(val == null) {
-                        return null;
+                        val = parameter.def();
+                        if(val == NULL_DEF_VALUE) {
+                            return null;
+                        }
                     }
 
                     if(type.isArray()) {
@@ -162,11 +168,23 @@ public class RestfulDispatcher {
                     }
                     return RestfulUtils.valueToType(type, val);
                 } else if(reqMethod == RestfulHttpMethod.POST && request.getPostBodyType() == PostBodyType.JSON) {
+                    /** post->json 取其中的字段 */
+                    JsonNode val = request.getJsonNodeForPath(name);
+                    if(val.isMissingNode()) {
+                        String defVal = parameter.def();
 
-                    return RestfulUtils.valueToType(type, request.getJsonNodeForPath(name).asText());
+                        if(defVal == NULL_DEF_VALUE) {
+                            return null;
+                        }
+
+                        //json取不出来则取默认值
+                        return RestfulUtils.valueToType(type, defVal);
+                    }
+                    return RestfulUtils.valueToType(type, val.asText());
                 }
             }
-        } if(attr != null) {
+        }
+        if(attr != null) {
             //attr 的 value 必填
             return request.getAttribute(attr.value());
         } else {
