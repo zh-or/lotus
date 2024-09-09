@@ -125,7 +125,11 @@ public abstract class RestfulRequest {
     public abstract String getHeader(String name);
 
     public String getCookieValue(String key) {
-        return getCookie(key).value;
+        RestfulCookie cookie = getCookie(key);
+        if(cookie != null) {
+            return cookie.value;
+        }
+        return null;
     }
 
     public synchronized RestfulCookie getCookie(String key) {
