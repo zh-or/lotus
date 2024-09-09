@@ -3,6 +3,7 @@ package or.lotus.core.http.restful.support;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import or.lotus.core.common.Utils;
+import or.lotus.core.http.RestfulApiException;
 import or.lotus.core.http.restful.RestfulContext;
 import or.lotus.core.http.restful.ann.Autowired;
 
@@ -18,6 +19,22 @@ import java.util.Arrays;
 import java.util.Date;
 
 public class RestfulUtils {
+
+    /** 如果t为true则抛出RestfulApiException异常 */
+    public static void assets(boolean t, String msg) {
+        if(t) {
+            throw new RestfulApiException(msg);
+        }
+    }
+
+    /** 如果对象为空则抛出RestfulApiException异常 */
+    public static void assets(Object obj, String msg) {
+        if(obj == null) {
+            throw new RestfulApiException(msg);
+        }
+    }
+
+
     public static Object[] valueToArray(Class type, Object[] value) {
         Utils.assets(value == null, "value 为空");
         Utils.assets(type == null, "type 为空");
