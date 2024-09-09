@@ -125,13 +125,17 @@ public class RestfulDispatcher {
             if(Utils.CheckNull(name)) {
                 /** post-> json 直接转换为对象 */
                 if(reqMethod == RestfulHttpMethod.POST && request.getPostBodyType() == PostBodyType.JSON) {
+                    String bodyString = request.getBodyString();
+                    if(Utils.CheckNull(bodyString)) {
+                        return null;
+                    }
                     if(type.isAssignableFrom(List.class)) {
                         return BeanUtils.JsonToObj(
                                 new TypeReferenceDynamic<List>(List.class, childType),
-                                request.getBodyString());
+                                bodyString);
                     }
 
-                    return BeanUtils.JsonToObj(type, request.getBodyString());
+                    return BeanUtils.JsonToObj(type, bodyString);
 
                 }
                 return null;
@@ -172,7 +176,12 @@ public class RestfulDispatcher {
                         if(defVal == DEF_NULL_VALUE) {
                             return null;
                         }
-
+                        /** 基本数据类型 */
+                        if(RestfulUtils.isBaseType(type)) {
+                            //json取不出来则取默认值
+                            return RestfulUtils.valueToType(type, defVal);
+                        }
+                        throw new RuntimeException("json 请求 默认值只能支持基本数据类型");
                     }
                     /** 基本数据类型 */
                     if(RestfulUtils.isBaseType(type)) {
