@@ -307,8 +307,8 @@ public abstract class RestfulContext {
 
     /** 手动注册Bean */
     public RestfulContext addBean(String name, Object bean) throws IllegalAccessException {
-        beansCache.put(name, bean);
         RestfulUtils.injectBeansToObject(this, bean);
+        beansCache.put(name, bean);
         return this;
     }
 
