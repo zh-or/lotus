@@ -6,6 +6,7 @@ import io.netty.handler.codec.http.*;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.stream.ChunkedFile;
 import or.lotus.core.common.Utils;
+import or.lotus.core.http.restful.RestfulContext;
 import or.lotus.core.http.restful.support.RestfulUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -181,7 +182,7 @@ public class NettyStaticFileHandler extends SimpleChannelInboundHandler<FullHttp
         } else if (request.protocolVersion().equals(HttpVersion.HTTP_1_0)) {
             response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
         }
-
+        response.headers().set("server", RestfulContext.TAG);
         // Write the initial line and the header.
         ctx.write(response);
 
@@ -222,10 +223,11 @@ public class NettyStaticFileHandler extends SimpleChannelInboundHandler<FullHttp
                         "<head><title>" + status.code() + "</title></head>\n" +
                         "<body>\n" +
                         "<center><h1>" + status.code() + "</h1></center>\n" +
-                        "<hr><center>" + status.reasonPhrase() + "</center>\n" +
+                        "<hr><center>" + RestfulContext.TAG + ":" + status.reasonPhrase() + "</center>\n" +
                         "</body>\n" +
                         "</html>", charset));
         response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html; charset=" + charset.displayName());
+
         sendAndCleanupConnection(ctx, request, response);
     }
 
@@ -243,7 +245,7 @@ public class NettyStaticFileHandler extends SimpleChannelInboundHandler<FullHttp
                 response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
             }
         }
-
+        response.headers().set("server", RestfulContext.TAG);
         ChannelFuture flushPromise = ctx.writeAndFlush(response);
         if(!keepAlive) {
             flushPromise.addListener(ChannelFutureListener.CLOSE);
