@@ -225,7 +225,7 @@ public class NettyStaticFileHandler extends SimpleChannelInboundHandler<FullHttp
                         "<hr><center>" + status.reasonPhrase() + "</center>\n" +
                         "</body>\n" +
                         "</html>", charset));
-        response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain; charset=" + charset.displayName());
+        response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html; charset=" + charset.displayName());
         sendAndCleanupConnection(ctx, request, response);
     }
 
