@@ -1,7 +1,6 @@
 package or.lotus.core.http.restful;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import or.lotus.core.common.BeanUtils;
 import or.lotus.core.common.Utils;
@@ -11,16 +10,14 @@ import or.lotus.core.http.restful.support.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import static or.lotus.core.http.restful.ann.Parameter.NULL_DEF_VALUE;
+import static or.lotus.core.http.restful.ann.Parameter.DEF_NULL_VALUE;
 
 public class RestfulDispatcher {
     static final Logger log = LoggerFactory.getLogger(RestfulDispatcher.class);
@@ -149,7 +146,7 @@ public class RestfulDispatcher {
                     String val = request.getParameter(name);
                     if(val == null) {
                         val = parameter.def();
-                        if(val == NULL_DEF_VALUE) {
+                        if(val == DEF_NULL_VALUE) {
                             return null;
                         }
                     }
@@ -173,7 +170,7 @@ public class RestfulDispatcher {
                     if(val.isMissingNode()) {
                         String defVal = parameter.def();
 
-                        if(defVal == NULL_DEF_VALUE) {
+                        if(defVal == DEF_NULL_VALUE) {
                             return null;
                         }
 

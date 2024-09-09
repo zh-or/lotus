@@ -255,7 +255,6 @@ public class HttpClient5 {
             EntityUtils.consume(response.getEntity());
             return responseContent;
         } catch (Exception e) {
-            // todo 自定义异常
             throw new RuntimeException(e);
         }
     }
@@ -281,7 +280,6 @@ public class HttpClient5 {
             EntityUtils.consume(response.getEntity());
             return responseContent;
         } catch (Exception e) {
-            // todo 自定义异常
             throw new RuntimeException(e);
         }
     }
