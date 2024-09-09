@@ -230,6 +230,8 @@ public abstract class RestfulContext {
     }
 
     protected RestfulDispatchMapper getDispatcher(RestfulRequest request) {
+        //todo 需要优化url匹配算法
+
         // 普通请求
         RestfulDispatchMapper mapper = dispatcherAbsMap.get(request.getUrl());
         if(mapper != null) {
