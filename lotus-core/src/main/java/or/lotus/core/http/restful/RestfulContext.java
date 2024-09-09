@@ -148,34 +148,8 @@ public abstract class RestfulContext {
                         if(templateEngine == null) {
                             throw new IllegalStateException("你返回了ModelAndView, 但是并没有启用模板引擎.");
                         }
-                        ModelAndView mv = (ModelAndView) ret;
 
-                        if(mv.isRedirect) {//302跳转
-                            response.redirect(mv.getViewName());
-                        } else {
-                            try {
-                                templateEngine.process(
-                                        mv.getViewName(),
-                                        mv.values,
-                                        response
-                                );
-                            } catch(Exception e) {
-                                if (filter != null) {
-                                    response.clearWrite();
-                                    filter.exception(e, request, response);
-                                } else {
-                                    log.error("处理模板出错:", e);
-                                }
-                                return ;
-                            }
-
-                            if(outModelAndViewTime) {
-                                try {
-                                    response.write("<!-- handle time: " + ((System.nanoTime() - mv.createTime) / 1_000_000) + "ms -->");
-                                } catch (IOException e) {}
-                            }
-                            response.setHeader("Content-Type", "text/html; charset=" + response.charset.displayName());
-                        }
+                        handleModelAndView(request, response, (ModelAndView) ret);
                     } else if(ret instanceof File) {
                         response.write((File) ret);
 
@@ -214,6 +188,35 @@ public abstract class RestfulContext {
             });
         } else {
             run.run();
+        }
+    }
+
+    protected void handleModelAndView(RestfulRequest request, RestfulResponse response, ModelAndView mv) throws IOException {
+        if(mv.isRedirect) {//302跳转
+            response.redirect(mv.getViewName());
+        } else {
+            try {
+                templateEngine.process(
+                        mv.getViewName(),
+                        mv.values,
+                        response
+                );
+            } catch(Exception e) {
+                if (filter != null) {
+                    response.clearWrite();
+                    filter.exception(e, request, response);
+                } else {
+                    log.error("处理模板出错:", e);
+                }
+                return ;
+            }
+
+            if(outModelAndViewTime) {
+                try {
+                    response.write("<!-- handle time: " + ((System.nanoTime() - mv.createTime) / 1_000_000) + "ms -->");
+                } catch (IOException e) {}
+            }
+            response.setHeader("Content-Type", "text/html; charset=" + response.charset.displayName());
         }
     }
 
