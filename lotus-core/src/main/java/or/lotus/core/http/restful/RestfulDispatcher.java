@@ -181,7 +181,7 @@ public class RestfulDispatcher {
                             //json取不出来则取默认值
                             return RestfulUtils.valueToType(type, defVal);
                         }
-                        throw new RuntimeException("json 请求 默认值只能支持基本数据类型");
+                        return null;
                     }
                     /** 基本数据类型 */
                     if(RestfulUtils.isBaseType(type)) {
