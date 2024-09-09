@@ -1,6 +1,9 @@
 package or.lotus.core.http;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import or.lotus.core.common.BeanUtils;
+
 public class ApiRes {
     public static final int C_SUCCESS         =   200;//成功
     public static final int C_FAIL            =   300;//操作失败
@@ -14,6 +17,15 @@ public class ApiRes {
     public Object data = null;
 
     private ApiRes() {
+    }
+
+    @Override
+    public String toString() {
+        try {
+            return BeanUtils.ObjToJson(this);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static ApiRes error() {

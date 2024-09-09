@@ -57,6 +57,7 @@ public class NettyFormDataItem implements RestfulFormDataItem {
         return null;
     }
 
+    @Override
     public File getFile() {
         if(item.getHttpDataType() == InterfaceHttpData.HttpDataType.FileUpload) {
             FileUpload fileUpload = (FileUpload) item;

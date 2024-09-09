@@ -2,6 +2,7 @@ package or.lotus.core.http.restful;
 
 import or.lotus.core.common.BeanUtils;
 import or.lotus.core.common.Utils;
+import or.lotus.core.http.ApiRes;
 import or.lotus.core.http.restful.ann.*;
 import or.lotus.core.http.restful.support.*;
 import org.slf4j.Logger;
@@ -152,7 +153,6 @@ public abstract class RestfulContext {
                         handleModelAndView(request, response, (ModelAndView) ret);
                     } else if(ret instanceof File) {
                         response.write((File) ret);
-
                     } else {
                         response.write(ret.toString());
                     }

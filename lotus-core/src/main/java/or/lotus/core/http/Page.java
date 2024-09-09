@@ -1,6 +1,9 @@
 package or.lotus.core.http;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import or.lotus.core.common.BeanUtils;
+
 import java.util.List;
 
 public class Page<T> {
@@ -18,5 +21,14 @@ public class Page<T> {
 
     public static int pageToStart(int page, int size) {
         return (page - 1) * size;
+    }
+
+    @Override
+    public String toString() {
+        try {
+            return BeanUtils.ObjToJson(this);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

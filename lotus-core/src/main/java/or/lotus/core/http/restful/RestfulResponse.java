@@ -1,5 +1,6 @@
 package or.lotus.core.http.restful;
 
+import or.lotus.core.http.ApiRes;
 import or.lotus.core.http.restful.support.ModelAndView;
 import or.lotus.core.http.restful.support.RestfulResponseStatus;
 
@@ -36,6 +37,9 @@ public abstract class RestfulResponse extends Writer {
         if(object instanceof ModelAndView) {
             request.context.handleModelAndView(request, this, (ModelAndView) object);
             return this;
+        }
+        if(object instanceof ApiRes) {
+
         }
         write(object.toString());
         return this;

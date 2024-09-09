@@ -11,4 +11,6 @@ public interface RestfulFormDataItem {
 
     public String getFileName();
     public InputStream getInputStream();
+
+    public File getFile();
 }
