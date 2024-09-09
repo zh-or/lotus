@@ -126,9 +126,8 @@ public class RestfulDispatcher {
                 /** post-> json 直接转换为对象 */
                 if(reqMethod == RestfulHttpMethod.POST && request.getPostBodyType() == PostBodyType.JSON) {
                     if(type.isAssignableFrom(List.class)) {
-                        //todo 需要测试
                         return BeanUtils.JsonToObj(
-                                new TypeReferenceDynamicList<List>(childType),
+                                new TypeReferenceDynamic<List>(List.class, childType),
                                 request.getBodyString());
                     }
 
@@ -174,10 +173,22 @@ public class RestfulDispatcher {
                             return null;
                         }
 
-                        //json取不出来则取默认值
-                        return RestfulUtils.valueToType(type, defVal);
                     }
-                    return RestfulUtils.valueToType(type, val.asText());
+                    /** 基本数据类型 */
+                    if(RestfulUtils.isBaseType(type)) {
+                        //json取不出来则取默认值
+                        return RestfulUtils.valueToType(type, val.asText());
+                    }
+                    /** list */
+                    if(type.isAssignableFrom(List.class)) {
+                        //todo 需要测试
+
+                        return BeanUtils.OBJECT_MAPPER.readValue(
+                                val.toString(),
+                                new TypeReferenceDynamic<List>(List.class, childType));
+                    }
+                    /** 对象 */
+                    return BeanUtils.JsonToObj(type, val.toString());
                 }
             }
         }
