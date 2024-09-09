@@ -9,7 +9,7 @@
 3. 继承 `RestfulResponse` 类, 用于处理 `controller` 结果返回
 
 ## 注解
-1. `@Autowired` 用于bean/controller中自动注入对象, 该注解用于bean/controller中标注字段
+1. `@Autowired` 用于`filter/bean/controller`中自动注入对象
 2. `@Bean` 用于启动时注册bean, 该注解用于标注方法
 3. `@RestfulController` 用于标注controller, `scanController`只会加载有该注解的类并解析
 4. `@Request` 用于标注controller中的方法
@@ -17,7 +17,7 @@
 6. `@Post` 用于标注controller中的方法
 7. `@Put` 用于标注controller中的方法
 8. `@Delete` 用于标注controller中的方法
-9. `@Parameter`  用于标注controller方法中的参数, 可自动读取 get -> query, post -> json, post -> urlencoded
+9. `@Parameter`  用于标注controller方法中的参数
 
 
 ## 使用
@@ -27,6 +27,9 @@
 @RestfulController("/api")
 public class ControllerA {
     
+    @Autowired
+    UserService userService;
+    
     @Get("/hello")
     public String hello(@Paramter("name") String name) {
         return "hello:" + name;
@@ -34,3 +37,12 @@ public class ControllerA {
 }
 ```
 
+## `@Paramter` 使用说明
+1. `GET` | `POST (urlencoded)` | `DELETE` | `OPTIONS`
+   * `@Paramter("key")` => 基本数据类型, [], List<基本数据类型>
+2. `POST (json)`
+   * `@Paramter` => 对象, List<对象>
+   * `@Paramter("key")` => 基本数据类型, List<对象>, 对象
+
+## `@Attr` 使用说明
+1. `@Attr("key")` => 获取当前`request`的 `attribute`, 可在`filter`中设置`attr`
