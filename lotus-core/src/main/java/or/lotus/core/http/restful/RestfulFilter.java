@@ -10,7 +10,9 @@ import or.lotus.core.http.restful.support.RestfulDispatchMapper;
 import java.io.IOException;
 
 public abstract class RestfulFilter {
-    /**调用 controller 之前, 返回 false 表示未处理, 返回 true 表示已处理*/
+    /**调用 controller 之前, 返回 false 表示未处理, 返回 true 表示已处理
+     * 需要注意dispatcher可能为空
+     * */
     public boolean beforeRequest(RestfulDispatcher dispatcher, RestfulRequest request, RestfulResponse response) {
         return false;
     }

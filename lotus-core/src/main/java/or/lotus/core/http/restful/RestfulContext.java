@@ -134,14 +134,14 @@ public abstract class RestfulContext {
                 if(mapper != null) {
                     RestfulDispatcher dispatcher = mapper.getDispatcher(request.getMethod());
 
-                    if(dispatcher == null) {
-                        response.setStatus(RestfulResponseStatus.CLIENT_ERROR_METHOD_NOT_ALLOWED);
-                        //response.clearWrite().write("");
+                    if(filter != null && filter.beforeRequest(dispatcher, request, response)) {
                         sendResponse(true, request, response);
                         return ;
                     }
 
-                    if(filter != null && filter.beforeRequest(dispatcher, request, response)) {
+                    if(dispatcher == null) {
+                        response.setStatus(RestfulResponseStatus.CLIENT_ERROR_METHOD_NOT_ALLOWED);
+                        //response.clearWrite().write("");
                         sendResponse(true, request, response);
                         return ;
                     }
