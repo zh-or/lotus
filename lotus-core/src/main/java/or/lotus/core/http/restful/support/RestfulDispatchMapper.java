@@ -44,6 +44,12 @@ public class RestfulDispatchMapper {
             return putDispatcher;
         else if(method == RestfulHttpMethod.DELETE)
             return deleteDispatcher;
+        else if(method == RestfulHttpMethod.OPTIONS) {
+            if(getDispatcher != null) return getDispatcher;
+            if(postDispatcher != null) return postDispatcher;
+            if(putDispatcher != null) return putDispatcher;
+            if(deleteDispatcher != null) return deleteDispatcher;
+        }
        return null;
     }
 
