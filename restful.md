@@ -37,12 +37,20 @@ public class ControllerA {
 }
 ```
 
+>`controller`返回值支持 `File`,`String`, `ModelAndView`, `Object` <br>
+> 其中 `Object` 会自动调用`toString`方法<br>
+> `File` 会根据文件类型自动设置`Content-Type`<br>
+> `ModelAndView` 需要在context中启用模板引擎, 并设置模板引擎路径
+
+*controller* 中的方法除了使用`@Paramter`外, `RestfulContext`, `RestfulRequest`, `RestfulResponse` 不需要注解直接自动注入
+
+
 ## `@Paramter` 使用说明
 1. `GET` | `POST (urlencoded)` | `DELETE` | `OPTIONS`
    * `@Paramter("key")` => 基本数据类型, [], List<基本数据类型>
 2. `POST (json)`
-   * `@Paramter` => 对象, List<对象>
-   * `@Paramter("key")` => 基本数据类型, List<对象>, 对象
+   * `@Paramter` => 对象, List<对象>, List<基本数据类型>
+   * `@Paramter("key")` => 基本数据类型, 对象, List<对象>, List<基本数据类型>
 
 ## `@Attr` 使用说明
 1. `@Attr("key")` => 获取当前`request`的 `attribute`, 可在`filter`中设置`attr`
