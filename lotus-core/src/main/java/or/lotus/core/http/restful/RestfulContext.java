@@ -380,6 +380,9 @@ public abstract class RestfulContext {
         tmpList.sort(Comparator.comparingInt(BeanSortWrap::getSort).reversed());
 
         for(BeanSortWrap tmp : tmpList) {
+            //先注入bean, 再执行方法
+            RestfulUtils.injectBeansToObject(this, tmp.obj);
+
             Object beanObj = tmp.method.invoke(tmp.obj);
             beansCache.put(tmp.name, beanObj);
             RestfulUtils.injectBeansToObject(this, beanObj);
