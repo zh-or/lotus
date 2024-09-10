@@ -54,3 +54,9 @@ public class ControllerA {
 
 ## `@Attr` 使用说明
 1. `@Attr("key")` => 获取当前`request`的 `attribute`, 可在`filter`中设置`attr`
+
+## 处理文件上传说明
+1. `POST (multipart/form-data)`
+2. `controller` 方法中使用 `NettyRequest` 获取 `NettyFormData formData = request.getBodyFormData();`
+3. `NettyFormData` 可获取 `formData` 的相关数据
+4. `NettyRequest.isMultipart()` 可判断当前请求是否 `multipart` 请求
