@@ -2,7 +2,7 @@ package or.lotus.core.queue.delay;
 
 /**回调里面不要抛出异常*/
 public abstract class DelayQueueCallBack {
-    /**延迟队列初始化, 此处可以从数据库或本地文件读取未执行的任务到队列*/
+    /**延迟队列初始化, 此处可以从数据库或本地文件读取未执行的任务到队列, 在这里调用 addTask 不会触发 onAddTask 回调*/
     public void onInit(DelayQueueExecutor context) {
 
     }
