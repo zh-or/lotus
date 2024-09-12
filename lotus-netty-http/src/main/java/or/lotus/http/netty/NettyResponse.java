@@ -10,20 +10,24 @@ import java.util.Map;
 
 public class NettyResponse extends RestfulResponse {
     NettyRequest request;
-    private FullHttpResponse response = null;
+    private HttpResponse response = null;
     public NettyResponse(NettyRequest request) {
         super(request);
         this.request = request;
 
     }
 
-    public FullHttpResponse getResponse() {
+    public HttpResponse getResponse() {
         if(response == null) {
-            response = new DefaultFullHttpResponse(
-                    HttpVersion.HTTP_1_1,
-                    HttpResponseStatus.valueOf(status.code()),
-                    bodyBuffer == null ? Unpooled.EMPTY_BUFFER : bodyBuffer
-            );
+            if(isFileResponse()) {
+                response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+            } else {
+                response = new DefaultFullHttpResponse(
+                        HttpVersion.HTTP_1_1,
+                        HttpResponseStatus.valueOf(status.code()),
+                        bodyBuffer == null ? Unpooled.EMPTY_BUFFER : bodyBuffer
+                );
+            }
         }
         HttpHeaders nh = response.headers();
         for(Map.Entry<String, String> entry : headers.entrySet()) {
