@@ -9,14 +9,26 @@ public abstract class RestfulFormData {
     public abstract RestfulFormDataItem getFormDataItem(String name);
 
     public String getFormDataItemValue(String name) {
-        return getFormDataItem(name).getValue();
+        RestfulFormDataItem item = getFormDataItem(name);
+        if(item == null) {
+            return null;
+        }
+        return item.getValue();
     }
 
     public InputStream getFormDataItemInputStream(String name) {
-        return getFormDataItem(name).getInputStream();
+        RestfulFormDataItem item = getFormDataItem(name);
+        if(item == null) {
+            return null;
+        }
+        return item.getInputStream();
     }
 
     public File getFormDataItemFile(String name) {
-        return getFormDataItem(name).getFile();
+        RestfulFormDataItem item = getFormDataItem(name);
+        if(item == null) {
+            return null;
+        }
+        return item.getFile();
     }
 }

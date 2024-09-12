@@ -114,6 +114,7 @@ public abstract class RestfulRequest {
     }
 
     public JsonNode getJsonNodeForPath(String path) throws JsonProcessingException {
+
         return getJSON().path(path);
     }
 
