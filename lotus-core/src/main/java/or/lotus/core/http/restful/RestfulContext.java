@@ -398,7 +398,7 @@ public abstract class RestfulContext {
     protected int eventThreadPoolSize = 20;
 
     /** request & response buffer初始大小 */
-    protected int bufferSize = 1024 * 4;
+    protected int bufferSize = 1024 * 4 * 2;
 
     /** 最大允许的请求体大小 */
     protected int maxContentLength = 1024 * 1024 * 2;
