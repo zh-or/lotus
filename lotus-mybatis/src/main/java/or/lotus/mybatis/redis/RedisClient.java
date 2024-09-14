@@ -17,20 +17,6 @@ public class RedisClient {
     private JedisPool pool;
 
     private static final Logger log = LoggerFactory.getLogger(RedisClient.class);
-    public static void main(String[] args) throws JsonProcessingException {
-        RedisClient client = new RedisClient("hotdoc.fun", 6377, "yang982465979");
-        System.out.println("key[a]=" + client.get("a"));
-
-       /* ArrayList<Tags> tags = new ArrayList<>();
-        tags.add(new Tags(1, "awd", 1, 1));
-        tags.add(new Tags(2, "阿我的", 1, 1));
-        client.putObj("test", tags);
-        TypeReference<ArrayList<Tags>> type = new TypeReference<ArrayList<Tags>>() {};
-        ArrayList<Tags> tags2 = client.getObj(type, "test");
-        System.out.println(tags2.size());*/
-
-    }
-
     public RedisClient(String host, int port, String password) {
         this.password = password;
         /*redis = new Jedis(host, port, 5000);

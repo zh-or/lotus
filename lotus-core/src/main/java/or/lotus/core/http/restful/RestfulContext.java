@@ -134,17 +134,18 @@ public abstract class RestfulContext {
                 if(mapper != null) {
                     RestfulDispatcher dispatcher = mapper.getDispatcher(request.getMethod());
 
-                    if(filter != null && filter.beforeRequest(dispatcher, request, response)) {
-                        sendResponse(true, request, response);
-                        return ;
-                    }
-
                     if(dispatcher == null) {
                         response.setStatus(RestfulResponseStatus.CLIENT_ERROR_METHOD_NOT_ALLOWED);
                         //response.clearWrite().write("");
                         sendResponse(true, request, response);
                         return ;
                     }
+
+                    if(filter != null && filter.beforeRequest(dispatcher, request, response)) {
+                        sendResponse(true, request, response);
+                        return ;
+                    }
+
                     Object ret = dispatcher.dispatch(this, request, response);
                     if(filter != null) {
                         if(filter.afterRequest(request, response, ret)) {
@@ -379,6 +380,9 @@ public abstract class RestfulContext {
         tmpList.sort(Comparator.comparingInt(BeanSortWrap::getSort).reversed());
 
         for(BeanSortWrap tmp : tmpList) {
+            //先注入bean, 再执行方法
+            RestfulUtils.injectBeansToObject(this, tmp.obj);
+
             Object beanObj = tmp.method.invoke(tmp.obj);
             beansCache.put(tmp.name, beanObj);
             RestfulUtils.injectBeansToObject(this, beanObj);
@@ -394,7 +398,7 @@ public abstract class RestfulContext {
     protected int eventThreadPoolSize = 20;
 
     /** request & response buffer初始大小 */
-    protected int bufferSize = 1024 * 4;
+    protected int bufferSize = 1024 * 4 * 2;
 
     /** 最大允许的请求体大小 */
     protected int maxContentLength = 1024 * 1024 * 2;

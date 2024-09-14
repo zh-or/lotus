@@ -47,7 +47,7 @@ public class DelayQueueExecutor implements Runnable, AutoCloseable {
         thread.start();
     }
 
-    /**name将用来判断重复*/
+    /**obj.equals将用来判断重复*/
     public void addTask(String taskType, long execTime, Object obj) throws Exception {
         if(isRun) {//没有初始化完毕时 不调用添加回调
             if(this.callback != null) {

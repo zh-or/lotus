@@ -188,7 +188,6 @@ public class LocalFileManager {
 
         /*
     *https://frps-05.hotdoc.fun/browser
-    * minioadmin yang982465979
     * 代码参考 https://zhuanlan.zhihu.com/p/654273720
     * //最低java8
 <dependency>

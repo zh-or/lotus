@@ -153,10 +153,10 @@ public class Database {
         return exec;
     }
 
-    public <T> T select(Class<T> clazz, int id)  throws SQLException {
+    public <T> T select(Class<T> clazz, Object id)  throws SQLException {
         DatabaseExecutor exec = new DatabaseExecutor(this, DatabaseExecutor.SqlMethod.SELECT, clazz, null);
         exec.fieldsFromObj();
-        exec.whereEq("id", String.valueOf(id));
+        exec.whereEq("id", id);
         return (T) exec.findOne();
     }
 
@@ -166,14 +166,14 @@ public class Database {
         exec.fieldsFromObj();
         return exec;
     }
-    public void deleteOrError(Class<?> clazz, long id) throws SQLException {
+    public void deleteOrError(Class<?> clazz, Object id) throws SQLException {
         if(delete(clazz, id) < 1) {
             throw new SQLException("受影响行数小于1");
         }
     }
 
     /**根据主键删除*/
-    public int delete(Class<?> clazz, long id) throws SQLException {
+    public int delete(Class<?> clazz, Object id) throws SQLException {
         DatabaseExecutor exec = new DatabaseExecutor(this, DatabaseExecutor.SqlMethod.DELETE, clazz, null);
         exec.whereEq(getConfig().getPrimaryKeyName(), id);
         return exec.execute();

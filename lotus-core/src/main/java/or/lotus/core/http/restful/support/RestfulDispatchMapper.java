@@ -31,7 +31,11 @@ public class RestfulDispatchMapper {
             throw new RuntimeException("未知的dispatcher类型");
     }
 
+    /** 当 控制器为 @Request 注解时直接返回该方法 */
     public RestfulDispatcher getDispatcher(RestfulHttpMethod method) {
+        if(requestDispatcher != null) {
+            return requestDispatcher;
+        }
         if(method == RestfulHttpMethod.GET)
             return getDispatcher;
         else if(method == RestfulHttpMethod.POST)
@@ -40,8 +44,12 @@ public class RestfulDispatchMapper {
             return putDispatcher;
         else if(method == RestfulHttpMethod.DELETE)
             return deleteDispatcher;
-        else if(requestDispatcher != null)
-            return requestDispatcher;
+        else if(method == RestfulHttpMethod.OPTIONS) {
+            if(getDispatcher != null) return getDispatcher;
+            if(postDispatcher != null) return postDispatcher;
+            if(putDispatcher != null) return putDispatcher;
+            if(deleteDispatcher != null) return deleteDispatcher;
+        }
        return null;
     }
 

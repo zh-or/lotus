@@ -222,8 +222,8 @@ public class NettyStaticFileHandler extends SimpleChannelInboundHandler<FullHttp
                 Unpooled.copiedBuffer("<html>\n" +
                         "<head><title>" + status.code() + "</title></head>\n" +
                         "<body>\n" +
-                        "<center><h1>" + status.code() + "</h1></center>\n" +
-                        "<hr><center>" + RestfulContext.TAG + ":" + status.reasonPhrase() + "</center>\n" +
+                        "<center><h1>" + status.code() + " " + status.reasonPhrase() + "</h1></center>\n" +
+                        "<hr><center>" + RestfulContext.TAG + "</center>\n" +
                         "</body>\n" +
                         "</html>", charset));
         response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html; charset=" + charset.displayName());

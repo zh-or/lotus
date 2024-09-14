@@ -263,7 +263,7 @@ public class NettyHttpServer extends RestfulContext {
         } else if(response.isFileResponse()) {
             NettyStaticFileHandler.sendFile(response.getFile(), request.rawRequest(), response.getResponse(), request.channel, charset);
         } else {
-            FullHttpResponse rawRequest = response.getResponse();
+            FullHttpResponse rawRequest = (FullHttpResponse) response.getResponse();
             final boolean keepAlive = HttpUtil.isKeepAlive(rawRequest);
             HttpUtil.setContentLength(rawRequest, rawRequest.content().readableBytes());
             if (keepAlive) {
