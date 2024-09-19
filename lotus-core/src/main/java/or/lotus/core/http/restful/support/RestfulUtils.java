@@ -35,6 +35,13 @@ public class RestfulUtils {
     }
 
 
+    /** 如果字符串为null或长度为0则抛出RestfulApiException异常 */
+    public static void assets(String str, String msg) {
+        if(Utils.CheckNull(str)) {
+            throw new RestfulApiException(msg);
+        }
+    }
+
     public static Object[] valueToArray(Class type, Object[] value) {
         Utils.assets(value == null, "value 为空");
         Utils.assets(type == null, "type 为空");
