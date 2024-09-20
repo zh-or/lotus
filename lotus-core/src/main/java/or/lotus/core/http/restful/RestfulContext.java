@@ -465,6 +465,10 @@ public abstract class RestfulContext {
         return beansCache.get(name);
     }
 
+    public <T> T getBean(Class<T> clazz) {
+        return (T) beansCache.get(clazz.getName());
+    }
+
     public void setOutModelAndViewTime(boolean outModelAndViewTime) {
         this.outModelAndViewTime = outModelAndViewTime;
     }
