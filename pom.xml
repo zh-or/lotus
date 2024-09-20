@@ -3,6 +3,13 @@
 
     <properties>
         <revision>2.0.4</revision>
+        <logback.version>1.5.8</logback.version>
+        <jackson.version>2.15.3</jackson.version>
+        <thymeleaf.version>3.1.2.RELEASE</thymeleaf.version>
+        <lionsoul.version>2.7.0</lionsoul.version>
+        <netty.all.version>4.1.113.Final</netty.all.version>
+        <client5.version>5.2.1</client5.version>
+        <jts.version>1.19.0</jts.version>
     </properties>
 
 
