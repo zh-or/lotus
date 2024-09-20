@@ -322,12 +322,15 @@ public abstract class RestfulContext {
     /** 手动注册Bean */
     public RestfulContext addBean(Object bean) throws IllegalAccessException {
         Utils.assets(bean == null, "bean 不能为空");
-        return addBean(bean.getClass().getName(), bean);
+        return addBean(null, bean);
     }
 
     /** 手动注册Bean */
     public RestfulContext addBean(String name, Object bean) throws IllegalAccessException {
         RestfulUtils.injectBeansToObject(this, bean);
+        if(Utils.CheckNull(name)) {
+            name = bean.getClass().getName();
+        }
         beansCache.put(name, bean);
         return this;
     }
@@ -343,13 +346,14 @@ public abstract class RestfulContext {
         List<String> clazzs = BeanUtils.getClassPathByPackage(packageName);
         for (String path : clazzs) {
             Class<?> c = Thread.currentThread().getContextClassLoader().loadClass(path);
+            Bean b = c.getAnnotation(Bean.class);
+            if(b != null) {
+                Constructor constructor = c.getDeclaredConstructor();
+                constructor.setAccessible(true);
+                Object obj = constructor.newInstance();
 
-            Constructor constructor = c.getDeclaredConstructor();
-            constructor.setAccessible(true);
-            Object obj = constructor.newInstance();
-            //注入bean
-            RestfulUtils.injectBeansToObject(this, obj);
-            addBean(obj);
+                addBean(b.value(), obj);
+            }
         }
         return clazzs;
     }
@@ -459,6 +463,10 @@ public abstract class RestfulContext {
 
     public Object getBean(String name) {
         return beansCache.get(name);
+    }
+
+    public <T> T getBean(Class<T> clazz) {
+        return (T) beansCache.get(clazz.getName());
     }
 
     public void setOutModelAndViewTime(boolean outModelAndViewTime) {

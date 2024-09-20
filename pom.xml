@@ -2,7 +2,35 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <properties>
-        <revision>2.0.4</revision>
+        <revision>2.0.5</revision>
+        <!--logback 1.2.13 才兼容java8-->
+        <logback.version>1.2.13</logback.version>
+        <slf4j.version>1.7.36</slf4j.version>
+
+        <!--
+        如果遇到其他库使用了高版本的slf4j, 需要手动排除掉
+        列出依赖关系命令:  mvn dependency:tree
+
+        <dependency>
+            <groupId>com.github.oshi</groupId>
+            <artifactId>oshi-core</artifactId>
+            <version>6.4.2</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        -->
+
+        <jackson.version>2.15.3</jackson.version>
+        <thymeleaf.version>3.1.2.RELEASE</thymeleaf.version>
+        <lionsoul.version>2.7.0</lionsoul.version>
+        <netty.all.version>4.1.113.Final</netty.all.version>
+        <client5.version>5.2.1</client5.version>
+        <jts.version>1.19.0</jts.version>
     </properties>
 
 

@@ -113,9 +113,10 @@ public abstract class RestfulRequest {
         return bodyJson;
     }
 
+    /** 支持层级 /person/name */
     public JsonNode getJsonNodeForPath(String path) throws JsonProcessingException {
 
-        return getJSON().path(path);
+        return getJSON().at(path);
     }
 
     public abstract String getBodyString();
