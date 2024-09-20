@@ -111,7 +111,7 @@ public class TimeoutConcurrentHashMap<K, V> extends TimerTask implements AutoClo
         ExpireWrap v = null;
         do {
             try {
-                v = delayQueue.poll(200, TimeUnit.SECONDS);
+                v = delayQueue.poll(200, TimeUnit.MILLISECONDS);
                 if(v != null) {
                     /** 有可能通过update更新了过期时间, 此处判断一下是否过期, 如果增加了时间需要加回队列 */
                     if(v.isTimeout()) {
