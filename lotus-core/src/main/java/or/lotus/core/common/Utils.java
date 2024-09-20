@@ -24,10 +24,10 @@ public class Utils {
 
         int t = ceilDiv(187, 20);
 
-        char[] key = rc4_init("123456");
-        byte[] d1 = rc4_crypt("哈哈lawd1123".getBytes("utf-8"), key.clone());
+        char[] key = rc4Init("123456");
+        byte[] d1 = rc4Crypt("哈哈lawd1123".getBytes("utf-8"), key.clone());
 
-        byte[] d2 = rc4_crypt(d1, key.clone());
+        byte[] d2 = rc4Crypt(d1, key.clone());
         System.out.println(new String(d2, "utf-8"));
 
         System.out.println(EnCode("123456", EN_TYPE_MD5));
@@ -98,9 +98,9 @@ public class Utils {
      * @param key
      * @return
      */
-    public static byte[] Encoded(byte[] data, String key) {
-        char[] s_box = rc4_init(key);
-        return rc4_crypt(data, s_box);
+    public static byte[] rc4Encoded(byte[] data, String key) {
+        char[] s_box = rc4Init(key);
+        return rc4Crypt(data, s_box);
     }
 
     /**
@@ -110,12 +110,13 @@ public class Utils {
      * @param key
      * @return
      */
-    public static byte[] Decode(byte[] data, String key) {
-        char[] s_box = rc4_init(key);
-        return rc4_crypt(data, s_box);
+    public static byte[] rc4Decode(byte[] data, String key) {
+        char[] s_box = rc4Init(key);
+        return rc4Crypt(data, s_box);
     }
 
-    public static char[] rc4_init(String key) {
+    /** 分开的步骤-1 */
+    public static char[] rc4Init(String key) {
         char[] rs = new char[S_BOX_MAX_SIZE];
         char[] key_ = key.toCharArray();
         int[] k = new int[S_BOX_MAX_SIZE];
@@ -135,17 +136,23 @@ public class Utils {
         return rs;
     }
 
-    public static byte[] rc4_crypt(byte[] data, char[] s_box) {
+    /** 分开的步骤-2 */
+    public static byte[] rc4Crypt(byte[] data, char[] s_box) {
         int x = 0, y = 0, t = 0, i = 0, len = data.length;
         char tmp;
+        int sBoxLen = s_box.length;
+        char[] s_box_clone = new char[sBoxLen];
+
+        System.arraycopy(s_box, 0, s_box_clone, 0, sBoxLen);
+
         for (i = 0; i < len; i++) {
             x = (x + 1) % S_BOX_MAX_SIZE;
-            y = (y + s_box[x]) % S_BOX_MAX_SIZE;
-            tmp = s_box[x];
-            s_box[x] = s_box[y];
-            s_box[y] = tmp;
-            t = (s_box[x] + s_box[y]) % S_BOX_MAX_SIZE;
-            data[i] ^= s_box[t];
+            y = (y + s_box_clone[x]) % S_BOX_MAX_SIZE;
+            tmp = s_box_clone[x];
+            s_box_clone[x] = s_box_clone[y];
+            s_box_clone[y] = tmp;
+            t = (s_box_clone[x] + s_box_clone[y]) % S_BOX_MAX_SIZE;
+            data[i] ^= s_box_clone[t];
         }
         return data;
     }
@@ -342,7 +349,7 @@ public class Utils {
     }
 
     public final static boolean CheckNull(String str) {
-        return str == null || "".equals(str);
+        return str == null || str.length() == 0;
     }
 
     /**
