@@ -1,9 +1,7 @@
 package or.lotus.core.common;
 
 import java.io.IOException;
-import java.util.Enumeration;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.DelayQueue;
 import java.util.concurrent.Delayed;
@@ -21,6 +19,8 @@ public class TimeoutConcurrentHashMap<K, V> extends TimerTask implements AutoClo
 
     private int checkDiff;
 
+    private TimeoutListener listener = null;
+
     public TimeoutConcurrentHashMap() {
         this(16, 1000);
     }
@@ -35,6 +35,10 @@ public class TimeoutConcurrentHashMap<K, V> extends TimerTask implements AutoClo
 
     public int getCheckDiff() {
         return checkDiff;
+    }
+
+    public void setListener(TimeoutListener listener) {
+        this.listener = listener;
     }
 
     /***
@@ -76,6 +80,10 @@ public class TimeoutConcurrentHashMap<K, V> extends TimerTask implements AutoClo
 
     public Enumeration<K> keys() {
         return map.keys();
+    }
+
+    public int size() {
+        return map.size();
     }
 
     public boolean has(K k) {
@@ -120,6 +128,9 @@ public class TimeoutConcurrentHashMap<K, V> extends TimerTask implements AutoClo
                     /** 有可能通过update更新了过期时间, 此处判断一下是否过期, 如果增加了时间需要加回队列 */
                     if(v.isTimeout()) {
                         map.remove(v.k);
+                        if(listener != null) {
+                            listener.timeout(this, v.k, v.obj);
+                        }
                     } else if(v.expire > 0) {
                         delayQueue.add(v);
                     }
@@ -174,5 +185,9 @@ public class TimeoutConcurrentHashMap<K, V> extends TimerTask implements AutoClo
             ExpireWrap other = (ExpireWrap) o;
             return (int)((expire - System.currentTimeMillis()) - (other.expire - System.currentTimeMillis()));
         }
+    }
+
+    public interface TimeoutListener<K, V> {
+        public void timeout(TimeoutConcurrentHashMap context, K k, V v);
     }
 }

@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 /** 使用方式:
  * 1. http容器继承此类, 并实现onStart()和onStop()方法实现启动停止
  * 2. 实现 sendResponse 处理返回内容
- * 2. 调用addBeans添加 bean
+ * 2. 调用addBeans添加 bean, 如果bean继承了 AutoClose 接口, 那么停止的时候会自动调用close方法
  * 3. 调用scanController扫描Controller类, 并实现@RestfulController注解
  * 4. http容器收到请求时调用dispatch方法分发请求, 返回值为需要输出的内容
  *  */
