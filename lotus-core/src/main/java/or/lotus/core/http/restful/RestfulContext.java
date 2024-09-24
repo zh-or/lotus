@@ -263,60 +263,64 @@ public abstract class RestfulContext {
 
         for (String path : clazzs) {
             Class<?> c = Thread.currentThread().getContextClassLoader().loadClass(path);
-            RestfulController annotation = c.getAnnotation(RestfulController.class);
-            if(annotation != null) {
-                //controller 只创建一次
-                Constructor constructor = c.getDeclaredConstructor();
-                constructor.setAccessible(true);
-                Object controller = constructor.newInstance();
-
-                //注入bean
-                RestfulUtils.injectBeansToObject(this, controller);
-
-                //只加载有注解的类
-                String url1 = annotation.value();
-
-                Method[] methods = c.getMethods();
-
-                for(Method method : methods) {
-                    RestfulDispatcher dispatcher = null;
-                    if(method.isAnnotationPresent(Get.class)) {
-                        Get get = method.getAnnotation(Get.class);
-                        dispatcher = new RestfulDispatcher(url1 + get.value(), controller, method, RestfulHttpMethod.GET, get.isPattern());
-                    } else if(method.isAnnotationPresent(Post.class)) {
-                        Post post = method.getAnnotation(Post.class);
-                        dispatcher = new RestfulDispatcher(url1 + post.value(), controller, method, RestfulHttpMethod.POST, post.isPattern());
-                    } else if(method.isAnnotationPresent(Put.class)) {
-                        Put put = method.getAnnotation(Put.class);
-                        dispatcher = new RestfulDispatcher(url1 + put.value(), controller, method, RestfulHttpMethod.PUT, put.isPattern());
-                    } else if(method.isAnnotationPresent(Delete.class)) {
-                        Delete delete = method.getAnnotation(Delete.class);
-                        dispatcher = new RestfulDispatcher(url1 + delete.value(), controller, method, RestfulHttpMethod.DELETE, delete.isPattern());
-                    } else if(method.isAnnotationPresent(Request.class)) {
-                        Request map = method.getAnnotation(Request.class);
-                        dispatcher = new RestfulDispatcher(url1 + map.value(), controller, method, RestfulHttpMethod.REQUEST, map.isPattern());
-                    }
-
-                    if(dispatcher != null) {
-
-                        if(dispatcher.isPattern) {
-                            dispatcherPatternList.add(dispatcher);
-                        } else {
-                            RestfulDispatchMapper old = dispatcherAbsMap.get(dispatcher.url);
-                            if(old == null) {
-                                old = new RestfulDispatchMapper();
-                                dispatcherAbsMap.put(dispatcher.url, old);
-                            }
-                            old.setDispatcher(dispatcher);
-                        }
-                    }
-                }
-
-                log.trace("加载Controller {} => {}", url1, path);
-            }
+            addController(c);
         }
 
         return dispatcherPatternList.size() + dispatcherPatternList.size();
+    }
+
+    public void addController(Class<?> c) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+        RestfulController annotation = c.getAnnotation(RestfulController.class);
+        if(annotation != null) {
+            //controller 只创建一次
+            Constructor constructor = c.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            Object controller = constructor.newInstance();
+
+            //注入bean
+            RestfulUtils.injectBeansToObject(this, controller);
+
+            //只加载有注解的类
+            String url1 = annotation.value();
+
+            Method[] methods = c.getMethods();
+
+            for(Method method : methods) {
+                RestfulDispatcher dispatcher = null;
+                if(method.isAnnotationPresent(Get.class)) {
+                    Get get = method.getAnnotation(Get.class);
+                    dispatcher = new RestfulDispatcher(url1 + get.value(), controller, method, RestfulHttpMethod.GET, get.isPattern());
+                } else if(method.isAnnotationPresent(Post.class)) {
+                    Post post = method.getAnnotation(Post.class);
+                    dispatcher = new RestfulDispatcher(url1 + post.value(), controller, method, RestfulHttpMethod.POST, post.isPattern());
+                } else if(method.isAnnotationPresent(Put.class)) {
+                    Put put = method.getAnnotation(Put.class);
+                    dispatcher = new RestfulDispatcher(url1 + put.value(), controller, method, RestfulHttpMethod.PUT, put.isPattern());
+                } else if(method.isAnnotationPresent(Delete.class)) {
+                    Delete delete = method.getAnnotation(Delete.class);
+                    dispatcher = new RestfulDispatcher(url1 + delete.value(), controller, method, RestfulHttpMethod.DELETE, delete.isPattern());
+                } else if(method.isAnnotationPresent(Request.class)) {
+                    Request map = method.getAnnotation(Request.class);
+                    dispatcher = new RestfulDispatcher(url1 + map.value(), controller, method, RestfulHttpMethod.REQUEST, map.isPattern());
+                }
+
+                if(dispatcher != null) {
+
+                    if(dispatcher.isPattern) {
+                        dispatcherPatternList.add(dispatcher);
+                    } else {
+                        RestfulDispatchMapper old = dispatcherAbsMap.get(dispatcher.url);
+                        if(old == null) {
+                            old = new RestfulDispatchMapper();
+                            dispatcherAbsMap.put(dispatcher.url, old);
+                        }
+                        old.setDispatcher(dispatcher);
+                    }
+                }
+            }
+
+            log.trace("加载Controller {} => {}", url1, c.getName());
+        }
     }
 
     /** 手动注册Bean */
