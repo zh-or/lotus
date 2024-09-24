@@ -17,7 +17,7 @@ public class GraceShutdown {
     public void shutdown() {
         for(AutoCloseable obj : objs) {
             try {
-                log.info("关闭 {}", obj.getClass().getName());
+                //log.info("关闭 {}", obj.getClass().getName());
                 obj.close();
             } catch (Exception e) {
                 log.error("关闭出错: {}, {}", obj, e);
