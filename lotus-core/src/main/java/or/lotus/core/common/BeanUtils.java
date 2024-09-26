@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+/** jackson工具类 */
 public class BeanUtils {
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 

@@ -18,7 +18,8 @@ public class Utils {
     public static final String EN_TYPE_SHA1 = "sha1";
     public static final int S_BOX_MAX_SIZE = 255;
 
-    private Utils() {}
+    private Utils() {
+    }
 
     public static void main(String[] args) throws Exception {
 
@@ -44,18 +45,20 @@ public class Utils {
         return System.getProperty("java.io.tmpdir") + File.separator;
     }
 
-    /**100TB, 100GB, 100MB, 100KB, 如果没有带单位默认为kb*/
+    /**
+     * 100TB, 100GB, 100MB, 100KB, 如果没有带单位默认为kb
+     */
     public static long formatSize(String sizeStr) {
         int[] n = Utils.getNumberFromStr(sizeStr);
-        if(n.length <= 0) {
+        if (n.length <= 0) {
             return 0;
         }
         long size = n[0];
-        if(sizeStr.endsWith("TB")) {
+        if (sizeStr.endsWith("TB")) {
             size = size * 1024 * 1024 * 1024 * 1024;
-        } else if(sizeStr.endsWith("GB")) {
+        } else if (sizeStr.endsWith("GB")) {
             size = size * 1024 * 1024 * 1024;
-        } else if(sizeStr.endsWith("MB")) {
+        } else if (sizeStr.endsWith("MB")) {
             size = size * 1024 * 1024;
         } else {//kb
             size = size * 1024;
@@ -65,20 +68,20 @@ public class Utils {
     }
 
     public static void assets(String v, String msg) {
-        if(Utils.CheckNull(v)) {
+        if (Utils.CheckNull(v)) {
             throw new IllegalArgumentException(msg);
         }
     }
 
     public static void assets(boolean v, String msg) {
-        if(v) {
+        if (v) {
             throw new IllegalArgumentException(msg);
         }
     }
 
 
     public static BigDecimal calc(Object v1, String m, Object v2) {
-        switch(m) {
+        switch (m) {
             case "+":
                 return new BigDecimal(v1.toString()).add(new BigDecimal(v2.toString()));
             case "-":
@@ -115,7 +118,9 @@ public class Utils {
         return rc4Crypt(data, s_box);
     }
 
-    /** 分开的步骤-1 */
+    /**
+     * 分开的步骤-1
+     */
     public static char[] rc4Init(String key) {
         char[] rs = new char[S_BOX_MAX_SIZE];
         char[] key_ = key.toCharArray();
@@ -136,7 +141,9 @@ public class Utils {
         return rs;
     }
 
-    /** 分开的步骤-2 */
+    /**
+     * 分开的步骤-2
+     */
     public static byte[] rc4Crypt(byte[] data, char[] s_box) {
         int x = 0, y = 0, t = 0, i = 0, len = data.length;
         char tmp;
@@ -158,21 +165,25 @@ public class Utils {
     }
 
 
-    /**按字节长度截取字符串, 默认字符串编码为utf-8*/
+    /**
+     * 按字节长度截取字符串, 默认字符串编码为utf-8
+     */
     public static String substring(String s, int maxBytes) throws UnsupportedEncodingException {
         return substring(s, maxBytes, "utf-8");
     }
 
-    /**按字节长度截取字符串*/
+    /**
+     * 按字节长度截取字符串
+     */
     public static String substring(String s, int maxBytes, String charset) throws UnsupportedEncodingException {
-        if(CheckNull(s)) {
+        if (CheckNull(s)) {
             return s;
         }
 
-        String s2 =  s.length() > maxBytes ? s.substring(0, maxBytes) : s;
+        String s2 = s.length() > maxBytes ? s.substring(0, maxBytes) : s;
         int len = s2.getBytes(charset).length;
 
-        while(len > maxBytes) {
+        while (len > maxBytes) {
             s2 = s2.substring(0, s2.length() - 1);
             len = s2.getBytes(charset).length;
         }
@@ -208,7 +219,7 @@ public class Utils {
 
     public static String RandomNum(int length) {
         StringBuilder sb = new StringBuilder(length);
-        for(int i = 0; i < length; i++) {
+        for (int i = 0; i < length; i++) {
             sb.append(RandomNum(0, 9));
         }
         return sb.toString();
@@ -355,10 +366,8 @@ public class Utils {
     /**
      * md5 或 sha1 加密
      *
-     * @param s
-     *            欲加密字符串
-     * @param entype
-     *            加密方式
+     * @param s      欲加密字符串
+     * @param entype 加密方式
      * @return
      * @throws Exception
      */
@@ -376,7 +385,7 @@ public class Utils {
     }
 
 
-    public final static byte[] SHA1(String s) throws NoSuchAlgorithmException{
+    public final static byte[] SHA1(String s) throws NoSuchAlgorithmException {
         MessageDigest md = MessageDigest.getInstance(EN_TYPE_SHA1);
         md.update(s.getBytes());
         return md.digest();
@@ -433,6 +442,7 @@ public class Utils {
 
     /**
      * 重组路径 删掉 ../ ../不会超过当前路径
+     *
      * @param path
      * @return
      */
@@ -443,25 +453,25 @@ public class Utils {
         String[] dirs = path.split(Pattern.quote(String.valueOf(File.separatorChar)));
         String[] build = new String[dirs.length];
 
-        for(String dir : dirs){
-            if("..".equals(dir)){
+        for (String dir : dirs) {
+            if ("..".equals(dir)) {
                 build[b] = null;
-                if(b > 0){
+                if (b > 0) {
                     b--;
                 }
-            }else{
+            } else {
                 build[b] = dir;
                 b++;
             }
         }
         StringBuilder sb = new StringBuilder(path.length());
-        for(String dir : build){
-            if(dir != null){
+        for (String dir : build) {
+            if (dir != null) {
                 sb.append(dir);
                 sb.append(File.separatorChar);
             }
         }
-        if(sb.charAt(sb.length() - 1) == File.separatorChar) sb.delete(sb.length() - 1, sb.length());
+        if (sb.charAt(sb.length() - 1) == File.separatorChar) sb.delete(sb.length() - 1, sb.length());
         return sb.toString();
     }
 
@@ -512,6 +522,7 @@ public class Utils {
 
     /**
      * "a13dv222" 返回 [13, 222]
+     *
      * @param str
      * @return
      */
@@ -551,13 +562,13 @@ public class Utils {
      * @return 找到了返回dest在src的起始下标 未找到返回-1 此下标从0开始
      */
     public static int byteArrSearch(byte[] src, byte[] dest, int offset) {
-        if(offset < 0) {
+        if (offset < 0) {
             offset = 0;
         }
         if (dest == null || src == null || src.length < dest.length)
             return -1;// fuck 了
         int p = -1, destLenEP = dest.length - 1, srcLen = src.length - destLenEP, k = 0, i = offset;
-        if((destLenEP + offset) > src.length) {
+        if ((destLenEP + offset) > src.length) {
             return -1;
         }
         boolean foundit = true;
@@ -580,26 +591,27 @@ public class Utils {
 
     /**
      * 生成范围包含开始和结束
+     *
      * @param start
      * @param end
      * @return
      */
     public static List<Integer> intRange(int start, int end) {
         List<Integer> arr = new ArrayList<>(end - start + 1);
-        for(int i = start; i <= end; i++) {
+        for (int i = start; i <= end; i++) {
             arr.add(Integer.valueOf(i));
         }
         return arr;
     }
 
     public static int ceilDiv(int a, int b) {
-        if(a == 0 || b == 0)
+        if (a == 0 || b == 0)
             return 0;
         return (int) Math.ceil((double) a / b);
     }
 
     public static int floorDiv(int a, int b) {
-        if(a == 0 || b == 0)
+        if (a == 0 || b == 0)
             return 0;
         return (int) Math.floor((double) a / b);
     }
@@ -610,7 +622,7 @@ public class Utils {
 
     public static String getUploadFileName(String raw) {
         int p = raw.lastIndexOf(".");
-        if(p != -1) {
+        if (p != -1) {
             return UUID.randomUUID().toString() + raw.substring(p);
         }
         return UUID.randomUUID().toString();
@@ -618,7 +630,7 @@ public class Utils {
 
     public static String getFileSuffix(String path) {
         int p = path.lastIndexOf(".");
-        if(p != -1) {
+        if (p != -1) {
             return path.substring(p + 1, path.length());
         }
         return "";
@@ -632,8 +644,8 @@ public class Utils {
             while (en.hasMoreElements()) {
                 NetworkInterface ni = (NetworkInterface) en.nextElement();
                 NetWorkAddress addr = new NetWorkAddress(ni);
-                if(isFilter) {
-                    if(!CheckNull(addr.mac) && addr.ips.size() > 0) {
+                if (isFilter) {
+                    if (!CheckNull(addr.mac) && addr.ips.size() > 0) {
                         ips.add(addr);
                     }
                 } else {
@@ -647,5 +659,51 @@ public class Utils {
 
     }
 
+    public static String formatException(Throwable cause) {
+        StackTraceElement[] stes = cause.getStackTrace();
+        String message = cause.getMessage();
+        StringBuffer sb = new StringBuffer();
+        sb.append("\n  ");
+        sb.append(cause.getClass().getName());
+        if (message != null) {
+            sb.append(message);
+        }
+        sb.append("\n");
+        for (StackTraceElement ste : stes) {
+            if (ste.getFileName() != null) {
+                sb.append("    ");
+                sb.append(ste.toString());
+                sb.append("\n");
+            }
 
+        }
+
+        Throwable ourCause = cause.getCause();
+
+        if (ourCause != null) {
+            sb.append("  Caused by ");
+            sb.append(ourCause.getClass().getName());
+            sb.append(":");
+            sb.append(ourCause.getMessage());
+            sb.append("\n");
+            StackTraceElement[] ourStes = ourCause.getStackTrace();
+
+            int n = stes.length - 1, m = ourStes.length - 1;
+            while (m >= 0 && n >= 0 && ourStes[m].equals(stes[n])) {
+                m--;
+                n--;
+            }
+            for (int i = 0; i <= m; i++) {
+                StackTraceElement ste = ourStes[i];
+                if (ste.getFileName() != null) {
+                    sb.append("    ");
+                    sb.append(ste.toString());
+                    sb.append("\n");
+                }
+            }
+
+        }
+
+        return sb.toString();
+    }
 }
