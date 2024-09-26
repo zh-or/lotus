@@ -1,5 +1,6 @@
 package or.lotus.core.common;
 
+import java.text.SimpleDateFormat;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -34,4 +35,15 @@ public class DateUtils {
         ZonedDateTime time = getDate();
         return time.format(DateTimeFormatter.ofPattern(pattern));
     }
+
+    /** yyyy-MM-dd HH:mm:ss*/
+    public static String format(long time) {
+        return format(time, "yyyy-MM-dd HH:mm:ss");
+    }
+
+    public static String format(long time, String pattern) {
+        SimpleDateFormat format = new SimpleDateFormat(pattern);
+        return format.format(new Date(time));
+    }
+
 }
