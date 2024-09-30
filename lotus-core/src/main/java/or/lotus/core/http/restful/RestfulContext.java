@@ -2,7 +2,6 @@ package or.lotus.core.http.restful;
 
 import or.lotus.core.common.BeanUtils;
 import or.lotus.core.common.Utils;
-import or.lotus.core.http.ApiRes;
 import or.lotus.core.http.restful.ann.*;
 import or.lotus.core.http.restful.support.*;
 import org.slf4j.Logger;
@@ -30,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 /** 使用方式:
  * 1. http容器继承此类, 并实现onStart()和onStop()方法实现启动停止
  * 2. 实现 sendResponse 处理返回内容
- * 2. 调用addBeans添加 bean, 如果bean继承了 AutoClose 接口, 那么停止的时候会自动调用close方法
+ * 2. 调用addBeans添加 bean, 如果bean继承了 AutoClose 接口, 那么停止 (stop()) 的时候会自动调用close方法
  * 3. 调用scanController扫描Controller类, 并实现@RestfulController注解
  * 4. http容器收到请求时调用dispatch方法分发请求, 返回值为需要输出的内容
  *  */
@@ -80,8 +79,8 @@ public abstract class RestfulContext {
                     (run) -> new Thread(run, "lotus-restful-service-pool")
             );
         }
-        onStart();
         isRunning = true;
+        onStart();
     }
 
     public synchronized void stop() {
@@ -348,17 +347,29 @@ public abstract class RestfulContext {
     public List<String> addBeansFromPackage(String packageName) throws Exception {
         Utils.assets(packageName, "包名不能为空");
         List<String> clazzs = BeanUtils.getClassPathByPackage(packageName);
+        ArrayList<BeanSortWrap> tmpList = new ArrayList<>();
         for (String path : clazzs) {
             Class<?> c = Thread.currentThread().getContextClassLoader().loadClass(path);
             Bean b = c.getAnnotation(Bean.class);
             if(b != null) {
                 Constructor constructor = c.getDeclaredConstructor();
                 constructor.setAccessible(true);
-                Object obj = constructor.newInstance();
-
-                addBean(b.value(), obj);
+                String name = b.value();
+                if(Utils.CheckNull(name)) {
+                    name = c.getName();
+                }
+                tmpList.add(new BeanSortWrap(constructor, name, b.order(), null));
             }
         }
+        //根据order排序, 否则交叉引用时会出问题
+        tmpList.sort(Comparator.comparingInt(BeanSortWrap::getSort).reversed());
+
+        for(BeanSortWrap tmp : tmpList) {
+            Constructor constructor = (Constructor) tmp.obj;
+            Object obj = constructor.newInstance();
+            addBean(tmp.name, obj);
+        }
+
         return clazzs;
     }
 

@@ -37,14 +37,9 @@ public class NettyHttpServer extends RestfulContext {
         sslContext = SslContextBuilder.forServer(new File(keystore), null, password).build();
     }
 
-    /** 会在filter内注入bean */
+    /** 会在调用start方法时向filter内注入bean */
     public void setFileFilter(NettyFileFilter fileFilter) {
         this.fileFilter = fileFilter;
-        try {
-            RestfulUtils.injectBeansToObject(this, fileFilter);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     public void setWebSocketMessageHandler(NettyWebSocketMessageHandler webSocketMessageHandler) {
@@ -65,6 +60,13 @@ public class NettyHttpServer extends RestfulContext {
 
     @Override
     protected void onStart() throws InterruptedException {
+
+        try {
+            RestfulUtils.injectBeansToObject(this, fileFilter);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+
         //accept thread group
         bossGroup = new NioEventLoopGroup(Runtime.getRuntime().availableProcessors() + 1);
         //io thread group

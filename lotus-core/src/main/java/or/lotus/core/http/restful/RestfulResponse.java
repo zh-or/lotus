@@ -1,6 +1,5 @@
 package or.lotus.core.http.restful;
 
-import or.lotus.core.http.ApiRes;
 import or.lotus.core.http.restful.support.ModelAndView;
 import or.lotus.core.http.restful.support.RestfulResponseStatus;
 
@@ -50,6 +49,8 @@ public abstract class RestfulResponse extends Writer {
     public abstract void write(String str, int off, int len) throws IOException;
     public abstract void write(int c) throws IOException;
     public abstract RestfulResponse write(byte[] data);
+
+    /** 清除content buffer中的数据 */
     public abstract RestfulResponse clearWrite();
 
     protected File file;
