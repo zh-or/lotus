@@ -1,12 +1,12 @@
 package test;
 
+import or.lotus.core.common.DateUtils;
 import or.lotus.orm.db.*;
 import or.lotus.orm.geometry.GeometryConvertToModel;
 import or.lotus.orm.geometry.model.PointGeo;
 import or.lotus.orm.pool.DataSourceConfig;
 import or.lotus.orm.pool.LotusConnection;
 import or.lotus.orm.pool.LotusDataSource;
-import or.lotus.core.common.Format;
 import or.lotus.core.common.Utils;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.WKBWriter;
@@ -167,13 +167,13 @@ public class TestORM {
         List<Test> res4 = db.select(Test.class).whereNot("id", 4).findList();
 
         for(Test t : res2) {
-            t.setStr("多更新:"  + Format.formatTime(System.currentTimeMillis()));
+            t.setStr("多更新:"  + DateUtils.format(System.currentTimeMillis()));
         }
 
         int mu1 = db.updateAll(res2);
 
         Test i = new Test();
-        i.setStr("单独更新:" + Format.formatTime(System.currentTimeMillis()));
+        i.setStr("单独更新:" + DateUtils.format(System.currentTimeMillis()));
         i.setCreateTime(new Date());
         i.setId(2);
         int u1 = db.update(i);
