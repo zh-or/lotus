@@ -1,10 +1,10 @@
 package or.lotus.core.test;
 
+import or.lotus.core.common.DateUtils;
 import or.lotus.core.queue.delay.DelayQueueCallBack;
 import or.lotus.core.queue.delay.DelayQueueExecutor;
 import or.lotus.core.queue.delay.DelayQueueRetryException;
 import or.lotus.core.queue.delay.DelayTaskExec;
-import or.lotus.core.common.Format;
 import or.lotus.core.common.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,14 +24,14 @@ public class DelayQueueTest {
             @Override
             public void onAddTask(DelayQueueExecutor context, String type, long execTime, Object obj) {
 
-                log.info("添加延迟任务成功, 执行时间: {}, obj: {}", Format.formatTime(execTime), obj);
+                log.info("添加延迟任务成功, 执行时间: {}, obj: {}", DateUtils.format(execTime), obj);
             }
 
             @Override
             public void onRetryException(DelayQueueExecutor context, String type, long execTime, Object obj) {
 
                 log.error("执行延迟任务出错, {} 自动重试,  type: {}, obj: {}",
-                        Format.formatTime(execTime),
+                        DateUtils.format(execTime),
                         type,
                         obj);
             }

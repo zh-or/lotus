@@ -2,7 +2,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <properties>
-        <revision>2.0.5</revision>
+        <revision>2.0.6</revision>
         <!--logback 1.2.13 才兼容java8-->
         <logback.version>1.2.13</logback.version>
         <slf4j.version>1.7.36</slf4j.version>

@@ -1,7 +1,7 @@
 package or.lotus.core.queue.delay;
 
 
-import or.lotus.core.common.Format;
+import or.lotus.core.common.DateUtils;
 import or.lotus.core.common.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -153,7 +153,7 @@ public class DelayQueueExecutor implements Runnable, AutoCloseable {
             StringBuilder sb = new StringBuilder();
             sb.append("type=").append(type)
                     .append(", execTime=").append(execTime)
-                    .append(", execTime=").append(Format.formatTime(execTime))
+                    .append(", execTime=").append(DateUtils.format(execTime))
                     .append(", obj=").append(obj);
             return sb.toString();
         }

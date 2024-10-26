@@ -1,10 +1,6 @@
 package or.lotus.core.common;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -12,7 +8,12 @@ import java.util.Map.Entry;
 
 
 /**
- * 简单ini配置文件读取
+ * 简单ini配置文件读取, 暂未实现注释回写
+ * 后期需实现
+ * 1. 读取所有行保存
+ * 2. 解析行
+ * 3. 保存时回写所有行, 并修改配置值
+ *
  * @author OR
  */
 public class IniConfig {
@@ -20,25 +21,25 @@ public class IniConfig {
 	private HashMap<String, HashMap<String, ArrStringValue>> group = null;
 	private File file = null;
 
-	public class ArrStringValue{
+	public class ArrStringValue {
 	    private ArrayList<String> val;
 
 	    public ArrStringValue(){
 	        val = new ArrayList<String>();
 	    }
 
-	    public ArrStringValue put(String v){
+	    public ArrStringValue put(String v) {
 	        val.add(v);
 	        return this;
 	    }
 
-	    public ArrStringValue set(String v){
+	    public ArrStringValue set(String v) {
 	        val.clear();
 	        val.add(v);
 	        return this;
 	    }
 
-	    public ArrayList<String> getVal(){
+	    public ArrayList<String> getVal() {
 	        return val;
 	    }
 
@@ -76,9 +77,8 @@ public class IniConfig {
 	    if(file == null || !file.exists()) {
 	        return;
 	    }
-		BufferedReader bis = null;
-		try {
-			bis = new BufferedReader(new InputStreamReader(new FileInputStream(file), charset));
+
+		try (BufferedReader bis =  new BufferedReader(new InputStreamReader(new FileInputStream(file), charset))) {
             group.clear();
 			HashMap<String, ArrStringValue> child = null;
 			String line = null;
@@ -114,12 +114,6 @@ public class IniConfig {
 			}
 		} catch (Exception e) {
 
-		}finally{
-			try {
-				if(bis != null) bis.close();
-				bis = null;
-			} catch (Exception e2) {
-			}
 		}
 	}
 
@@ -149,42 +143,42 @@ public class IniConfig {
 
 	/**
 	 * 读取配置
-	 * @param groupkey
-	 * @param childkey
-	 * @param defaultvalue 默认值
+	 * @param groupKey
+	 * @param childKey
+	 * @param defaultValue 默认值
 	 * @return
 	 */
-	public String getStringValue(String groupkey, String childkey, String defaultvalue){
-	    ArrStringValue val = getArrStringValue(groupkey, childkey, defaultvalue);
+	public String getStringValue(String groupKey, String childKey, String defaultValue){
+	    ArrStringValue val = getArrStringValue(groupKey, childKey, defaultValue);
 		return val.toString();
 	}
 
-	public ArrStringValue getArrStringValue(String groupkey, String childkey, String defaultvalue){
-	    HashMap<String, ArrStringValue>  child = group.get(groupkey);
-        if(child == null) return new ArrStringValue().put(defaultvalue);
-        ArrStringValue val = child.get(childkey);
+	public ArrStringValue getArrStringValue(String groupKey, String childKey, String defaultValue){
+	    HashMap<String, ArrStringValue>  child = group.get(groupKey);
+        if(child == null) return new ArrStringValue().put(defaultValue);
+        ArrStringValue val = child.get(childKey);
         if(val == null){
             ArrStringValue vals = new ArrStringValue();
-            if(!Utils.CheckNull(defaultvalue)) {
-                vals.put(defaultvalue);
+            if(!Utils.CheckNull(defaultValue)) {
+                vals.put(defaultValue);
             }
             return vals;
         }
         return val;
 	}
 
-	public int getIntValue(String groupkey, String childkey, int defaultvalue){
-		return Integer.valueOf(getStringValue(groupkey, childkey, defaultvalue + ""));
+	public int getIntValue(String groupKey, String childKey, int defaultValue){
+		return Integer.valueOf(getStringValue(groupKey, childKey, defaultValue + ""));
 	}
 
 	/**
-	 * @param groupkey
-	 * @param childkey
-	 * @param defaultvalue
+	 * @param groupKey
+	 * @param childKey
+	 * @param defaultValue
 	 * @return 当此配置项的值为 'true' 或 '1' 时返回 true
 	 */
-	public boolean getBoolValue(String groupkey, String childkey, boolean defaultvalue){
-		String v = getStringValue(groupkey, childkey, defaultvalue + "");
+	public boolean getBoolValue(String groupKey, String childKey, boolean defaultValue){
+		String v = getStringValue(groupKey, childKey, defaultValue + "");
 		return "true".equals(v) || "1".equals(v);
 	}
 
@@ -201,22 +195,22 @@ public class IniConfig {
 	/**
 	 * 设置值 没有则创建 此方法多次put会有多个key value
 	 * @param groupkey
-	 * @param childkey
+	 * @param childKey
 	 * @param value
 	 * @return
 	 */
-	public synchronized void addValue(String groupkey, String childkey, String value){
+	public synchronized void addValue(String groupkey, String childKey, String value){
 	    //read(lastReadCharset);
 		HashMap<String, ArrStringValue>  child = group.get(groupkey);
 		if(child == null){
 			child = new HashMap<String, ArrStringValue>();
-			child.put(childkey, new ArrStringValue().put(value));
+			child.put(childKey, new ArrStringValue().put(value));
 			group.put(groupkey, child);
 			return ;
 		}
-		ArrStringValue val = child.get(childkey);
+		ArrStringValue val = child.get(childKey);
 		if(val == null){
-		    child.put(childkey, new ArrStringValue().put(value));
+		    child.put(childKey, new ArrStringValue().put(value));
 		}else{
 		    val.put(value);
 		}
@@ -225,21 +219,21 @@ public class IniConfig {
 	/**
 	 * 此方法不会增加多个key
 	 * @param groupkey
-	 * @param childkey
+	 * @param childKey
 	 * @param value
 	 */
-	public synchronized void setValue(String groupkey, String childkey, String value){
+	public synchronized void setValue(String groupkey, String childKey, String value){
         //read(lastReadCharset);
 	    HashMap<String, ArrStringValue>  child = group.get(groupkey);
         if(child == null){
             child = new HashMap<String, ArrStringValue>();
-            child.put(childkey, new ArrStringValue().put(value));
+            child.put(childKey, new ArrStringValue().put(value));
             group.put(groupkey, child);
             return ;
         }
-        ArrStringValue val = child.get(childkey);
+        ArrStringValue val = child.get(childKey);
         if(val == null){
-            child.put(childkey, new ArrStringValue().put(value));
+            child.put(childKey, new ArrStringValue().put(value));
         }else{
             val.set(value);
         }
@@ -296,9 +290,9 @@ public class IniConfig {
 	@Override
 	public String toString() {
 	    StringBuilder sb = new StringBuilder();
-        Iterator<Entry<String, HashMap<String, ArrStringValue>>> iter = group.entrySet().iterator();
-        while (iter.hasNext()) {
-            Entry<String, HashMap<String, ArrStringValue>> entry = iter.next();
+        Iterator<Entry<String, HashMap<String, ArrStringValue>>> it = group.entrySet().iterator();
+        while (it.hasNext()) {
+            Entry<String, HashMap<String, ArrStringValue>> entry = it.next();
             String key = (String) entry.getKey();
             HashMap<String, ArrStringValue> val = entry.getValue();
             sb.append("  [");
