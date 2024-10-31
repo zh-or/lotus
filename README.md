@@ -11,6 +11,7 @@
 5. 微信后台api封装 `lotus-wx`, 可继承`WxPay`类扩展
 6. 超时自动移除`value`的`ConcurrentHashMap`=>`TimeoutConcurrentHashMap`
 7. `k/v`存储本地文件版`LocalFileManager`
+8. 延迟队列`DelayQueueExecutor`
 
 
 >redisson 会和lotus-netty-http冲突
