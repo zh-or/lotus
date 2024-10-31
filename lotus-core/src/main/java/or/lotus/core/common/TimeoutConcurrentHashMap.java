@@ -8,7 +8,7 @@ import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 简易超时hashmap
+ * 超时hashmap
  * @param <K>
  * @param <V>
  */
