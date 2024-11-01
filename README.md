@@ -13,6 +13,8 @@
 7. `k/v`存储本地文件版`LocalFileManager`
 8. 延迟队列`DelayQueueExecutor`
 
+## 联系
+>QQ群: 427717461
 
 >redisson 会和lotus-netty-http冲突
 
