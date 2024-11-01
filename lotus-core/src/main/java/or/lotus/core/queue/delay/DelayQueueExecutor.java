@@ -25,7 +25,16 @@ public class DelayQueueExecutor implements Runnable, AutoCloseable {
 
     private boolean isRun = false;
 
+    /**线程池默认为50个线程*/
     public DelayQueueExecutor(DelayQueueCallBack callback) {
+        this(callback, Executors.newFixedThreadPool(50));
+    }
+
+    public DelayQueueExecutor(DelayQueueCallBack callback, int threadPoolSize) {
+        this(callback, Executors.newFixedThreadPool(threadPoolSize));
+    }
+
+    public DelayQueueExecutor(DelayQueueCallBack callback, ExecutorService executorService) {
         /*try (DelayQueueService queueService = new DelayQueueService()) {
             ArrayList<LinkDelayQueue> arr = queueService.queryWaitExecTask();
 
@@ -41,7 +50,7 @@ public class DelayQueueExecutor implements Runnable, AutoCloseable {
             this.callback.onInit(this);
         }
         isRun = true;
-        executorPoll = Executors.newFixedThreadPool(50);
+        executorPoll = executorService;
         Thread thread = new Thread(this);
         thread.setName("DelayQueueExecutor-thread");
         thread.start();
