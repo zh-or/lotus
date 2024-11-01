@@ -14,7 +14,7 @@
 8. 延迟队列`DelayQueueExecutor`
 
 ## 联系
->QQ群: 427717461
+>QQ群: 347596815
 
 >redisson 会和lotus-netty-http冲突
 
