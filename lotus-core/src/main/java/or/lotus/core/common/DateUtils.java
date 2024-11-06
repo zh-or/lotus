@@ -36,6 +36,12 @@ public class DateUtils {
         return time.format(DateTimeFormatter.ofPattern(pattern));
     }
 
+    /** return 20241106 */
+    public static int getFullYearDay() {
+        String dateStr = getDateFormat("yyyyMMdd");
+        return Integer.valueOf(dateStr);
+    }
+
     /** yyyy-MM-dd HH:mm:ss*/
     public static String format(long time) {
         return format(time, "yyyy-MM-dd HH:mm:ss");
