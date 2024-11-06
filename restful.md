@@ -1,12 +1,10 @@
+## 自带netty实现
+>lotus-netty-http
+
 ## 注意事项
 >1. `controller` 中的方法的参数不能为基本数据类型, 必须为包装类型, 否则会报错 ~~int~~, ~~long~~... Integer &#10004; Long&#10004;
->2. `controller` 支持两种返回值, `String`, `ModelAndView`, 其他返回值会直接调用 `toString` 并返回
->3.
+>2. `controller` 支持3种返回值, `File`, `String`, `ModelAndView`, 其他返回值会直接调用 `toString` 并返回
 
-## 使用需继承并实现 *3* 个类
-1. 继承 `RestfulContext` 类, 用于接收请求并处理返回值
-2. 继承 `RestfulRequest` 类, 用于包装`Request`可在这里面保存相关上下文
-3. 继承 `RestfulResponse` 类, 用于处理 `controller` 结果返回
 
 ## 注解
 1. `@Autowired` 用于`filter/bean/controller`中自动注入对象
@@ -60,3 +58,10 @@ public class ControllerA {
 2. `controller` 方法中使用 `NettyRequest` 获取 `NettyFormData formData = request.getBodyFormData();`
 3. `NettyFormData` 可获取 `formData` 的相关数据
 4. `NettyRequest.isMultipart()` 可判断当前请求是否 `multipart` 请求
+
+
+
+## 如需使用其他http容器需要继承并实现 *3* 个类
+1. 继承 `RestfulContext` 类, 用于接收请求并处理返回值
+2. 继承 `RestfulRequest` 类, 用于包装`Request`可在这里面保存相关上下文
+3. 继承 `RestfulResponse` 类, 用于处理 `controller` 结果返回

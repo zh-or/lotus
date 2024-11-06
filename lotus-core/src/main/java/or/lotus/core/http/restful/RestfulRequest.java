@@ -105,10 +105,11 @@ public abstract class RestfulRequest {
         return bodyType;
     }
 
-    protected ObjectNode bodyJson = null;
-    public ObjectNode getJSON() throws JsonProcessingException {
+    protected JsonNode bodyJson = null;
+    /** ObjectNode | ArrayNode */
+    public JsonNode getJSON() throws JsonProcessingException {
         if(bodyJson == null) {
-            bodyJson = BeanUtils.parseObject(getBodyString());
+            bodyJson = BeanUtils.parseNode(getBodyString());
         }
         return bodyJson;
     }
