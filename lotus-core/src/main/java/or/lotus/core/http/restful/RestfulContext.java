@@ -7,6 +7,8 @@ import or.lotus.core.http.restful.support.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.IExpressionContext;
+import org.thymeleaf.linkbuilder.StandardLinkBuilder;
 import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.templateresolver.FileTemplateResolver;
 
@@ -21,6 +23,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -518,6 +521,15 @@ public abstract class RestfulContext {
         }
         templateEngine = new TemplateEngine();
         templateEngine.setTemplateResolver(templateResolver);
+        // 由于没有servlet context, 导致输出href的时候会报错,  cannot be context relative (/...) unless the context xxx...
+        // ### https://github.com/vert-x3/vertx-web/issues/161#issuecomment-634707186
+        //
+        templateEngine.setLinkBuilder(new StandardLinkBuilder() {
+            @Override
+            protected String computeContextPath(IExpressionContext context, String base, Map<String, Object> parameters) {
+                return "/";
+            }
+        });
     }
 
 }
