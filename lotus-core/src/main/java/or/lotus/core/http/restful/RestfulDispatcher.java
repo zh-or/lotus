@@ -26,6 +26,7 @@ public class RestfulDispatcher {
     public RestfulHttpMethod httpMethod;
     public Object controllerObject;
     public Method method;
+    private Class<?> returnType;
     private Class[] parameterTypes;
     private Parameter[] parameterAnnotations;
     private Attr[] attrs;
@@ -38,6 +39,8 @@ public class RestfulDispatcher {
 
         this.controllerObject = controllerObject;
         this.method = method;
+
+        returnType = method.getReturnType();
 
         parameterTypes = method.getParameterTypes();
         Annotation[][] parameterTypesAnnotations = method.getParameterAnnotations();
@@ -221,5 +224,7 @@ public class RestfulDispatcher {
         return null;
     }
 
-
+    public Class<?> getReturnType() {
+        return returnType;
+    }
 }
