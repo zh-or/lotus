@@ -7,8 +7,15 @@
 
 
 ## 注解
-1. `@Autowired` 用于`filter/bean/controller`中自动注入对象
+1. `@Autowired` 
+   - `filter/bean/controller`中成员变量自动注入`bean`
+   - `controller` 的参数注入`bean`
+   - `context.addBeansFromMethodReturn` 传入的对象的方法的参数自动注入已存在的`bean`
 2. `@Bean` 用于启动时注册bean, 该注解用于标注方法
+3. `@Attr` 用于 `controller` 的参数注入`request.attribute`
+4. `@Prop`
+   - `filter/bean/controller`中成员变量自动注入`context.property`
+   - `controller` 的参数注入`context.property`
 3. `@RestfulController` 用于标注controller, `scanController`只会加载有该注解的类并解析
 4. `@Request` 用于标注controller中的方法
 5. `@Get` 用于标注controller中的方法

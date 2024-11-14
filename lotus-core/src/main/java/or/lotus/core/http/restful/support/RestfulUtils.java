@@ -1,22 +1,26 @@
 package or.lotus.core.http.restful.support;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import or.lotus.core.common.Utils;
 import or.lotus.core.http.RestfulApiException;
 import or.lotus.core.http.restful.RestfulContext;
 import or.lotus.core.http.restful.ann.Autowired;
+import or.lotus.core.http.restful.ann.Parameter;
+import or.lotus.core.http.restful.ann.Prop;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.sql.Time;
-import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 public class RestfulUtils {
 
@@ -171,6 +175,63 @@ public class RestfulUtils {
         return type;
     }
 
+    public static Object getPropObject(RestfulContext context, Class<?> type, Prop prop) {
+        String name = prop.value();
+        if(!Utils.CheckNull(name)) {
+            if(type.isArray()) {
+                return  RestfulUtils.valueToArray(
+                        type.getComponentType(),
+                        context.getStringArrayConfig(name, prop.def())
+                );
+            } else if(type.isAssignableFrom(List.class)) {
+                throw new RuntimeException("List 类型的属性暂不支持, 请使用数组 " + prop.value());
+            } else {
+                String ini;
+                if(prop.random()) {
+                    ini = context.getRandomStringConfig(name, prop.def());
+                } else {
+                    ini = context.getStringConfig(name, prop.def());
+                }
+                return RestfulUtils.valueToType(type, ini);
+            }
+        }
+        return null;
+    }
+
+    public static Object injectPropAndInvokeMethod(RestfulContext context, Object obj, Method method) throws IllegalAccessException, InvocationTargetException {
+        Class[] parameterTypes = method.getParameterTypes();
+        int size = parameterTypes.length;
+        Object[] parameters = new Object[size];
+
+        for(int i = 0; i < size; i ++) {
+            Class type = parameterTypes[i];
+            Annotation[][] anns = method.getParameterAnnotations();
+            parameters[i] = null;
+
+            if(anns[i].length > 0) {
+                for(Annotation a : anns[i]) {
+                    Class annType = a.annotationType();
+                    if(annType == Prop.class) {
+                        Prop prop = (Prop) a;
+                        parameters[i] = getPropObject(context, type, prop);
+                        break;
+                    }
+                    if (annType == Autowired.class) {
+                        Autowired autowired = (Autowired) a;
+                        String name = autowired.value();
+                        if(Utils.CheckNull(name)) {
+                            //使用全限定名
+                            name = type.getName();
+                        }
+                        parameters[i] = context.getBean(name);
+                        break;
+                    }
+                }
+            }
+        }
+
+        return method.invoke(obj, parameters);
+    }
 
     /** 注入Bean到对象 */
     public static void injectBeansToObject(RestfulContext context, Object obj) throws IllegalAccessException {
@@ -200,6 +261,13 @@ public class RestfulUtils {
                     ));
                 }
             }
+
+            Prop prop = field.getAnnotation(Prop.class);
+            if(prop != null) {
+                field.setAccessible(true);
+                field.set(obj, getPropObject(context, field.getType(), prop));
+            }
+
         }
     }
 }
