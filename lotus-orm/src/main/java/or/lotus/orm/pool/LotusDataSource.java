@@ -47,7 +47,9 @@ public class LotusDataSource implements DataSource {
                 log.trace("关闭连接出错:", e);
             }
         }
-        timer.cancel();
+        if(timer != null) {
+            timer.cancel();
+        }
     }
 
     public String toString() {
