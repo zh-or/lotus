@@ -12,18 +12,14 @@ import org.thymeleaf.linkbuilder.StandardLinkBuilder;
 import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.templateresolver.FileTemplateResolver;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -56,11 +52,18 @@ public abstract class RestfulContext {
     /**请求过滤器*/
     protected RestfulFilter filter;
 
+    protected Properties properties = new Properties();
 
     public RestfulContext() {
         beansCache = new ConcurrentHashMap<>();
         dispatcherAbsMap = new ConcurrentHashMap<>();
         dispatcherPatternList = new ArrayList<>();
+    }
+
+    /**如果加载了配置, 此时启动端口会读取配置文件的 server.port 的值*/
+    public void start() throws InterruptedException {
+        int port = getIntConfig("server.port", 8080);
+        start(new InetSocketAddress(port));
     }
 
     public void start(int port) throws InterruptedException {
@@ -109,6 +112,16 @@ public abstract class RestfulContext {
 
         isRunning = false;
     }
+
+    public void loadProperties(String path) throws IOException {
+        properties.load(new InputStreamReader(new FileInputStream(path), "utf-8"));
+    }
+
+
+    public void loadProperties(InputStream stream) throws IOException {
+        properties.load(new InputStreamReader(stream, "utf-8"));
+    }
+
 
     protected abstract void onStart() throws InterruptedException;
     protected abstract void onStop();
@@ -405,7 +418,7 @@ public abstract class RestfulContext {
             //先注入bean, 再执行方法
             RestfulUtils.injectBeansToObject(this, tmp.obj);
 
-            Object beanObj = tmp.method.invoke(tmp.obj);
+            Object beanObj = RestfulUtils.injectPropAndInvokeMethod(this, tmp.obj, tmp.method);
             beansCache.put(tmp.name, beanObj);
             RestfulUtils.injectBeansToObject(this, beanObj);
         }
@@ -531,5 +544,41 @@ public abstract class RestfulContext {
             }
         });
     }
+
+
+    public int getIntConfig(String key, int def) {
+        try {
+            return Integer.parseInt(properties.getProperty(key));
+        } catch (Exception e) {
+            return def;
+        }
+    }
+
+    /**以逗号分割配置*/
+    public String[] getStringArrayConfig(String key, String def) {
+        String config = getStringConfig(key, def);
+        String[] vals = config.split(",");
+        return vals;
+    }
+
+    public String getStringConfig(String key, String def) {
+        return properties.getProperty(key, def);
+    }
+
+    public boolean getBooleanConfig(String key, boolean def) {
+        String v = getStringConfig(key, def ? "true" : "false");
+        return "true".equals(v);
+    }
+
+    /** 从逗号隔开的配置中随机取一个值 */
+    public String getRandomStringConfig(String key, String def) {
+        String[] vals = getStringArrayConfig(key, def);
+        if (vals.length > 0) {
+            int b = Utils.RandomNum(0, vals.length - 1);
+            return vals[b];
+        }
+        return def;
+    }
+
 
 }
