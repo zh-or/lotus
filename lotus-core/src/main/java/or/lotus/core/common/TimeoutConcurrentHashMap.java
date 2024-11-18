@@ -41,6 +41,11 @@ public class TimeoutConcurrentHashMap<K, V> extends TimerTask implements AutoClo
         this.listener = listener;
     }
 
+    public void clear() {
+        map.clear();
+        delayQueue.clear();
+    }
+
     /***
      * 此方法加入的对象将永远不会超时
      * @param k
