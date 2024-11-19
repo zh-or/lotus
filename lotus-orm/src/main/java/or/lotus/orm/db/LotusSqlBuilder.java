@@ -201,17 +201,19 @@ public class LotusSqlBuilder {
             sb.append(" where ");
             for(WhereItem wi : wheres) {
                 if("m".equals(wi.m)) {
-                    sb.append(wi.k).append(" ");
+                    sb.append('`').append(wi.k).append('`').append(" ");
                 } else if("in".equals(wi.m)) {
                     if(needCd % 2 != 0) {
                         throw new SQLException("where 之间需要增加条件");
                     }
-                    sb.append(wi.k).append(" in(").append(wi.v).append(") ");
+                    sb.append('`').append(wi.k).append('`')
+                            .append(" in(").append(wi.v).append(") ");
                 } else {
                     if(needCd % 2 != 0) {
                         throw new SQLException("where 之间需要增加条件");
                     }
-                    sb.append(wi.k).append(" ")
+                    sb.append('`').append(wi.k).append('`')
+                            .append(" ")
                             .append(wi.m).append(" ")
                             .append(wi.v).append(" ");
                 }
@@ -230,9 +232,9 @@ public class LotusSqlBuilder {
             sb.append(" order by ");
             for(OrderItem oi : orders) {
                 if("m".equals(oi.m)) {
-                    sb.append(oi.field).append(" ");
+                    sb.append('`').append(oi.field).append('`').append(" ");
                 } else {
-                    sb.append(oi.field)
+                    sb.append('`').append(oi.field).append('`')
                         .append(" ")
                         .append(oi.m).append(" ");
                 }
