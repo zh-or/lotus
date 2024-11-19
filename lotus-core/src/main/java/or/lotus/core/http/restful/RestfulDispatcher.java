@@ -17,6 +17,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 import static or.lotus.core.http.restful.ann.Parameter.DEF_NULL_VALUE;
@@ -153,7 +154,7 @@ public class RestfulDispatcher {
                             String val = request.getParameter(name);
                             if(val == null) {
                                 val = parameter.def();
-                                if(val == DEF_NULL_VALUE) {
+                                if(Objects.equals(val, DEF_NULL_VALUE)) {
                                     return null;
                                 }
                             }
@@ -176,8 +177,7 @@ public class RestfulDispatcher {
                             JsonNode val = request.getJsonNodeForPath(name);
                             if(val.isMissingNode()) {
                                 String defVal = parameter.def();
-
-                                if(defVal == DEF_NULL_VALUE) {
+                                if(Objects.equals(val, DEF_NULL_VALUE)) {
                                     return null;
                                 }
                                 /** 基本数据类型 */
