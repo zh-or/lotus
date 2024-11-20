@@ -309,8 +309,15 @@ public class DatabaseExecutor<T> {
         return this;
     }
 
-    public DatabaseExecutor<T> where(WhereItem where) {
-        builder.addWhere(where);
+    public DatabaseExecutor<T> where(WhereItem where) throws SQLException {
+        if(where.v == null) {
+            throw new SQLException("v 不能为空");
+        } else {
+            whereParams.add(where.v);
+            where.v = "?";
+            builder.addWhere(where);
+        }
+
         return this;
     }
 
