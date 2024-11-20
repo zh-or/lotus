@@ -5,6 +5,14 @@ public class WhereItem {
     public String m;
     public Object v;
 
+    public WhereItem() {
+    }
+
+    public WhereItem(Object k, String m, Object v) {
+        this.k = k;
+        this.m = m;
+        this.v = v;
+    }
 
     public static WhereItem in(Object k, Object v) {
         WhereItem obj = new WhereItem();

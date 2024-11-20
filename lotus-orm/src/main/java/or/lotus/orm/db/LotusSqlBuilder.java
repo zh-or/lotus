@@ -201,7 +201,7 @@ public class LotusSqlBuilder {
             sb.append(" where ");
             for(WhereItem wi : wheres) {
                 if("m".equals(wi.m)) {
-                    sb.append('`').append(wi.k).append('`').append(" ");
+                    sb.append(wi.k).append(" ");
                 } else if("in".equals(wi.m)) {
                     if(needCd % 2 != 0) {
                         throw new SQLException("where 之间需要增加条件");

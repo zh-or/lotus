@@ -309,6 +309,11 @@ public class DatabaseExecutor<T> {
         return this;
     }
 
+    public DatabaseExecutor<T> where(WhereItem where) {
+        builder.addWhere(where);
+        return this;
+    }
+
     /**如果受影响行数小于 1 则抛出异常*/
     public void executeOrError() throws SQLException {
         executeOrError(1);
