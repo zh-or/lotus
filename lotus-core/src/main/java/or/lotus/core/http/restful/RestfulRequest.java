@@ -43,6 +43,21 @@ public abstract class RestfulRequest {
 
     public abstract String getQueryString();
 
+    /** 获取url参数 index 从1开始, 顺序为从左到右 */
+    public String getPathParamByIndexL(int index) {
+        String path = getUrl();
+        if(index < 1 || Utils.CheckNull(path)) {
+            return null;
+        }
+
+        String[] pars = path.split("/");
+        int len = pars.length;
+        if(len > 0 && len >= index) {
+            return pars[index - 1];
+        }
+        return null;
+    }
+
     /** 获取url参数 index 从1开始, 顺序为从右到左 */
     public String getPathParamByIndex(int index) {
         String path = getUrl();
