@@ -53,7 +53,7 @@ public abstract class RestfulRequest {
         String[] pars = path.split("/");
         int len = pars.length;
         if(len > 0 && len >= index) {
-            return pars[index - 1];
+            return pars[index/* - 1*/];//分割字符串后前面会有个空的字符串
         }
         return null;
     }
