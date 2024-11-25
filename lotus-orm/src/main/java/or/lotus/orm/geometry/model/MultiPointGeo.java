@@ -1,17 +1,28 @@
 package or.lotus.orm.geometry.model;
 
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import or.lotus.orm.geometry.BaseGeo;
 import or.lotus.orm.geometry.GeometryConvertToModel;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 
 public class MultiPointGeo extends BaseGeo {
+
+    @JsonUnwrapped
     public PointGeo[] pointGeos;
 
     public MultiPointGeo() {
     }
 
     public MultiPointGeo(PointGeo[] pointGeos) {
+        this.pointGeos = pointGeos;
+    }
+
+    public PointGeo[] getPointGeos() {
+        return pointGeos;
+    }
+
+    public void setPointGeos(PointGeo[] pointGeos) {
         this.pointGeos = pointGeos;
     }
 
