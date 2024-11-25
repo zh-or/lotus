@@ -545,6 +545,10 @@ public abstract class RestfulContext {
         });
     }
 
+    /** 获取当前的模板引擎 */
+    public TemplateEngine getTemplateEngine() {
+        return templateEngine;
+    }
 
     public int getIntConfig(String key, int def) {
         try {
