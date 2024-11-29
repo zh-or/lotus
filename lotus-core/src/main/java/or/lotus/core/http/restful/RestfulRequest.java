@@ -161,7 +161,8 @@ public abstract class RestfulRequest {
                 String [] cookies_str_arr = cookies_str.split(";");
                 for(String item : cookies_str_arr) {
                     item = item.trim();
-                    RestfulCookie tmp = RestfulCookie.parseFormString(item);
+
+                    RestfulCookie tmp = RestfulCookie.parseFormString(item, context.getCharset().displayName());
                     cookies.put(tmp.key, tmp);
                 }
             }

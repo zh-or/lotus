@@ -1,5 +1,8 @@
 package or.lotus.core.http.restful.support;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+
 public class RestfulCookie {
     public String path;
     public String key;
@@ -35,13 +38,17 @@ public class RestfulCookie {
     }
 
 
-    public static RestfulCookie parseFormString(String str) {
+    public static RestfulCookie parseFormString(String str, String charset) {
         RestfulCookie cookie = null;
         int w = str.indexOf("=");
         if(w != -1) {
             String key = str.substring(0, w);
             String val = str.substring(w + 1, str.length());
-            cookie = new RestfulCookie(key, val);
+            try {
+                cookie = new RestfulCookie(key, URLDecoder.decode(val, charset));
+            } catch (UnsupportedEncodingException e) {
+                throw new RuntimeException(e);
+            }
         }
         return cookie;
     }
