@@ -500,6 +500,10 @@ public class DatabaseExecutor<T> {
             for(Object obj : list) {
                 insertParams.clear();
                 for(Field f : fs) {
+                    int modifiers = f.getModifiers();
+                    if(Modifier.isFinal(modifiers) || Modifier.isStatic(modifiers)) {
+                        continue;
+                    }
                     String fieldName = f.getName();
                     if(builder.isDefaultFields(fieldName)) {
                         continue;
@@ -574,6 +578,10 @@ public class DatabaseExecutor<T> {
             for(Object obj : list) {
                 insertParams.clear();
                 for(Field f : fs) {
+                    int modifiers = f.getModifiers();
+                    if(Modifier.isFinal(modifiers) || Modifier.isStatic(modifiers)) {
+                        continue;
+                    }
                     String fieldName = f.getName();
                     if(builder.isDefaultFields(fieldName)) {
                         continue;

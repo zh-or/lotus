@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import javax.sql.DataSource;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.*;
@@ -200,6 +201,10 @@ public class Database {
         String primaryKeyName = getConfig().getPrimaryKeyName();
         String fieldName;
         for(Field f : fields) {
+            int modifiers = f.getModifiers();
+            if(Modifier.isFinal(modifiers) || Modifier.isStatic(modifiers)) {
+                continue;
+            }
             fieldName = f.getName();
             if(!fieldName.equals(primaryKeyName)) {
                 fieldNames.add(JdbcUtils.convertPropertyNameToUnderscoreName(fieldName));
@@ -261,7 +266,7 @@ public class Database {
     }
 
 
-    /**根据对象的主键更新, 如果没有主键会更新整个表的数据
+    /**根据对象的主键更新, 如果没有主键会更新整个表的数据 不会更新final,static修饰的字段
      * 可增加where条件, 但是必须先 whereAnd() | whereOr() 因为第一个条件是 id = ?
      * @param updateIgnoreNull 更新时如果有字段为null则忽略该字段
      * */
@@ -274,6 +279,10 @@ public class Database {
         String primaryKeyName = getConfig().getPrimaryKeyName();
         String fieldName;
         for(Field f : fields) {
+            int modifiers = f.getModifiers();
+            if(Modifier.isFinal(modifiers) || Modifier.isStatic(modifiers)) {
+                continue;
+            }
             fieldName = f.getName();
             Object val = JdbcUtils.invokeGetter(obj, clazz, fieldName);
             if(fieldName.equals(primaryKeyName)) {
@@ -321,6 +330,10 @@ public class Database {
         Field[] fields = clazz.getDeclaredFields();
         List<String> fieldNames = new ArrayList<>(fields.length);
         for(Field f : fields) {
+            int modifiers = f.getModifiers();
+            if(Modifier.isFinal(modifiers) || Modifier.isStatic(modifiers)) {
+                continue;
+            }
             fieldNames.add(JdbcUtils.convertPropertyNameToUnderscoreName(f.getName()));
         }
         exec.fieldList(fieldNames);
@@ -349,6 +362,10 @@ public class Database {
         exec.useDefaultField(useDefaultField);
 
         for(Field f : fields) {
+            int modifiers = f.getModifiers();
+            if(Modifier.isFinal(modifiers) || Modifier.isStatic(modifiers)) {
+                continue;
+            }
             String name = f.getName();
             Object val = JdbcUtils.invokeGetter(obj, clazz, name);
             if(val != null) {
