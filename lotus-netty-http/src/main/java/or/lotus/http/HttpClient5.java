@@ -259,7 +259,7 @@ public class HttpClient5 {
         }
     }
 
-    private static String send(String url, String methodName, ContentType contentType, Map<String, String> header, Object content, int timeout) {
+    public static String send(String url, String methodName, ContentType contentType, Map<String, String> header, Object content, int timeout) {
         HttpUriRequestBase request = buildRequest(url, methodName, content);
 
         addHeader(request, contentType, header);
@@ -269,7 +269,7 @@ public class HttpClient5 {
         return getResponse(request);
     }
 
-    private static String getResponse(HttpUriRequestBase request) {
+    public static String getResponse(HttpUriRequestBase request) {
         // 发起请求
         try(CloseableHttpResponse response = httpClient.execute(request)){
             //LOGGER.info("httpclient response code: {} - {}", response.getCode(), response.getReasonPhrase());
@@ -291,7 +291,7 @@ public class HttpClient5 {
      * @param content get请求为params, 按照?key1=value1&key2=value2拼接, post请求直接设置url
      * @return
      */
-    private static HttpUriRequestBase buildRequest(String url, String methodName, Object content) {
+    public static HttpUriRequestBase buildRequest(String url, String methodName, Object content) {
         if (HttpGet.METHOD_NAME.equals(methodName)) {
             Map<String, String> params = (Map<String, String>)content;
             if (params == null || params.isEmpty()){
@@ -314,7 +314,7 @@ public class HttpClient5 {
         return null;
     }
 
-    private static void addHeader(HttpUriRequestBase request, ContentType contentType, Map<String, String> header) {
+    public static void addHeader(HttpUriRequestBase request, ContentType contentType, Map<String, String> header) {
         // post请求设置contentType请求头
         if (request instanceof HttpPost) {
             request.addHeader("Content-Type", contentType.getMimeType());
@@ -329,7 +329,7 @@ public class HttpClient5 {
         }
     }
 
-    private static void setRequestConfig(HttpUriRequestBase request, int timeout) {
+    public static void setRequestConfig(HttpUriRequestBase request, int timeout) {
         // timeout为0走默认配置
         if (timeout == 0) {
             return;
@@ -341,7 +341,7 @@ public class HttpClient5 {
         request.setConfig(requestConfig);
     }
 
-    private static void setContent(HttpUriRequestBase request, ContentType contentType, Object content) {
+    public static void setContent(HttpUriRequestBase request, ContentType contentType, Object content) {
         if (contentType == null || content == null) {
             return;
         }
