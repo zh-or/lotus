@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.sql.*;
 import java.util.*;
@@ -48,6 +49,10 @@ public class DatabaseExecutor<T> {
         Field[] fields = clazz.getDeclaredFields();
         List<String> fieldNames = new ArrayList<>(fields.length);
         for(Field f : fields) {
+            int modifiers = f.getModifiers();
+            if(Modifier.isFinal(modifiers) || Modifier.isStatic(modifiers)) {
+                continue;
+            }
             fieldNames.add(JdbcUtils.convertPropertyNameToUnderscoreName(f.getName()));
         }
         fieldList(fieldNames);
