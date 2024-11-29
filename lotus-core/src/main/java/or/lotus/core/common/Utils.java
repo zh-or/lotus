@@ -511,6 +511,45 @@ public class Utils {
         return sb.toString();
     }
 
+    public static String longTo35(long num) {
+        if (num == 0) {
+            return "0";
+        }
+
+        StringBuilder result = new StringBuilder();
+        while (num > 0) {
+            long remainder = num % 35;
+            if (remainder < 10) {
+                result.insert(0, remainder); // 0-9 对应 0-9
+            } else {
+                result.insert(0, (char) ('A' + (remainder - 10))); // 10-34 对应 A-Z
+            }
+            num /= 35;
+        }
+        return result.toString();
+    }
+
+    public static long str35ToLong(String str) {
+        if (str == null || str.isEmpty()) {
+            throw new IllegalArgumentException("String cannot be null or empty");
+        }
+
+        long result = 0;
+        for (int i = 0; i < str.length(); i++) {
+            char c = str.charAt(i);
+            int value;
+            if (c >= '0' && c <= '9') {
+                value = c - '0'; // 0-9 对应 0-9
+            } else if (c >= 'A' && c <= 'Z') {
+                value = c - 'A' + 10; // A-Z 对应 10-34
+            } else {
+                throw new IllegalArgumentException("Invalid character: " + c);
+            }
+            result = result * 35 + value;
+        }
+        return result;
+    }
+
     public static long strHash(String str) {
         int len = str.length();
         long h = len;

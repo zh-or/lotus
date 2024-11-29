@@ -12,6 +12,13 @@ import java.util.regex.Pattern;
 
 public class TestCommon {
     public static void main(String[] args) throws Exception {
+        long v = 256866551110225l;
+        String x = Utils.longTo35(v);
+
+        long v2 = Utils.str35ToLong(x);
+
+        System.out.println("->" + (v == v2) + " :" +  x);
+
         String input = "/a/b/c/{userId}";
         String regex = "/\\{(.*)\\}";
 
