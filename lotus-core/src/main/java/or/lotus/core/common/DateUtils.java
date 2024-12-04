@@ -5,6 +5,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
+import java.util.TimeZone;
 
 public class DateUtils {
     private static ZoneId zoneId = ZoneId.of("+08:00");
@@ -47,8 +48,15 @@ public class DateUtils {
         return format(time, "yyyy-MM-dd HH:mm:ss");
     }
 
+    public static String format(Date time, String pattern) {
+        SimpleDateFormat format = new SimpleDateFormat(pattern);
+        format.setTimeZone(TimeZone.getTimeZone(zoneId));
+        return format.format(time);
+    }
+
     public static String format(long time, String pattern) {
         SimpleDateFormat format = new SimpleDateFormat(pattern);
+        format.setTimeZone(TimeZone.getTimeZone(zoneId));
         return format.format(new Date(time));
     }
 
