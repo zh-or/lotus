@@ -207,8 +207,9 @@ public class RestfulUtils {
             Class type = parameterTypes[i];
             Annotation[][] anns = method.getParameterAnnotations();
             parameters[i] = null;
-
-            if(anns[i].length > 0) {
+            if(type.isInstance(context)) {
+                parameters[i] = context;
+            } else if(anns[i].length > 0) {
                 for(Annotation a : anns[i]) {
                     Class annType = a.annotationType();
                     if(annType == Prop.class) {
@@ -240,6 +241,10 @@ public class RestfulUtils {
         Field[] fields = clazz.getDeclaredFields();
 
         for(Field field : fields) {
+            if(field.getType().isInstance(context)) {
+                field.set(obj, context);
+            }
+
             Autowired autowired = field.getAnnotation(Autowired.class);
             if(autowired != null) {
                 String name = autowired.value();
