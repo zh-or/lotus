@@ -1,4 +1,4 @@
-## 自带netty实现
+## netty实现
 >lotus-netty-http
 
 ## 注意事项
@@ -8,10 +8,9 @@
 
 ## 注解
 1. `@Autowired` 
-   - `filter/bean/controller`中成员变量自动注入`bean`
-   - `controller` 的参数注入`bean`
-   - `context.addBeansFromMethodReturn` 传入的对象的方法的参数自动注入已存在的`bean`
-2. `@Bean` 用于启动时注册bean, 该注解用于标注方法
+   - `filter/bean/controller`中成员变量自动注入`bean`, `prop`
+   - `controller` 的参数注入`bean`, `prop`
+2. `@Bean` 用于启动时注册bean, 该注解用于标注对象
 3. `@Attr` 用于 `controller` 的参数注入`request.attribute`
 4. `@Prop`
    - `filter/bean/controller`中成员变量自动注入`context.property`
