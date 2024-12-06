@@ -143,6 +143,12 @@ public abstract class RestfulContext {
             log.trace("加载Controller {} => {}", url1, c.getName());
         }
 
+        /** 给filter注入bean */
+        try {
+            RestfulUtils.injectBeansToObject(this, filter);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
 
         this.bindAddress = bindAddress;
         if(eventThreadPoolSize > 0) {
@@ -447,11 +453,6 @@ public abstract class RestfulContext {
     /** 会在filter内注入bean */
     public void setFilter(RestfulFilter filter) {
         this.filter = filter;
-        try {
-            RestfulUtils.injectBeansToObject(this, filter);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     public void setCharset(Charset charset) {
