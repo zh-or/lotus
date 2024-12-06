@@ -89,20 +89,23 @@ public abstract class RestfulContext {
         }
 
         for(BeanSortWrap tmp : tmpBeanList) {
-            //先注入bean, 再执行方法
             RestfulUtils.injectBeansToObject(this, tmp.obj);
-            //方法为约定的 initBean
+
             if(tmp.method != null) {
                 Object obj = RestfulUtils.injectPropAndInvokeMethod(this, tmp.obj, tmp.method);
                 if(obj != null && tmp.useReturn) {
                     // addBeansFromMethodReturn 方法的返回值
                     beansCache.put(tmp.name, obj);
+                    //先注入bean, 再执行方法
+                    RestfulUtils.injectBeansToObject(this, obj);
                 }
             }
         }
 
-        for(BeanSortWrap tmp : tmpBeanList) {
-            RestfulUtils.injectBeansToObject(this, tmp.obj);
+        Iterator<Map.Entry<String, Object>> it = beansCache.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<String, Object> item = it.next();
+            RestfulUtils.injectBeansToObject(this, item.getValue());
         }
 
         /** 初始化 controller */
