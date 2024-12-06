@@ -101,6 +101,10 @@ public abstract class RestfulContext {
             }
         }
 
+        for(BeanSortWrap tmp : tmpBeanList) {
+            RestfulUtils.injectBeansToObject(this, tmp.obj);
+        }
+
         /** 初始化 controller */
         for(Object controller : tmpControllers) {
             Class<?> c = controller.getClass();
