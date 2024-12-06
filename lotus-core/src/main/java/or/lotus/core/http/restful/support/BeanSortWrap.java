@@ -4,9 +4,18 @@ import java.lang.reflect.Method;
 
 public class BeanSortWrap {
     public Object obj;
-    public int sort;
     public String name;
+    public int sort;
     public Method method;
+    public boolean useReturn = false;
+
+    public BeanSortWrap(Object obj, String name, int sort, Method method, boolean useReturn) {
+        this.obj = obj;
+        this.sort = sort;
+        this.name = name;
+        this.method = method;
+        this.useReturn = useReturn;
+    }
 
     public BeanSortWrap(Object obj, String name, int sort, Method method) {
         this.obj = obj;

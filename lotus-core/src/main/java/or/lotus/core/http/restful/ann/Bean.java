@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 /**
  * 用于标注bean的类
  */
-@Target ({ElementType.TYPE})
+@Target ({ElementType.TYPE, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Bean {
     /**如果不填值则默认为类名如: com.a.b.User, 与 @Autowired 对应*/

@@ -88,7 +88,12 @@ public abstract class RestfulContext {
             RestfulUtils.injectBeansToObject(this, tmp.obj);
             //方法为约定的 initBean
             if(tmp.method != null) {
-                RestfulUtils.injectPropAndInvokeMethod(this, tmp.obj, tmp.method);
+                Object obj = RestfulUtils.injectPropAndInvokeMethod(this, tmp.obj, tmp.method);
+                if(obj != null && tmp.useReturn) {
+                    // addBeansFromMethodReturn 方法的返回值
+                    beansCache.put(tmp.name, obj);
+                    continue;
+                }
             }
             beansCache.put(tmp.name, tmp.obj);
         }
@@ -374,7 +379,7 @@ public abstract class RestfulContext {
     protected ArrayList<Object> tmpControllers = new ArrayList<>();
 
     /** 手动注册Bean */
-    public RestfulContext addBean(Object bean) throws IllegalAccessException {
+    public RestfulContext addBean(Object bean) {
         Class<?> clazz = bean.getClass();
         Method[] ms = clazz.getMethods();
         Bean b = clazz.getAnnotation(Bean.class);
@@ -417,7 +422,28 @@ public abstract class RestfulContext {
         }
     }
 
+    /** 执行参数中 beans 的带有 Bean 注解的方法, 并将返回值缓存, 在 Controller 中使用 Autowired 注解时自动注入该缓存 */
+    public void addBeansFromMethodReturn(Object... beans) throws InvocationTargetException, IllegalAccessException {
+        List<String> addedBeans = new ArrayList<>();
+        for(Object beanParent : beans) {
+            Class clazz = beanParent.getClass();
+            Method[] methods = clazz.getDeclaredMethods();
 
+            for(Method method : methods) {
+                Bean b = method.getAnnotation(Bean.class);
+                if(b != null) {
+                    String name = b.value();
+                    if(Utils.CheckNull(name)) {
+                        //获取返回值的全限定名
+                        name = method.getReturnType().getName();
+                    }
+                    addedBeans.add(name);
+                    tmpBeanList.add(new BeanSortWrap(beanParent, name, b.order(), method, true));
+                }
+            }
+        }
+
+    }
 
 
     //配置

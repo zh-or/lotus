@@ -11,6 +11,7 @@
    - `filter/bean/controller`中成员变量自动注入`bean`, `prop`
    - `controller` 的参数注入`bean`, `prop`
 2. `@Bean` 用于启动时注册bean, 该注解用于标注对象
+   - `context.addBeansFromMethodReturn` 添加的类的方法标注`@Bean`
 3. `@Attr` 用于 `controller` 的参数注入`request.attribute`
 4. `@Prop`
    - `filter/bean/controller`中成员变量自动注入`context.property`
