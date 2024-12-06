@@ -402,6 +402,11 @@ public abstract class RestfulContext {
         return this;
     }
 
+    public RestfulContext addBean(String name, Object bean) {
+        tmpBeanList.add(new BeanSortWrap(bean, name, 0, null));
+        return this;
+    }
+
     /** 1. 扫描指定包名
      * 2. 实例化所有带有Bean注解的类
      * 3. 注入Bean
