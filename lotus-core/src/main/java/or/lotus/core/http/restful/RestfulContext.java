@@ -83,6 +83,7 @@ public abstract class RestfulContext {
         /** 初始化bean */
         tmpBeanList.sort(Comparator.comparingInt(BeanSortWrap::getSort).reversed());
 
+        beansCache.put(this.getClass().getName(), this);
 
         for(BeanSortWrap tmp : tmpBeanList) {
             beansCache.put(tmp.name, tmp.obj);

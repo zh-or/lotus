@@ -241,9 +241,6 @@ public class RestfulUtils {
         Field[] fields = clazz.getDeclaredFields();
 
         for(Field field : fields) {
-            if(field.getType().isInstance(context)) {
-                field.set(obj, context);
-            }
 
             Autowired autowired = field.getAnnotation(Autowired.class);
             if(autowired != null) {
