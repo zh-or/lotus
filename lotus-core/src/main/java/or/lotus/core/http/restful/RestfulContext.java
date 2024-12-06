@@ -382,10 +382,7 @@ public abstract class RestfulContext {
     public RestfulContext addBean(Object bean) {
         Class<?> clazz = bean.getClass();
         Method[] ms = clazz.getMethods();
-        Bean b = clazz.getAnnotation(Bean.class);
-        if(b == null) {
-            throw new RuntimeException(clazz.getName() + " 无 @Bean 注解");
-        }
+
         Method initBean = null;
         for(Method m : ms) {
             if("initBean".equals(m.getName())) {
@@ -393,12 +390,17 @@ public abstract class RestfulContext {
                 break;
             }
         }
-        String name = b.value();
-        if(Utils.CheckNull(name)) {
-            name = clazz.getName();
-        }
+        Bean b = clazz.getAnnotation(Bean.class);
 
-        tmpBeanList.add(new BeanSortWrap(bean, name, b.order(), initBean));
+        if(b == null) {
+            tmpBeanList.add(new BeanSortWrap(bean, clazz.getName(), 0, initBean));
+        } else {
+            String name = b.value();
+            if(Utils.CheckNull(name)) {
+                name = clazz.getName();
+            }
+            tmpBeanList.add(new BeanSortWrap(bean, name, b.order(), initBean));
+        }
         return this;
     }
 
