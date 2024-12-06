@@ -83,6 +83,11 @@ public abstract class RestfulContext {
         /** 初始化bean */
         tmpBeanList.sort(Comparator.comparingInt(BeanSortWrap::getSort).reversed());
 
+
+        for(BeanSortWrap tmp : tmpBeanList) {
+            beansCache.put(tmp.name, tmp.obj);
+        }
+
         for(BeanSortWrap tmp : tmpBeanList) {
             //先注入bean, 再执行方法
             RestfulUtils.injectBeansToObject(this, tmp.obj);
@@ -92,10 +97,8 @@ public abstract class RestfulContext {
                 if(obj != null && tmp.useReturn) {
                     // addBeansFromMethodReturn 方法的返回值
                     beansCache.put(tmp.name, obj);
-                    continue;
                 }
             }
-            beansCache.put(tmp.name, tmp.obj);
         }
 
         /** 初始化 controller */
