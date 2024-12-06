@@ -28,8 +28,8 @@ import java.util.concurrent.TimeUnit;
 /** 使用方式:
  * 1. http容器继承此类, 并实现onStart()和onStop()方法实现启动停止
  * 2. 实现 sendResponse 处理返回内容
- * 2. 调用addBeans添加 bean, 如果bean继承了 AutoClose 接口, 那么停止 (stop()) 的时候会自动调用close方法
- * 3. 调用scanController扫描Controller类, 并实现@RestfulController注解
+ * 2. 调用addBeans添加 bean, bean类都需要 @Bean 注解, order 可以控制bean初始化顺序, 数字越大越优先初始化, 如果bean继承了 AutoClose 接口, 那么停止 (stop()) 的时候会自动调用close方法
+ * 3. 调用scanController扫描Controller类, 并添加 @RestfulController 注解
  * 4. http容器收到请求时调用dispatch方法分发请求, 返回值为需要输出的内容
  *  */
 public abstract class RestfulContext {
@@ -39,6 +39,7 @@ public abstract class RestfulContext {
 
     /**key = @Bean->value | packageName*/
     protected ConcurrentHashMap<String, Object> beansCache;
+    protected String initBeanMethodName = "initBean";
 
     /** key = url + http-method-str*/
     protected ConcurrentHashMap<String, RestfulDispatchMapper> dispatcherAbsMap;
@@ -61,23 +62,88 @@ public abstract class RestfulContext {
     }
 
     /**如果加载了配置, 此时启动端口会读取配置文件的 server.port 的值*/
-    public void start() throws InterruptedException {
+    public void start() throws Exception {
         int port = getIntConfig("server.port", 8080);
         start(new InetSocketAddress(port));
     }
 
-    public void start(int port) throws InterruptedException {
+    public void start(int port) throws Exception {
         start(new InetSocketAddress(port));
     }
 
-    public void start(String host, int port) throws InterruptedException {
+    public void start(String host, int port) throws Exception {
         start(new InetSocketAddress(host, port));
     }
 
-    public synchronized void start(InetSocketAddress bindAddress) throws InterruptedException {
+    public synchronized void start(InetSocketAddress bindAddress) throws Exception {
         if(isRunning) {
             throw new RuntimeException("服务已启动");
         }
+
+        /** 初始化bean */
+        tmpBeanList.sort(Comparator.comparingInt(BeanSortWrap::getSort).reversed());
+
+        for(BeanSortWrap tmp : tmpBeanList) {
+            //先注入bean, 再执行方法
+            RestfulUtils.injectBeansToObject(this, tmp.obj);
+            //方法为约定的 initBean
+            if(tmp.method != null) {
+                RestfulUtils.injectPropAndInvokeMethod(this, tmp.obj, tmp.method);
+            }
+            beansCache.put(tmp.name, tmp.obj);
+        }
+
+        /** 初始化 controller */
+        for(Object controller : tmpControllers) {
+            Class<?> c = controller.getClass();
+            RestfulController annotation = c.getAnnotation(RestfulController.class);
+
+            //注入bean
+            RestfulUtils.injectBeansToObject(this, controller);
+
+            //只加载有注解的类
+            String url1 = annotation.value();
+
+            Method[] methods = c.getMethods();
+
+            for(Method method : methods) {
+                RestfulDispatcher dispatcher = null;
+                if(method.isAnnotationPresent(Get.class)) {
+                    Get get = method.getAnnotation(Get.class);
+                    dispatcher = new RestfulDispatcher(url1 + get.value(), controller, method, RestfulHttpMethod.GET, get.isPattern());
+                } else if(method.isAnnotationPresent(Post.class)) {
+                    Post post = method.getAnnotation(Post.class);
+                    dispatcher = new RestfulDispatcher(url1 + post.value(), controller, method, RestfulHttpMethod.POST, post.isPattern());
+                } else if(method.isAnnotationPresent(Put.class)) {
+                    Put put = method.getAnnotation(Put.class);
+                    dispatcher = new RestfulDispatcher(url1 + put.value(), controller, method, RestfulHttpMethod.PUT, put.isPattern());
+                } else if(method.isAnnotationPresent(Delete.class)) {
+                    Delete delete = method.getAnnotation(Delete.class);
+                    dispatcher = new RestfulDispatcher(url1 + delete.value(), controller, method, RestfulHttpMethod.DELETE, delete.isPattern());
+                } else if(method.isAnnotationPresent(Request.class)) {
+                    Request map = method.getAnnotation(Request.class);
+                    dispatcher = new RestfulDispatcher(url1 + map.value(), controller, method, RestfulHttpMethod.REQUEST, map.isPattern());
+                }
+
+                if(dispatcher != null) {
+
+                    if(dispatcher.isPattern) {
+                        dispatcherPatternList.add(dispatcher);
+                    } else {
+                        RestfulDispatchMapper old = dispatcherAbsMap.get(dispatcher.url);
+                        if(old == null) {
+                            old = new RestfulDispatchMapper();
+                            dispatcherAbsMap.put(dispatcher.url, old);
+                        }
+                        old.setDispatcher(dispatcher);
+                    }
+                }
+            }
+
+            log.trace("加载Controller {} => {}", url1, c.getName());
+        }
+
+
         this.bindAddress = bindAddress;
         if(eventThreadPoolSize > 0) {
             executorService = Executors.newFixedThreadPool(
@@ -99,6 +165,10 @@ public abstract class RestfulContext {
                 log.error("等待业务线程池退出失败:", e);
             }
         }
+
+        dispatcherAbsMap.clear();
+        dispatcherPatternList.clear();
+
         for(Object b : beansCache.values()) {
             try {
                 if(b.getClass().isAssignableFrom(AutoCloseable.class)) {
@@ -109,6 +179,7 @@ public abstract class RestfulContext {
                 log.error("关闭bean失败:" + b, e);
             }
         }
+        beansCache.clear();
 
         isRunning = false;
     }
@@ -268,7 +339,7 @@ public abstract class RestfulContext {
      * 此方法需要在 addBeans 后调用, 否则无法正确使用 @Autowired 注入
      * 注意 Controller 类只会在加载时创建一次, 并不会每次调用时都创建
      * */
-    public int scanController(String packageName) throws URISyntaxException, IOException, ClassNotFoundException, InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
+    public void scanController(String packageName) throws URISyntaxException, IOException, ClassNotFoundException, InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
         if(isRunning) {
             /** 因为正则的 url 列表使用的 ArrayList, 不是线程安全的, 后面有需要再去除此限制 */
             throw new RuntimeException("启动后不支持再添加 Controller");
@@ -280,8 +351,6 @@ public abstract class RestfulContext {
             Class<?> c = Thread.currentThread().getContextClassLoader().loadClass(path);
             addController(c);
         }
-
-        return dispatcherPatternList.size() + dispatcherPatternList.size();
     }
 
     public void addController(Class<?> c) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
@@ -291,66 +360,34 @@ public abstract class RestfulContext {
             Constructor constructor = c.getDeclaredConstructor();
             constructor.setAccessible(true);
             Object controller = constructor.newInstance();
-
-            //注入bean
-            RestfulUtils.injectBeansToObject(this, controller);
-
-            //只加载有注解的类
-            String url1 = annotation.value();
-
-            Method[] methods = c.getMethods();
-
-            for(Method method : methods) {
-                RestfulDispatcher dispatcher = null;
-                if(method.isAnnotationPresent(Get.class)) {
-                    Get get = method.getAnnotation(Get.class);
-                    dispatcher = new RestfulDispatcher(url1 + get.value(), controller, method, RestfulHttpMethod.GET, get.isPattern());
-                } else if(method.isAnnotationPresent(Post.class)) {
-                    Post post = method.getAnnotation(Post.class);
-                    dispatcher = new RestfulDispatcher(url1 + post.value(), controller, method, RestfulHttpMethod.POST, post.isPattern());
-                } else if(method.isAnnotationPresent(Put.class)) {
-                    Put put = method.getAnnotation(Put.class);
-                    dispatcher = new RestfulDispatcher(url1 + put.value(), controller, method, RestfulHttpMethod.PUT, put.isPattern());
-                } else if(method.isAnnotationPresent(Delete.class)) {
-                    Delete delete = method.getAnnotation(Delete.class);
-                    dispatcher = new RestfulDispatcher(url1 + delete.value(), controller, method, RestfulHttpMethod.DELETE, delete.isPattern());
-                } else if(method.isAnnotationPresent(Request.class)) {
-                    Request map = method.getAnnotation(Request.class);
-                    dispatcher = new RestfulDispatcher(url1 + map.value(), controller, method, RestfulHttpMethod.REQUEST, map.isPattern());
-                }
-
-                if(dispatcher != null) {
-
-                    if(dispatcher.isPattern) {
-                        dispatcherPatternList.add(dispatcher);
-                    } else {
-                        RestfulDispatchMapper old = dispatcherAbsMap.get(dispatcher.url);
-                        if(old == null) {
-                            old = new RestfulDispatchMapper();
-                            dispatcherAbsMap.put(dispatcher.url, old);
-                        }
-                        old.setDispatcher(dispatcher);
-                    }
-                }
-            }
-
-            log.trace("加载Controller {} => {}", url1, c.getName());
+            tmpControllers.add(controller);
         }
     }
+
+    protected ArrayList<BeanSortWrap> tmpBeanList = new ArrayList<>();
+    protected ArrayList<Object> tmpControllers = new ArrayList<>();
 
     /** 手动注册Bean */
     public RestfulContext addBean(Object bean) throws IllegalAccessException {
-        Utils.assets(bean == null, "bean 不能为空");
-        return addBean(null, bean);
-    }
-
-    /** 手动注册Bean */
-    public RestfulContext addBean(String name, Object bean) throws IllegalAccessException {
-        RestfulUtils.injectBeansToObject(this, bean);
-        if(Utils.CheckNull(name)) {
-            name = bean.getClass().getName();
+        Class<?> clazz = bean.getClass();
+        Method[] ms = clazz.getMethods();
+        Bean b = clazz.getAnnotation(Bean.class);
+        if(b == null) {
+            throw new RuntimeException(clazz.getName() + " 无 @Bean 注解");
         }
-        beansCache.put(name, bean);
+        Method initBean = null;
+        for(Method m : ms) {
+            if("initBean".equals(m.getName())) {
+                initBean = m;
+                break;
+            }
+        }
+        String name = b.value();
+        if(Utils.CheckNull(name)) {
+            name = clazz.getName();
+        }
+
+        tmpBeanList.add(new BeanSortWrap(bean, name, b.order(), initBean));
         return this;
     }
 
@@ -360,71 +397,20 @@ public abstract class RestfulContext {
      * 4. 添加该类到Bean缓存
      * 注意: 该方法只适合没有构造参数的类, 否则会报错
      * */
-    public List<String> addBeansFromPackage(String packageName) throws Exception {
+    public void addBeansFromPackage(String packageName) throws Exception {
         Utils.assets(packageName, "包名不能为空");
         List<String> clazzs = BeanUtils.getClassPathByPackage(packageName);
-        ArrayList<BeanSortWrap> tmpList = new ArrayList<>();
         for (String path : clazzs) {
             Class<?> c = Thread.currentThread().getContextClassLoader().loadClass(path);
             Bean b = c.getAnnotation(Bean.class);
             if(b != null) {
                 Constructor constructor = c.getDeclaredConstructor();
                 constructor.setAccessible(true);
-                String name = b.value();
-                if(Utils.CheckNull(name)) {
-                    name = c.getName();
-                }
-                tmpList.add(new BeanSortWrap(constructor, name, b.order(), null));
+                addBean(constructor.newInstance());
             }
         }
-        //根据order排序, 否则交叉引用时会出问题
-        tmpList.sort(Comparator.comparingInt(BeanSortWrap::getSort).reversed());
-
-        for(BeanSortWrap tmp : tmpList) {
-            Constructor constructor = (Constructor) tmp.obj;
-            Object obj = constructor.newInstance();
-            addBean(tmp.name, obj);
-        }
-
-        return clazzs;
     }
 
-    /** 执行参数中 beans 的带有 Bean 注解的方法, 并将返回值缓存, 在 Controller 中使用 Autowired 注解时自动注入该缓存 */
-    public List<String> addBeansFromMethodReturn(Object... beans) throws InvocationTargetException, IllegalAccessException {
-        ArrayList<BeanSortWrap> tmpList = new ArrayList<>();
-        List<String> addedBeans = new ArrayList<>();
-        for(Object beanParent : beans) {
-            Class clazz = beanParent.getClass();
-            Method[] methods = clazz.getDeclaredMethods();
-
-            for(Method method : methods) {
-                Bean b = method.getAnnotation(Bean.class);
-                if(b != null) {
-                    String name = b.value();
-                    if(Utils.CheckNull(name)) {
-                        //获取返回值的全限定名
-                        name = method.getReturnType().getName();
-                    }
-                    addedBeans.add(name);
-                    BeanSortWrap tmp = new BeanSortWrap(beanParent, name, b.order(), method);
-                    tmpList.add(tmp);
-                }
-            }
-        }
-        //根据order排序, 否则交叉引用时会出问题
-        tmpList.sort(Comparator.comparingInt(BeanSortWrap::getSort).reversed());
-
-        for(BeanSortWrap tmp : tmpList) {
-            //先注入bean, 再执行方法
-            RestfulUtils.injectBeansToObject(this, tmp.obj);
-
-            Object beanObj = RestfulUtils.injectPropAndInvokeMethod(this, tmp.obj, tmp.method);
-            beansCache.put(tmp.name, beanObj);
-            RestfulUtils.injectBeansToObject(this, beanObj);
-        }
-
-        return addedBeans;
-    }
 
 
 
@@ -500,6 +486,7 @@ public abstract class RestfulContext {
         return (T) beansCache.get(clazz.getName());
     }
 
+    /** 是否开启在html结尾输出处理时间 */
     public void setOutModelAndViewTime(boolean outModelAndViewTime) {
         this.outModelAndViewTime = outModelAndViewTime;
     }
@@ -548,6 +535,16 @@ public abstract class RestfulContext {
     /** 获取当前的模板引擎 */
     public TemplateEngine getTemplateEngine() {
         return templateEngine;
+    }
+
+    /** bean初始化时会调用的方法名 */
+    public String getInitBeanMethodName() {
+        return initBeanMethodName;
+    }
+
+    /** bean初始化时会调用的方法名 */
+    public void setInitBeanMethodName(String initBeanMethodName) {
+        this.initBeanMethodName = initBeanMethodName;
     }
 
     public int getIntConfig(String key, int def) {
