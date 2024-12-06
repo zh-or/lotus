@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 返回Bean的方法
+ * 用于标注bean的类
  */
 @Target ({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
