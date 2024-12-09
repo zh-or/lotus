@@ -7,12 +7,15 @@ import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 
+import java.util.HashMap;
+
 public class NettyWebSocketSession {
     private QueryStringDecoder qsd;
     private String path;
     private NettyWebSocketMessageHandler handler;
     private ChannelHandlerContext ctx;
     private HttpHeaders requestHeaders;
+    protected HashMap<String, Object> attributes;
 
     public NettyWebSocketSession(QueryStringDecoder qsd, HttpHeaders headers, NettyWebSocketMessageHandler handler, ChannelHandlerContext ctx) {
         this.qsd = qsd;
@@ -20,6 +23,19 @@ public class NettyWebSocketSession {
         this.path = qsd.path();
         this.handler = handler;
         this.ctx = ctx;
+        this.attributes = new HashMap<>();
+    }
+
+    public Object getAttribute(String name) {
+        return attributes.get(name);
+    }
+
+    public void setAttribute(String name, Object value) {
+        attributes.put(name, value);
+    }
+
+    public void removeAttribute(String name) {
+        attributes.remove(name);
     }
 
     public HttpHeaders getRequestHeaders() {
