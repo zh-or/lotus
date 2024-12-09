@@ -42,7 +42,8 @@ public class NettyHttpServer extends RestfulContext {
         this.fileFilter = fileFilter;
     }
 
-    public void setWebSocketMessageHandler(NettyWebSocketMessageHandler webSocketMessageHandler) {
+    public void addWebSocketMessageHandler(NettyWebSocketMessageHandler webSocketMessageHandler) {
+        tmpControllers.add(webSocketMessageHandler);
         webSocketHandlers.put(webSocketMessageHandler.getPath(), webSocketMessageHandler);
     }
 

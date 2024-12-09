@@ -116,7 +116,9 @@ public abstract class RestfulContext {
 
             //注入bean
             RestfulUtils.injectBeansToObject(this, controller);
-
+            if(annotation == null) {
+                continue;
+            }
             //只加载有注解的类
             String url1 = annotation.value();
 
