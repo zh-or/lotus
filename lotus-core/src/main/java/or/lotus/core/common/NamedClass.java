@@ -37,9 +37,9 @@ public class NamedClass {
      * @param obj
      * @throws Exception 当有重复名字时触发
      */
-    public void registerClass(Object obj) throws Exception {
+    public void registerClass(Object obj) {
         if(obj == null) {
-            throw new Exception("所注册对象不能为空");
+            throw new RuntimeException("所注册对象不能为空");
         }
         Class<? extends Object> clazz = obj.getClass();
         NamedAnnotation na = clazz.getAnnotation(NamedAnnotation.class);
@@ -58,7 +58,7 @@ public class NamedClass {
                     name = ma.name();
                 }
                 if(namedMap.containsKey(name)) {
-                    throw new Exception("出现重复名称: " + name);
+                    throw new RuntimeException("出现重复名称: " + name);
                 }
                 namedMap.put(name, mWrap);
             }
