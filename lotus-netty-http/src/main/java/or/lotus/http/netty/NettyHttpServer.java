@@ -43,7 +43,8 @@ public class NettyHttpServer extends RestfulContext {
     }
 
     public void addWebSocketMessageHandler(NettyWebSocketMessageHandler webSocketMessageHandler) {
-        tmpControllers.add(webSocketMessageHandler);
+        //tmpControllers.add(webSocketMessageHandler);
+        addBean(webSocketMessageHandler);
         webSocketHandlers.put(webSocketMessageHandler.getPath(), webSocketMessageHandler);
     }
 
