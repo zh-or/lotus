@@ -11,6 +11,7 @@ import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketSe
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.util.AttributeKey;
+import or.lotus.core.common.Utils;
 import or.lotus.core.http.restful.RestfulContext;
 import or.lotus.core.http.restful.RestfulRequest;
 import or.lotus.core.http.restful.RestfulResponse;
@@ -33,6 +34,8 @@ public class NettyHttpServer extends RestfulContext {
     String staticPath = null;
     boolean isSupportSymbolicLink = false;
 
+    String wsPathPrefix = null;//ws前缀
+
     public void setKeyStoreAndEnableSSL(String keystore, String password) throws Exception {
         sslContext = SslContextBuilder.forServer(new File(keystore), null, password).build();
     }
@@ -42,7 +45,14 @@ public class NettyHttpServer extends RestfulContext {
         this.fileFilter = fileFilter;
     }
 
+    public void setWsPathPrefix(String wsPathPrefix) {
+        this.wsPathPrefix = wsPathPrefix;
+    }
+
     public void addWebSocketMessageHandler(NettyWebSocketMessageHandler webSocketMessageHandler) {
+        if(Utils.CheckNull(wsPathPrefix)) {
+            throw new RuntimeException("由于netty规则的原因需要设置一个前缀");
+        }
         //tmpControllers.add(webSocketMessageHandler);
         addBean(webSocketMessageHandler);
         webSocketHandlers.put(webSocketMessageHandler.getPath(), webSocketMessageHandler);
@@ -94,7 +104,18 @@ public class NettyHttpServer extends RestfulContext {
                     //pipeline.addLast("websocketDecoder", new WebSocketServerProtocolHandler());//处理websocket请求
                     pipeline.addLast("websocketCompressor", new WebSocketServerCompressionHandler());
 
-                    for(Map.Entry<String, NettyWebSocketMessageHandler> entry : webSocketHandlers.entrySet()) {
+                    WebSocketServerProtocolConfig config = WebSocketServerProtocolConfig.newBuilder()
+                            .checkStartsWith(true)//只检查url的前面是否匹配, 不然的话不能在url上传参数
+                            .allowExtensions(true)
+                            .handleCloseFrames(true)
+                            //.allowMaskMismatch(false)//mask
+                            .websocketPath(wsPathPrefix)
+                            .build();
+
+                    //处理websocket请求
+                    pipeline.addLast("websocketDecoder-/", new WebSocketServerProtocolHandler(config));
+                    //下面这样会导致只支持第一个路径的ws连接
+                    /*for(Map.Entry<String, NettyWebSocketMessageHandler> entry : webSocketHandlers.entrySet()) {
                         WebSocketServerProtocolConfig config = WebSocketServerProtocolConfig.newBuilder()
                                 .checkStartsWith(true)//值检查url的前面是否匹配, 不然的话不能在url上传参数
                                 .allowExtensions(true)
@@ -105,7 +126,7 @@ public class NettyHttpServer extends RestfulContext {
 
                         //处理websocket请求
                         pipeline.addLast("websocketDecoder-" + entry.getKey(), new WebSocketServerProtocolHandler(config));
-                    }
+                    }*/
                     pipeline.addLast("websocketHandler", new NettyWebSocketServerHandler(NettyHttpServer.this));//处理websocket请求
                 }
 
