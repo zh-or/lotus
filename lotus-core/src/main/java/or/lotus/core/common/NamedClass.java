@@ -11,8 +11,8 @@ public class NamedClass {
 
     @Target({ ElementType.TYPE, ElementType.METHOD })
     @Retention(RetentionPolicy.RUNTIME)
-    public @interface NamedAnnotation {
-        String name();
+    public @interface NamedMethod {
+        String value();
     }
 
     private class NamedObj {
@@ -42,20 +42,20 @@ public class NamedClass {
             throw new RuntimeException("所注册对象不能为空");
         }
         Class<? extends Object> clazz = obj.getClass();
-        NamedAnnotation na = clazz.getAnnotation(NamedAnnotation.class);
+        NamedMethod na = clazz.getAnnotation(NamedMethod.class);
 
         Method[] ms = clazz.getDeclaredMethods();
 
         for(Method m : ms) {
-            NamedAnnotation ma = m.getAnnotation(NamedAnnotation.class);
+            NamedMethod ma = m.getAnnotation(NamedMethod.class);
 
             if(ma != null) {
                 NamedObj mWrap = new NamedObj(obj, m);
                 String name;
                 if(na != null) {
-                    name = na.name() + ma.name();
+                    name = na.value() + ma.value();
                 } else {
-                    name = ma.name();
+                    name = ma.value();
                 }
                 if(namedMap.containsKey(name)) {
                     throw new RuntimeException("出现重复名称: " + name);
