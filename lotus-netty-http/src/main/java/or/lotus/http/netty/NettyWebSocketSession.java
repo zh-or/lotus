@@ -7,6 +7,7 @@ import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 
+import java.net.SocketAddress;
 import java.util.HashMap;
 
 public class NettyWebSocketSession {
@@ -81,6 +82,10 @@ public class NettyWebSocketSession {
 
     public ChannelFuture close() {
         return ctx.channel().close();
+    }
+
+    public SocketAddress getRemoteAddress() {
+        return ctx.channel().remoteAddress();
     }
 
 }
