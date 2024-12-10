@@ -85,6 +85,14 @@ public class TimeoutConcurrentHashMap<K, V> extends TimerTask implements AutoClo
         }
     }
 
+    public boolean isTimeout(K k) {
+        ExpireWrap obj = map.get(k);
+        if(obj == null) {
+            return true;
+        }
+        return obj.isTimeout();
+    }
+
     public Enumeration<K> keys() {
         return map.keys();
     }
