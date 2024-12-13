@@ -52,7 +52,7 @@ public class NettyStaticFileHandler extends SimpleChannelInboundHandler<FullHttp
             if("/".equals(uri)) {
                 uri = this.server.defaultIndexFile;
             }
-            return this.server.staticPath + File.separator +  Utils.BuildPath(uri);
+            return this.server.staticPath + File.separator +  Utils.buildPath(uri);
         } catch (Exception e) {
             log.error("格式化本地路径出错: " + uri, e);
         }

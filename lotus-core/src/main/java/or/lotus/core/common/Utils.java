@@ -446,7 +446,7 @@ public class Utils {
      * @param path
      * @return
      */
-    public static String BuildPath(String path) {
+    public static String buildPath(String path) {
         int b = 0;
         path = path.replace("\\", "/");
         path = path.replace('/', File.separatorChar);
@@ -560,7 +560,7 @@ public class Utils {
     }
 
     /**
-     * "a13dv222" 返回 [13, 222]
+     * "a13dv222" 返回 [13, 222] 注意: 不支持 - 号, 也就是不会解析出来负数
      *
      * @param str
      * @return
@@ -571,7 +571,7 @@ public class Utils {
         int bound = 0;
         boolean ex = false;
         for (int i = 0; i < str.length(); i++) {
-            if (str.charAt(i) >= 48 && str.charAt(i) <= 57 || str.charAt(i) == 45) {
+            if (str.charAt(i) >= 48 && str.charAt(i) <= 57/* || str.charAt(i) == 45*//*负数?*/) {
                 if (ex)
                     ret = Arrays.copyOf(ret, ret.length + 1);
                 t += str.charAt(i);
