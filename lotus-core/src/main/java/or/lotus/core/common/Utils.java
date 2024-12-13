@@ -49,7 +49,7 @@ public class Utils {
      * 100TB, 100GB, 100MB, 100KB, 如果没有带单位默认为kb
      */
     public static long formatSize(String sizeStr) {
-        int[] n = Utils.getNumberFromStr(sizeStr);
+        int[] n = Utils.getNumberFromStr(sizeStr, false);
         if (n.length <= 0) {
             return 0;
         }
@@ -560,32 +560,52 @@ public class Utils {
     }
 
     /**
-     * "a13dv222" 返回 [13, 222] 注意: 不支持 - 号, 也就是不会解析出来负数
+     * "a13dv222" 返回 [13, 222]
      *
      * @param str
+     * @param deNegativeNum 是否解析负数
      * @return
      */
-    public static int[] getNumberFromStr(String str) {
-        String t = "";
-        int[] ret = new int[1];
-        int bound = 0;
-        boolean ex = false;
-        for (int i = 0; i < str.length(); i++) {
-            if (str.charAt(i) >= 48 && str.charAt(i) <= 57/* || str.charAt(i) == 45*//*负数?*/) {
-                if (ex)
+    public static int[] getNumberFromStr(String str, boolean deNegativeNum) {
+        int[] ret = new int[0];
+        int bound = 0, i = 0, len = str.length();
+        StringBuilder sb = new StringBuilder(len);
+        boolean nowIsAppend = false;
+
+        while(i < len) {
+
+            char n = str.charAt(i);
+
+            if(n == 45 && deNegativeNum && sb.length() == 0) {
+                sb.append('-');
+            } else if (n >= 48 && n <= 57) {
+                sb.append(n);
+            } else if(sb.length() > 0) {
+                try {
+                    int num = Integer.valueOf(sb.toString());//解析成功后再申请内存
                     ret = Arrays.copyOf(ret, ret.length + 1);
-                t += str.charAt(i);
-                ex = false;
-            } else if (!ex && !"".equals(t)) {
-                ex = true;
-                ret[bound] = Integer.valueOf(t);
-                t = "";
-                bound++;
+                    ret[bound] = num;
+                    bound++;
+                    sb.setLength(0);
+                } catch (Exception e) {
+                    sb.setLength(0);
+                    if(n == 45) {
+                        sb.append('-');
+                    }
+                }
+            }
+            i++;
+        }
+
+        if(sb.length() > 0) {//处理最后一个数字, 如果存在的话
+            try {
+                int num = Integer.valueOf(sb.toString());//解析成功后再申请内存
+                ret = Arrays.copyOf(ret, ret.length + 1);
+                ret[bound] = num;
+            } catch (Exception e) {
             }
         }
-        if (!"".equals(t) && !ex) {
-            ret[bound] = Integer.valueOf(t);
-        }
+
         return ret;
     }
 

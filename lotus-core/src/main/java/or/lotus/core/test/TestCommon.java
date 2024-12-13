@@ -14,6 +14,9 @@ import java.util.regex.Pattern;
 
 public class TestCommon {
     public static void main(String[] args) throws Exception {
+        int[] a = Utils.getNumberFromStr("1,------2-,3,4,5,6,7,8aaa9dd,10", true);
+
+
         List<String> clazz = BeanUtils.getClassPathByPackage("or.lotus.core.http.*");
 
 
