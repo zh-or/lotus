@@ -1,6 +1,7 @@
 package or.lotus.core.common;
 
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -8,7 +9,7 @@ import java.util.Date;
 import java.util.TimeZone;
 
 public class DateUtils {
-    private static ZoneId zoneId = ZoneId.of("+08:00");
+    public static ZoneId zoneId = ZoneId.of("+08:00");
 
     /** 需要修改时区时调用此方法 */
     public static void setZoneId(ZoneId zoneId) {
@@ -24,16 +25,20 @@ public class DateUtils {
         return ZonedDateTime.parse(dateStr, formatter);
     }
 
-    public static Date getLocalDate() {
-        return new Date(getDate().toInstant().toEpochMilli());
+    public static Date getDate() {
+        return new Date(getZonedDateTime().toInstant().toEpochMilli());
     }
 
-    public static ZonedDateTime getDate() {
+    public static LocalDate getLocalDate() {
+        return LocalDate.now(zoneId);
+    }
+
+    public static ZonedDateTime getZonedDateTime() {
         return ZonedDateTime.now(zoneId);
     }
 
     public static String getDateFormat(String pattern) {
-        ZonedDateTime time = getDate();
+        ZonedDateTime time = getZonedDateTime();
         return time.format(DateTimeFormatter.ofPattern(pattern));
     }
 
