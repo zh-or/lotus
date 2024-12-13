@@ -47,6 +47,12 @@ public class NettyRequest extends RestfulRequest {
             msg.release();
         }
     }
+
+    @Override
+    public String getPath() {
+        return qsd.rawPath();
+    }
+
     @Override
     public String getUrl() {
         return qsd.path();

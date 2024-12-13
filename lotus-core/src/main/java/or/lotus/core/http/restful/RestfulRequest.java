@@ -39,6 +39,9 @@ public abstract class RestfulRequest {
         attributes.remove(name);
     }
 
+    /**不需要url中的参数部分*/
+    public abstract String getPath();
+
     public abstract String getUrl();
 
     public abstract String getQueryString();

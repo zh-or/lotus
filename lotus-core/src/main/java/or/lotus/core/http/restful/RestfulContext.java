@@ -344,7 +344,7 @@ public abstract class RestfulContext {
         //todo 需要优化url匹配算法
 
         // 普通请求
-        RestfulDispatchMapper mapper = dispatcherAbsMap.get(request.getUrl());
+        RestfulDispatchMapper mapper = dispatcherAbsMap.get(request.getPath());
         if(mapper != null) {
             return mapper;
         }

@@ -89,7 +89,7 @@ public class RestfulDispatcher {
             return false;
         }
 
-        return Pattern.matches(url, request.getUrl());
+        return Pattern.matches(url, request.getPath());
     }
 
     public Object dispatch(RestfulContext context, RestfulRequest request, RestfulResponse response) throws Exception {
