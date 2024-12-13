@@ -1,17 +1,22 @@
 package or.lotus.core.test;
 
 
+import or.lotus.core.common.BeanUtils;
 import or.lotus.core.common.NetWorkAddress;
 import or.lotus.core.common.Utils;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class TestCommon {
     public static void main(String[] args) throws Exception {
+        List<String> clazz = BeanUtils.getClassPathByPackage("or.lotus.core.http.*");
+
+
         long v = 256866551110225l;
         String x = Utils.longTo35(v);
 

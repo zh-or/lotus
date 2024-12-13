@@ -97,9 +97,18 @@ public class BeanUtils {
         return null;
     }
 
+    /**
+     * 当结尾为 .* 时则枚举所有子目录
+     * */
     public static List<String> getClassPathByPackage(String packageName) throws URISyntaxException, IOException {
 
         ArrayList<String> res = new ArrayList<>();
+        boolean listChildren = packageName.endsWith(".*");
+
+        if(listChildren) {
+            packageName = packageName.substring(0, packageName.length() - 2);
+        }
+
         String pkgPath = packageName.replace(".", "/");
         URL url = Thread.currentThread().getContextClassLoader().getResource(pkgPath);
         String pt = url.getProtocol();
@@ -109,21 +118,35 @@ public class BeanUtils {
             File[] fs = dir.listFiles();
 
             for (File f : fs) {
+                if(listChildren && f.isDirectory()) {
+                    res.addAll(getClassPathByPackage(packageName + "." + f.getName() + ".*"));
+                    continue;
+                }
+
                 String fileName = f.getName();
                 if (fileName.endsWith(".class")) {
-                    fileName = fileName.substring(0, fileName.lastIndexOf("."));
+                    fileName = fileName.substring(0, fileName.length() - 6);
                     res.add(packageName + "." + fileName);
                 }
             }
         } else if ("jar".equals(pt)) {
             try (JarFile jar = ((JarURLConnection) url.openConnection()).getJarFile()) {
                 Enumeration<JarEntry> entries = jar.entries();
-                while (entries.hasMoreElements()) {
+                while (entries.hasMoreElements()) {//这个循环会直接循环所有目录&文件
+
                     JarEntry entry = entries.nextElement();
-                    if(!entry.isDirectory()) {
-                        String name = entry.getName();
-                        if(name.startsWith(pkgPath) && name.endsWith(".class")) {
-                            res.add(name.replaceAll("/", ".").substring(0, name.lastIndexOf(".")));
+                    String name = entry.getName();
+                    if(!entry.isDirectory()) {//因为会循环所有路径, 直接忽略目录
+                        int p = name.lastIndexOf("/");
+                        if(p == -1) {
+                            continue;
+                        }
+                        String filePath = name.substring(0, p);
+                        String namePkg = filePath.replaceAll("/", ".");
+                        boolean matched = listChildren ? namePkg.startsWith(packageName) : namePkg.equals(packageName);
+
+                        if(matched && name.endsWith(".class")) {
+                            res.add(name.replaceAll("/", ".").substring(0, name.length() - 6));
                         }
                     }
                 }
