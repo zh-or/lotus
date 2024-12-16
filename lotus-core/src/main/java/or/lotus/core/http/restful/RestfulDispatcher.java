@@ -4,10 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import or.lotus.core.common.BeanUtils;
 import or.lotus.core.common.Utils;
-import or.lotus.core.http.restful.ann.Attr;
-import or.lotus.core.http.restful.ann.Autowired;
-import or.lotus.core.http.restful.ann.Parameter;
-import or.lotus.core.http.restful.ann.Prop;
+import or.lotus.core.http.restful.ann.*;
 import or.lotus.core.http.restful.support.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -220,6 +217,10 @@ public class RestfulDispatcher {
                 }
                 Object bean = context.getBean(name);
                 return bean;
+            } else if(annotationType == Header.class) {
+                Header header = (Header) annotation;
+                String headerName = header.value();
+                return request.getHeader(headerName);
             }
         } else {
             if(type.isInstance(request)) {
