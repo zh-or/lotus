@@ -24,6 +24,7 @@ public abstract class RestfulResponse extends Writer {
         this.headers = new HashMap<>();
         this.charset = request.context.getCharset();
         setHeader("Server", RestfulContext.TAG);
+        setHeader("Content-Type", "text/html; charset=" + charset.displayName());
 
         Date time = new Date();
         setHeader("Expires", time.toString());
