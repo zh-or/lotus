@@ -56,10 +56,13 @@ public class RestfulDispatcher {
             annotations[i] = null;
 
             for(Annotation ann : parameterTypesAnnotations[i]) {
-                if(ann.annotationType() == Parameter.class
-                        || ann.annotationType() == Autowired.class
-                        || ann.annotationType() == Attr.class
-                        || ann.annotationType() == Prop.class) {
+                Class t = ann.annotationType();
+
+                if(t == Parameter.class
+                   || t == Autowired.class
+                   || t == Attr.class
+                   || t == Header.class
+                   || t == Prop.class) {
                     annotations[i] = ann;
                 }
 

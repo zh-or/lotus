@@ -18,6 +18,7 @@ import or.lotus.core.http.restful.RestfulResponse;
 import or.lotus.core.http.restful.support.RestfulUtils;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -302,7 +303,11 @@ public class NettyHttpServer extends RestfulContext {
                 flushPromise.addListener(ChannelFutureListener.CLOSE);
             }
         }
-
+        try {
+            _response.flush();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         request.release();
     }
 }
