@@ -289,24 +289,19 @@ public class NettyHttpServer extends RestfulContext {
         } else if(response.isFileResponse()) {
             NettyStaticFileHandler.sendFile(response.getFile(), request.rawRequest(), response.getResponse(), request.channel, charset);
         } else {
-            FullHttpResponse rawRequest = (FullHttpResponse) response.getResponse();
-            final boolean keepAlive = HttpUtil.isKeepAlive(rawRequest);
-            HttpUtil.setContentLength(rawRequest, rawRequest.content().readableBytes());
+            FullHttpResponse rawResponse = (FullHttpResponse) response.getResponse();
+            final boolean keepAlive = HttpUtil.isKeepAlive(rawResponse);
+            HttpUtil.setContentLength(rawResponse, rawResponse.content().readableBytes());
             if (keepAlive) {
-                rawRequest.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
-            } else if (rawRequest.protocolVersion().equals(HttpVersion.HTTP_1_0)) {
-                rawRequest.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE);
+                rawResponse.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
+            } else if (rawResponse.protocolVersion().equals(HttpVersion.HTTP_1_0)) {
+                rawResponse.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE);
             }
-            ChannelFuture flushPromise = request.channel.writeAndFlush(rawRequest);
+            ChannelFuture flushPromise = request.channel.writeAndFlush(rawResponse);
 
             if (!keepAlive) {
                 flushPromise.addListener(ChannelFutureListener.CLOSE);
             }
-        }
-        try {
-            _response.flush();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
         request.release();
     }
