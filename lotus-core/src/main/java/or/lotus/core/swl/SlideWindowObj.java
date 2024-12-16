@@ -7,22 +7,16 @@ public class SlideWindowObj {
     int limitSec;
     int[] windows;
 
-    int limitCount = 0;
 
     public SlideWindowObj() {
     }
 
-    public SlideWindowObj(int windowLimit, int limitSec, int limitCount) {
+    public SlideWindowObj(int windowLimit, int limitSec) {
         this.windows = new int[windowLimit];
         this.limitSec = limitSec;
-        this.limitCount = limitCount;
     }
 
-    public boolean check() {
-        return check(limitCount);
-    }
-
-    public boolean check(int count) {
+    public synchronized boolean check(int count) {
         long now = System.currentTimeMillis();
         int move = (int) ((now - lastTime) / 1000 / limitSec);
 
@@ -60,7 +54,6 @@ public class SlideWindowObj {
                 "lastTime=" + lastTime +
                 ", limitSec=" + limitSec +
                 ", windows=" + Arrays.toString(windows) +
-                ", limitCount=" + limitCount +
                 '}';
     }
 
@@ -88,11 +81,4 @@ public class SlideWindowObj {
         this.windows = windows;
     }
 
-    public int getLimitCount() {
-        return limitCount;
-    }
-
-    public void setLimitCount(int limitCount) {
-        this.limitCount = limitCount;
-    }
 }
