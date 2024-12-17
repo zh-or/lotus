@@ -9,6 +9,7 @@ import or.lotus.core.http.restful.RestfulRequest;
 import or.lotus.core.http.restful.support.RestfulHttpMethod;
 import or.lotus.http.netty.exception.NettyParameterException;
 
+import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 
 public class NettyRequest extends RestfulRequest {
@@ -103,8 +104,8 @@ public class NettyRequest extends RestfulRequest {
     }
 
     @Override
-    public SocketAddress getRemoteAddress() {
-        return channel.channel().remoteAddress();
+    public InetSocketAddress getRemoteAddress() {
+        return (InetSocketAddress) channel.channel().remoteAddress();
     }
 
 }

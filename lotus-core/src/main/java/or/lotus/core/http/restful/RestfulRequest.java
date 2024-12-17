@@ -10,6 +10,7 @@ import or.lotus.core.http.restful.support.RestfulCookie;
 import or.lotus.core.http.restful.support.RestfulHttpMethod;
 
 import java.io.UnsupportedEncodingException;
+import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.URLDecoder;
 import java.util.HashMap;
@@ -181,7 +182,7 @@ public abstract class RestfulRequest {
         return false;
     }
 
-    public abstract SocketAddress getRemoteAddress();
+    public abstract InetSocketAddress getRemoteAddress();
 
     public abstract RestfulFormData getBodyFormData();
 
