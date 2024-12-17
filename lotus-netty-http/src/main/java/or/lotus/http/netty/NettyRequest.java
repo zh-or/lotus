@@ -98,6 +98,11 @@ public class NettyRequest extends RestfulRequest {
     }
 
     @Override
+    public String getHeaders() {
+        return msg.headers().toString();
+    }
+
+    @Override
     public SocketAddress getRemoteAddress() {
         return channel.channel().remoteAddress();
     }

@@ -147,6 +147,8 @@ public abstract class RestfulRequest {
     /** 需要在此方法内处理大小写问题 */
     public abstract String getHeader(String name);
 
+    public abstract String getHeaders();
+
     public String getCookieValue(String key) {
         RestfulCookie cookie = getCookie(key);
         if(cookie != null) {
