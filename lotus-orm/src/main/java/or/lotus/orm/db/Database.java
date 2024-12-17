@@ -190,7 +190,7 @@ public class Database {
 
     /**使用config.primaryKeyName 作为主键更新所有字段*/
     public int updateAll(List<?> obj) throws SQLException {
-        if(obj == null && obj.size() == 0) {
+        if(obj == null || obj.size() == 0) {
             return 0;
         }
         Object first = obj.get(0);
@@ -316,7 +316,7 @@ public class Database {
      * @param useDefaultField 字段为数据库字段名
      * */
     public int insertAll(List<Object> obj, String ...useDefaultField) throws SQLException {
-        if(obj == null && obj.size() == 0) {
+        if(obj == null || obj.size() == 0) {
             return 0;
         }
         Object first = obj.get(0);
