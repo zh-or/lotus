@@ -2,6 +2,7 @@ package or.lotus.http.netty;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
 import or.lotus.core.http.restful.RestfulContext;
@@ -100,7 +101,16 @@ public class NettyRequest extends RestfulRequest {
 
     @Override
     public String getHeaders() {
-        return msg.headers().toString();
+        HttpHeaders headers = msg.headers();
+        StringBuilder sb = new StringBuilder();
+        for(String key : headers.names()) {
+            sb.append(key);
+            sb.append(": ");
+            sb.append(headers.get(key));
+            sb.append("\n");
+        }
+
+        return sb.toString();
     }
 
     @Override
