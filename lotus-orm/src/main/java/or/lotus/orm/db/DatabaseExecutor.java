@@ -505,7 +505,7 @@ public class DatabaseExecutor<T> {
                         continue;
                     }
                     String fieldName = f.getName();
-                    if(builder.isDefaultFields(fieldName)) {
+                    if(builder.isDefaultFields(JdbcUtils.convertPropertyNameToUnderscoreName(fieldName))) {
                         continue;
                     }
 
@@ -583,7 +583,7 @@ public class DatabaseExecutor<T> {
                         continue;
                     }
                     String fieldName = f.getName();
-                    if(builder.isDefaultFields(fieldName)) {
+                    if(builder.isDefaultFields(JdbcUtils.convertPropertyNameToUnderscoreName(fieldName))) {
                         continue;
                     }
 
