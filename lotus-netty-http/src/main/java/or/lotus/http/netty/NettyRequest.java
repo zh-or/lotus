@@ -57,7 +57,7 @@ public class NettyRequest extends RestfulRequest {
 
     @Override
     public String getUrl() {
-        return qsd.path();
+        return qsd.uri();
     }
 
     @Override
@@ -102,7 +102,7 @@ public class NettyRequest extends RestfulRequest {
     @Override
     public String getHeaders() {
         HttpHeaders headers = msg.headers();
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(2048);
         for(String key : headers.names()) {
             sb.append(key);
             sb.append(": ");
