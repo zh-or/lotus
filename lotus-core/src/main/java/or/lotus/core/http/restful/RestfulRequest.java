@@ -47,6 +47,20 @@ public abstract class RestfulRequest {
 
     public abstract String getQueryString();
 
+    /** 从url获取参数 */
+    public String getParameterFromUrl(String name) {
+        String qs = getQueryString();
+        try {
+            Pattern pattern = Pattern.compile("[&]k=([^&]*)");
+            Matcher m = pattern.matcher("&" + qs);
+            if(m.find()) {
+                String par = m.group(1);
+                return URLDecoder.decode(par, context.charset.displayName());
+            }
+        } catch (UnsupportedEncodingException e) {}
+        return null;
+    }
+
     /** 获取url参数 index 从1开始, 顺序为从左到右 */
     public String getPathParamByIndexL(int index) {
         String path = getPath();
