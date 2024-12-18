@@ -49,7 +49,7 @@ public abstract class RestfulRequest {
 
     /** 获取url参数 index 从1开始, 顺序为从左到右 */
     public String getPathParamByIndexL(int index) {
-        String path = getUrl();
+        String path = getPath();
         if(index < 1 || Utils.CheckNull(path)) {
             return null;
         }
@@ -57,14 +57,17 @@ public abstract class RestfulRequest {
         String[] pars = path.split("/");
         int len = pars.length;
         if(len > 0 && len >= index) {
-            return pars[index/* - 1*/];//分割字符串后前面会有个空的字符串
+            try {
+                return URLDecoder.decode(pars[index/* - 1*/], context.charset.displayName());//分割字符串后前面会有个空的字符串
+            } catch (UnsupportedEncodingException e) {
+            }
         }
         return null;
     }
 
     /** 获取url参数 index 从1开始, 顺序为从右到左 */
     public String getPathParamByIndex(int index) {
-        String path = getUrl();
+        String path = getPath();
         if(index < 1 || Utils.CheckNull(path)) {
             return null;
         }
@@ -72,7 +75,10 @@ public abstract class RestfulRequest {
         String[] pars = path.split("/");
         int len = pars.length;
         if(len > 0 && len > index) {
-            return pars[len - index];
+            try {
+                return URLDecoder.decode(pars[len - index], context.charset.displayName());
+            } catch (UnsupportedEncodingException e) {
+            }
         }
         return null;
     }
