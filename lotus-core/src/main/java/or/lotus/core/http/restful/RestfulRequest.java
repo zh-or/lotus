@@ -48,10 +48,10 @@ public abstract class RestfulRequest {
     public abstract String getQueryString();
 
     /** 从url获取参数 */
-    public String getParameterFromUrl(String name) {
+    public String getParameterFromUrl(String key) {
         String qs = getQueryString();
         try {
-            Pattern pattern = Pattern.compile("[&]k=([^&]*)");
+            Pattern pattern = Pattern.compile("[&]" + key + "=([^&]*)");
             Matcher m = pattern.matcher("&" + qs);
             if(m.find()) {
                 String par = m.group(1);
