@@ -71,6 +71,14 @@ public class WhereItem {
         return obj;
     }
 
+    public static WhereItem ltEq(Object k, Object v) {
+        WhereItem obj = new WhereItem();
+        obj.k = k;
+        obj.v = v;
+        obj.m = "<=";
+        return obj;
+    }
+
     public static WhereItem gt(Object k, Object v) {
         WhereItem obj = new WhereItem();
         obj.k = k;
@@ -78,6 +86,16 @@ public class WhereItem {
         obj.m = ">";
         return obj;
     }
+
+    public static WhereItem gtEq(Object k, Object v) {
+        WhereItem obj = new WhereItem();
+        obj.k = k;
+        obj.v = v;
+        obj.m = ">=";
+        return obj;
+    }
+
+
 
     public static WhereItem or() {
         WhereItem obj = new WhereItem();
