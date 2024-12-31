@@ -548,7 +548,7 @@ public abstract class RestfulContext {
         templateResolver.setPrefix(path);
         templateResolver.setSuffix(".html");
         templateResolver.setCacheable(cache);
-        templateResolver.setCharacterEncoding("UTF-8");
+        templateResolver.setCharacterEncoding(charset.name());
 
         enableTemplateEngine(templateResolver);
     }
