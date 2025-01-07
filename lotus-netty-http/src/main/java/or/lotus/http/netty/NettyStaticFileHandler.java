@@ -38,8 +38,8 @@ public class NettyStaticFileHandler extends SimpleChannelInboundHandler<FullHttp
     }
 
     /** 转换请求路径为本地路径, 返回 null 表示未启用本地路径或者转换失败 */
-    private String sanitizeUri(String localPath, String uri) {
-        if(Utils.CheckNull(localPath)) {
+    private File sanitizeUri(String uri) {
+        if(server.staticPath.isEmpty()) {
             return null;
         }
         if (uri == null || uri.isEmpty() || uri.charAt(0) != '/') {
@@ -52,7 +52,45 @@ public class NettyStaticFileHandler extends SimpleChannelInboundHandler<FullHttp
             if("/".equals(uri)) {
                 uri = this.server.defaultIndexFile;
             }
-            return localPath + File.separator +  Utils.buildPath(uri);
+
+            for(String localPath : this.server.staticPath) {
+
+                String path = localPath + File.separator +  Utils.buildPath(uri);;
+
+                //支持符号链接
+                Path p2 = Paths.get(path);
+
+                File file = null;
+                if(Files.isSymbolicLink(p2)) {
+                    /**检查配置是否启用支持软链接*/
+                    if(!server.isSupportSymbolicLink) {
+                        //sendError(ctx, request, HttpResponseStatus.FORBIDDEN, this.server.getCharset());
+                        continue;
+                    }
+
+                    p2 = Files.readSymbolicLink(p2);
+                    file = p2.toFile();
+                } else {
+                    file = new File(path);
+                }
+
+                if(file.isHidden() || !file.exists()) {
+                    //sendError(ctx, request, HttpResponseStatus.NOT_FOUND, this.server.getCharset());
+                    continue;
+                }
+
+                if (file.isDirectory()) {
+                    //sendError(ctx, request, HttpResponseStatus.NOT_FOUND, this.server.getCharset());
+                    continue;
+                }
+
+                if (!file.isFile()) {
+                    //sendError(ctx, request, HttpResponseStatus.FORBIDDEN, this.server.getCharset());
+                    continue;
+                }
+                return file;
+            }
+
         } catch (Exception e) {
             log.error("格式化本地路径出错: " + uri, e);
         }
@@ -82,51 +120,9 @@ public class NettyStaticFileHandler extends SimpleChannelInboundHandler<FullHttp
         }
 
         final String uri = request.uri();
-        String path = null;
 
-        for(String localPath: server.staticPath) {
-            path = sanitizeUri(localPath, uri);
-            if(path != null) {
-                break;
-            }
-        }
+        File file = sanitizeUri(uri);
 
-        if (path == null) {
-            sendError(ctx, request, HttpResponseStatus.FORBIDDEN, this.server.getCharset());
-            return;
-        }
-
-        //支持符号链接
-        Path p2 = Paths.get(path);
-
-        File file = null;
-        if(Files.isSymbolicLink(p2)) {
-            /**检查配置是否启用支持软链接*/
-            if(!server.isSupportSymbolicLink) {
-                sendError(ctx, request, HttpResponseStatus.FORBIDDEN, this.server.getCharset());
-                return ;
-            }
-
-            p2 = Files.readSymbolicLink(p2);
-            file = p2.toFile();
-        } else {
-            file = new File(path);
-        }
-
-        if(file.isHidden() || !file.exists()) {
-            sendError(ctx, request, HttpResponseStatus.NOT_FOUND, this.server.getCharset());
-            return ;
-        }
-
-        if (file.isDirectory()) {
-            sendError(ctx, request, HttpResponseStatus.NOT_FOUND, this.server.getCharset());
-            return;
-        }
-
-        if (!file.isFile()) {
-            sendError(ctx, request, HttpResponseStatus.FORBIDDEN, this.server.getCharset());
-            return;
-        }
         final boolean keepAlive = HttpUtil.isKeepAlive(request);
 
         // Cache Validation
