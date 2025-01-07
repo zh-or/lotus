@@ -19,7 +19,9 @@ import or.lotus.core.http.restful.support.RestfulUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class NettyHttpServer extends RestfulContext {
@@ -32,7 +34,7 @@ public class NettyHttpServer extends RestfulContext {
     HashMap<String, NettyWebSocketMessageHandler> webSocketHandlers = new HashMap<>();
 
     String defaultIndexFile = "index.html";
-    String staticPath = null;
+    List<String> staticPath = new ArrayList<>(3);
     boolean isSupportSymbolicLink = false;
 
     String wsPathPrefix = null;//ws前缀
@@ -64,7 +66,11 @@ public class NettyHttpServer extends RestfulContext {
     }
 
     public void setStaticPath(String staticPath) {
-        this.staticPath = staticPath;
+        addStaticPath(staticPath);
+    }
+
+    public void addStaticPath(String path) {
+        staticPath.add(path);
     }
 
     public void setSupportSymbolicLink(boolean supportSymbolicLink) {

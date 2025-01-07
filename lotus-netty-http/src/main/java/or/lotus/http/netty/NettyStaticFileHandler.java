@@ -38,8 +38,8 @@ public class NettyStaticFileHandler extends SimpleChannelInboundHandler<FullHttp
     }
 
     /** 转换请求路径为本地路径, 返回 null 表示未启用本地路径或者转换失败 */
-    private String sanitizeUri(String uri) {
-        if(this.server.staticPath == null) {
+    private String sanitizeUri(String localPath, String uri) {
+        if(Utils.CheckNull(localPath)) {
             return null;
         }
         if (uri == null || uri.isEmpty() || uri.charAt(0) != '/') {
@@ -52,10 +52,15 @@ public class NettyStaticFileHandler extends SimpleChannelInboundHandler<FullHttp
             if("/".equals(uri)) {
                 uri = this.server.defaultIndexFile;
             }
-            return this.server.staticPath + File.separator +  Utils.buildPath(uri);
+            return localPath + File.separator +  Utils.buildPath(uri);
         } catch (Exception e) {
             log.error("格式化本地路径出错: " + uri, e);
         }
+        return null;
+    }
+
+    private Path getOnePath(String uri) {
+
         return null;
     }
 
@@ -77,7 +82,14 @@ public class NettyStaticFileHandler extends SimpleChannelInboundHandler<FullHttp
         }
 
         final String uri = request.uri();
-        final String path = sanitizeUri(uri);
+        String path = null;
+
+        for(String localPath: server.staticPath) {
+            path = sanitizeUri(localPath, uri);
+            if(path != null) {
+                break;
+            }
+        }
 
         if (path == null) {
             sendError(ctx, request, HttpResponseStatus.FORBIDDEN, this.server.getCharset());
