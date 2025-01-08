@@ -690,7 +690,7 @@ public class Utils {
     public static String getFileSuffix(String path) {
         int p = path.lastIndexOf(".");
         if (p != -1) {
-            return path.substring(p + 1, path.length());
+            return "." + path.substring(p + 1, path.length());
         }
         return "";
     }
