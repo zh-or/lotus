@@ -189,7 +189,7 @@ public class Database {
     }
 
     /**使用config.primaryKeyName 作为主键更新所有字段*/
-    public int updateAll(List<?> obj) throws SQLException {
+    public int updateAll(List<? extends Object> obj) throws SQLException {
         if(obj == null || obj.size() == 0) {
             return 0;
         }
@@ -303,7 +303,7 @@ public class Database {
         return exec;
     }
 
-    public void insertAllOrError(List<Object> obj, String ...useDefaultField) throws SQLException {
+    public void insertAllOrError(List<? extends  Object> obj, String ...useDefaultField) throws SQLException {
         int t = insertAll(obj, useDefaultField);
         int t1 = obj.size();
 
@@ -315,7 +315,7 @@ public class Database {
     /**useDefaultField的字段为数据库默认值不从obj取
      * @param useDefaultField 字段为数据库字段名
      * */
-    public int insertAll(List<Object> obj, String ...useDefaultField) throws SQLException {
+    public int insertAll(List<? extends  Object> obj, String ...useDefaultField) throws SQLException {
         if(obj == null || obj.size() == 0) {
             return 0;
         }
