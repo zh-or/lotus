@@ -16,7 +16,7 @@ import java.util.TimerTask;
 
 public class Wx implements AutoCloseable {
     public static String WX_EXCEPTION = "微信服务繁忙, 请稍后再试~";
-
+    public static boolean ENABLE_REFRESH_LOG = false;
     protected static Logger log = LoggerFactory.getLogger(Wx.class);
     public static final int REQ_TIMEOUT = 10 * 1000;
     protected String token = null;
@@ -182,7 +182,9 @@ public class Wx implements AutoCloseable {
                 throwWxException("init", params.toString() , json);
                 token = json.path("access_token").asText();
                 timeout = json.path("expires_in").asInt();
-                log.info("微信access_token刷新成功: {}", res);
+                if(ENABLE_REFRESH_LOG) {
+                    log.info("微信access_token刷新成功: {}", res);
+                }
 
                 if(!Utils.CheckNull(token)) {
                     timeout = timeout - 60;//提前一分钟获取, 在普通模式调用下，平台会提前5分钟更新access_token，即在有效期倒计时5分钟内发起调用会获取新的access_token。在新旧access_token交接之际，平台会保证在5分钟内，新旧access_token都可用，这保证了用户业务的平滑过渡；
@@ -194,13 +196,15 @@ public class Wx implements AutoCloseable {
                     timer.schedule(new TimerTask() {
                         @Override
                         public void run() {
-                            log.info("开始刷新微信access_token...");
+                            if(ENABLE_REFRESH_LOG) {
+                                log.info("开始刷新微信access_token...");
+                            }
                             init();
                         }
                     }, timeout * 1000, timeout * 1000);
                     return true;
                 }
-                log.info("刷新微信token错误返回:", res);
+                log.error("刷新微信token错误返回:", res);
             } catch(Exception e) {
                 log.error("初始化微信API服务失败:", e);
             }
