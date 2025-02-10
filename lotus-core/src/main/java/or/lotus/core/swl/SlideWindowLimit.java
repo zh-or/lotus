@@ -38,7 +38,7 @@ public class SlideWindowLimit implements AutoCloseable {
         }
     }
 
-    /**返回true表示未被限制, 返回false表示已限制
+    /**返回true表示未达限制, 返回false表示已达限制
      * @Param key 键
      * @Param count 窗口内计数, 如果窗口内总数大于 count 则返回true, 否则返回false
      * */
@@ -49,7 +49,7 @@ public class SlideWindowLimit implements AutoCloseable {
         try {
             set(key, val);
         } catch (JsonProcessingException e) {
-            log.error("滑动窗口保存数据到redis失败:", e);
+            log.error("滑动窗口保存数据失败:", e);
         }
         return flag;
     }
