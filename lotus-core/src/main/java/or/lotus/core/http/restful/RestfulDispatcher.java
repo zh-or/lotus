@@ -33,6 +33,8 @@ public class RestfulDispatcher {
 
     private Class[] genericTypes;
 
+    private Pattern pattern;
+
     public RestfulDispatcher(String url, Object controllerObject, Method method, RestfulHttpMethod httpMethod, boolean isPattern) {
         this.url = url.replaceAll("//", "/");
         this.httpMethod = httpMethod;
@@ -78,9 +80,12 @@ public class RestfulDispatcher {
                     genericTypes[i] = (Class) actualTypeArguments[0];//取第一个
                 }
             }
-
-
         }
+
+        if(isPattern) {
+            pattern = Pattern.compile(url);
+        }
+
     }
 
     /** 检查当前正则是否匹配url */
@@ -88,8 +93,7 @@ public class RestfulDispatcher {
         if(!isPattern) {
             return false;
         }
-
-        return Pattern.matches(url, request.getPath());
+        return pattern.matcher(request.getPath()).matches();
     }
 
     public Object dispatch(RestfulContext context, RestfulRequest request, RestfulResponse response) throws Exception {
