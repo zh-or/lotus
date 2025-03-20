@@ -92,7 +92,8 @@ public class NettyStaticFileHandler extends SimpleChannelInboundHandler<FullHttp
             }
 
         } catch (Exception e) {
-            log.error("格式化本地路径出错: " + uri, e);
+            //这里不报错
+            //log.error("格式化本地路径出错: " + uri, e);
         }
         return null;
     }
@@ -122,7 +123,10 @@ public class NettyStaticFileHandler extends SimpleChannelInboundHandler<FullHttp
         final String uri = request.uri();
 
         File file = sanitizeUri(uri);
-
+        if(file == null) {
+            sendError(ctx, request, HttpResponseStatus.NOT_FOUND, this.server.getCharset());
+            return;
+        }
         final boolean keepAlive = HttpUtil.isKeepAlive(request);
 
         // Cache Validation
