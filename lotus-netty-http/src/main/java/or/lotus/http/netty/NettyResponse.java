@@ -5,8 +5,10 @@ import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.*;
 import or.lotus.core.http.restful.RestfulResponse;
 
-import java.io.IOException;
+import java.io.*;
 import java.util.Map;
+
+import static java.lang.Character.*;
 
 public class NettyResponse extends RestfulResponse {
     NettyRequest request;
@@ -54,7 +56,16 @@ public class NettyResponse extends RestfulResponse {
     @Override
     public void write(int c) throws IOException {
         getBuffer();
-        bodyBuffer.writeByte(c);
+        //bodyBuffer.writeChar(c);
+        /*System.out.println("c:" + c + " -> " + Character.isBmpCodePoint(c));*/
+        if (Character.isBmpCodePoint(c))
+            bodyBuffer.writeByte( c);
+        else {
+            bodyBuffer.writeByte((char) ((c >>> 10) + (MIN_HIGH_SURROGATE - (MIN_SUPPLEMENTARY_CODE_POINT >>> 10))));
+            bodyBuffer.writeByte((char) ((c & 0x3ff) + MIN_LOW_SURROGATE));
+        }
+        //Character.toSurrogates(c, v, j++);
+        // bodyBuffer.writeByte( c);
     }
 
     @Override
