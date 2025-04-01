@@ -26,6 +26,9 @@ public class DataSourceConfig {
 
     public String printStackPackagePrefix = null;
 
+    public boolean printSlowSqlStack = true;//输出慢sql堆栈
+    public long slowSqlTime = 2000;//慢sql最小时间
+
     private ConcurrentHashMap<String, TypeConvert> typeConvertMap = new ConcurrentHashMap<>();
 
     public DataSourceConfig() {
@@ -172,4 +175,19 @@ public class DataSourceConfig {
         this.printStackPackagePrefix = printStackPackagePrefix;
     }
 
+    public boolean isPrintSlowSqlStack() {
+        return printSlowSqlStack;
+    }
+
+    public void setPrintSlowSqlStack(boolean printSlowSqlStack) {
+        this.printSlowSqlStack = printSlowSqlStack;
+    }
+
+    public long getSlowSqlTime() {
+        return slowSqlTime;
+    }
+
+    public void setSlowSqlTime(long slowSqlTime) {
+        this.slowSqlTime = slowSqlTime;
+    }
 }
