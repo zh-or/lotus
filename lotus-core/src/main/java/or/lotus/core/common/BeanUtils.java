@@ -155,7 +155,10 @@ public class BeanUtils {
         return res;
     }
 
-    public static void copyFields(Object from, Object to) {
+    /**
+     * @param ignoreNull 是否忽略null字段, true 时不复制from为空的字段
+     * */
+    public static void copyFields(Object from, Object to, boolean ignoreNull) {
         if(from == null || to == null) {
             return ;
         }
@@ -167,7 +170,10 @@ public class BeanUtils {
                 if(ff != null && f.getType() == f.getType()) {
                     ff.setAccessible(true);
                     f.setAccessible(true);
-                    f.set(to, ff.get(from));
+                    Object v = ff.get(from);
+                    if(!ignoreNull || v != null) {
+                        f.set(to, v);
+                    }
                 }
             } catch (Exception e) {}
         }
