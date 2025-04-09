@@ -202,6 +202,7 @@ public abstract class RestfulRequest {
         return false;
     }
 
+    /**如果连接断开了会返回null*/
     public abstract InetSocketAddress getRemoteAddress();
 
     public abstract RestfulFormData getBodyFormData();
