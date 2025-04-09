@@ -1,13 +1,11 @@
 package or.lotus.orm.db;
 
-import or.lotus.orm.pool.DataSourceConfig;
 import or.lotus.core.common.Utils;
+import or.lotus.orm.pool.DataSourceConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.*;
 import java.math.BigDecimal;
 import java.sql.*;
 import java.util.*;
@@ -401,10 +399,16 @@ public class DatabaseExecutor<T> {
         return 0;
     }
 
-    /**key from fields, col从0开始*/
+    /**key col从0开始*/
     public Object findOneByCol(int col) throws SQLException {
         Map<String, Object> oneMap = findOneMap();
-        return oneMap.get(builder.fields.get(col));
+        return oneMap.values().toArray()[0];
+    }
+
+    /**key */
+    public Object findOneByCol(String column) throws SQLException {
+        Map<String, Object> oneMap = findOneMap();
+        return oneMap.get(column);
     }
 
     public Page<T> findPage(int page, int size) throws SQLException {
@@ -465,7 +469,6 @@ public class DatabaseExecutor<T> {
             return ps.executeUpdate();
         }
     }
-
 
     private int runUpdate(String sql) throws SQLException {
         printSqlLog(sql);
@@ -648,6 +651,7 @@ public class DatabaseExecutor<T> {
         }
     }
 
+
     private List<T> runSelect(String sql, boolean one) throws SQLException {
         printSqlLog(sql);
         ResultSet rs = null;
@@ -659,38 +663,17 @@ public class DatabaseExecutor<T> {
             setParamsToStatement(ps, whereParams, params.size());
 
             rs = ps.executeQuery();
-            ResultSetMetaData metaData = rs.getMetaData();
-            int columnCount = metaData.getColumnCount();
+
+            Map<Object, Object> rowPrimaryCache = new HashMap<>();
 
             List<T> resObj = new ArrayList<T>();
+
             while(rs.next()) {
 
-                Constructor constructor = clazz.getDeclaredConstructor();
-                constructor.setAccessible(true);
-                T obj = (T) constructor.newInstance();
-                Class<?> newClazz = obj.getClass();
-
-                for(int i = 1; i <= columnCount; i++) {
-                    String name = metaData.getColumnName(i);
-                    try {
-                        String fieldName = JdbcUtils.convertUnderscoreNameToPropertyName(name, false);
-                        Field field = newClazz.getDeclaredField(fieldName);
-
-                        Class<?> fieldTypeClass = field.getType();
-                        TypeConvert convert = config.getTypeConvert(fieldTypeClass.getName());
-                        if(convert != null) {
-                            JdbcUtils.invokeSetter(obj, newClazz, fieldName, convert.decode(rs, i));
-                        } else {
-                            JdbcUtils.invokeSetter(obj, newClazz, fieldName, rs.getObject(i, fieldTypeClass));
-                        }
-
-                        //Object val = JdbcUtils.getResultSetValue(rs, i, field.getType());
-                    } catch (NoSuchFieldException e) {
-                        //不输出此异常
-                        //log.error("对象: {} 不存在字段: {}, {}", clazz.getSimpleName(), name, e);
-                    }
+                Object res = resultSetToBean(rs, clazz, rowPrimaryCache, null, config.getPrimaryKeyName());
+                if(res != null) {
+                    resObj.add((T) res);
                 }
-                resObj.add(obj);
                 if(one) {
                     break;
                 }
@@ -702,6 +685,121 @@ public class DatabaseExecutor<T> {
             JdbcUtils.closeResultSet(rs);
         }
         return null;
+    }
+
+
+    private Object resultSetToBean(ResultSet rs, Class<?> clazz,  Map<Object, Object> cache, String currentPrefix, String currentPrimaryKey) throws SQLException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+        ToMany toMany = clazz.getAnnotation(ToMany.class);
+        boolean isFromCache = true;//当从缓存取到对象后, 就不返回了, 实现一对多
+        if(currentPrefix == null) {
+            currentPrefix = "";
+        }
+        Object bean = null;
+        if(toMany != null) {
+            String mcKey = toMany.primaryKey();
+            if(!Utils.CheckNull(mcKey)) {
+                currentPrimaryKey = mcKey;
+            }
+        }
+        // step1 从缓存取对象
+        Object primaryColumnValue = null;
+        try {
+            primaryColumnValue = rs.getObject(currentPrimaryKey, String.class);
+            bean = cache.get(primaryColumnValue);
+        } catch (SQLException e) {
+            /*如果rs结果集没有 主键 则会报错*/
+        }
+
+        // step2 未取到表示新的数据
+        if(bean == null) {
+            Constructor constructor = clazz.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            bean = constructor.newInstance();
+            if(primaryColumnValue != null) {
+                cache.put(primaryColumnValue, bean);
+            }
+            isFromCache = false;
+        }
+
+        //step3 获取当前对象有哪些是需要展开处理的
+        HashMap<String, String> mcColumnAndPrefix = new HashMap<>();
+        HashMap<String, String> mcPrimaryKeys = new HashMap<>();
+        if(toMany != null) {
+            String[] mcColumns = toMany.columns();
+            String[] mcPrefix = toMany.prefix();
+            String[] mcKeys = toMany.primaryKeys();
+            for(int i = 0; i < mcColumns.length; i++) {
+                String prefix = null;
+                if(i < mcPrefix.length) {
+                    prefix = mcPrefix[i];
+                }
+                mcColumnAndPrefix.put(mcColumns[i], prefix);
+                mcPrimaryKeys.put(mcColumns[i], mcKeys[i]);
+            }
+            //isManyColumn = mcColumns.length > 0;//如果没有字段就不展开
+        }
+
+        Field[] fields = clazz.getDeclaredFields();
+        for(Field f : fields) {
+            String rawFieldName = f.getName();
+            String rsFieldName = JdbcUtils.convertPropertyNameToUnderscoreName(rawFieldName);
+            String prefix = mcColumnAndPrefix.get(rsFieldName);
+            if(prefix != null) {
+                rsFieldName = prefix + rsFieldName;
+            }
+
+            //step4 判断是否需要处理的字段
+            if(mcColumnAndPrefix.containsKey(rawFieldName)) {
+
+                Type genericType = f.getGenericType();
+                if(JdbcUtils.isRightList(genericType)) {//列表类型?
+                    List<Object> listField = (List<Object>) JdbcUtils.invokeGetter(bean, clazz, rawFieldName);
+                    if(listField == null) {
+                        listField = new ArrayList<>();
+                        JdbcUtils.invokeSetter(bean, clazz, rawFieldName, listField);
+                    }
+
+                    //取泛型类型
+                    ParameterizedType parameterizedType = (ParameterizedType) genericType;
+                    Type[] actualTypeArgs = parameterizedType.getActualTypeArguments();
+                    Class fieldGenericType = (Class<?>) actualTypeArgs[0];
+
+                    //下级缓存
+                    HashMap<Object, Object> childCache = (HashMap<Object, Object>) cache.get(rawFieldName);
+                    if(childCache == null) {
+                        childCache = new HashMap<>();
+                        childCache.put(rawFieldName, childCache);
+                    }
+                    Object listItem = resultSetToBean(rs, fieldGenericType, childCache, mcColumnAndPrefix.get(rawFieldName), mcPrimaryKeys.get(rawFieldName));
+                    if(listItem != null) {
+                        listField.add(listItem);
+                    }
+
+                } else {//单独对象?
+                    Object signItem = resultSetToBean(rs, f.getType(), new HashMap<>(), mcColumnAndPrefix.get(rawFieldName), mcPrimaryKeys.get(rawFieldName));
+                    JdbcUtils.invokeSetter(bean, clazz, rawFieldName, signItem);
+                }
+
+            } else {
+                try {
+                    Class<?> fieldTypeClass = f.getType();
+
+                    TypeConvert convert = config.getTypeConvert(fieldTypeClass.getName());
+                    if(convert != null) {
+                        JdbcUtils.invokeSetter(bean, clazz, rawFieldName, convert.decode(rs, currentPrefix + rsFieldName));
+                    } else {
+                        Object val = rs.getObject(currentPrefix + rsFieldName, fieldTypeClass);
+                        JdbcUtils.invokeSetter(bean, clazz, rawFieldName, val);
+                    }
+                } catch (SQLException e) {
+                    /*sql未取到值*/
+                }
+            }
+        }
+        if(isFromCache) {
+            return null;
+        }
+        return bean;
     }
 
     private void printSqlLog(String sql) {
@@ -742,7 +840,6 @@ public class DatabaseExecutor<T> {
         }
 
     }
-
 
     private void setParamsToStatement(PreparedStatement ps, List<Object> params) throws SQLException {
         setParamsToStatement(ps, params, 0);

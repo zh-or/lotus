@@ -1,5 +1,6 @@
 package or.lotus.orm.db;
 
+import or.lotus.orm.pool.DataSourceConfig;
 import or.lotus.orm.pool.LotusDataSource;
 import or.lotus.core.common.Utils;
 import org.slf4j.Logger;
@@ -9,12 +10,11 @@ import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.lang.reflect.*;
 import java.math.BigDecimal;
 import java.sql.*;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -66,6 +66,7 @@ public abstract class JdbcUtils {
             }
         }
     }
+
 
     /**执行对象的setter方法*/
     public static void invokeSetter(Object obj, Class<?> clazz, String fieldName, Object val) {
@@ -309,7 +310,52 @@ public abstract class JdbcUtils {
         return result.toString();
     }
 
+    public static boolean isRightList(Type type) {
+        if (type instanceof ParameterizedType) {
+            ParameterizedType parameterizedType = (ParameterizedType) type;
+            Type rawType = parameterizedType.getRawType();
+            return rawType.equals(List.class);
+        }
+        return false;
+    }
 
+    public static boolean isListType(Type type) {
+        if (type == null) {
+            return false;
+        }
+
+        // 情况1：直接是List.class
+        if (type.equals(List.class)) {
+            return true;
+        }
+
+        // 情况2：参数化类型（如 List<String>）
+        if (type instanceof ParameterizedType) {
+            ParameterizedType parameterizedType = (ParameterizedType) type;
+            Type rawType = parameterizedType.getRawType();
+            return rawType.equals(List.class);
+        }
+
+        // 情况3：通配符类型（如 List<?>）
+        if (type instanceof WildcardType) {
+            WildcardType wildcardType = (WildcardType) type;
+            Type[] upperBounds = wildcardType.getUpperBounds();
+            return upperBounds.length > 0 && upperBounds[0].equals(List.class);
+        }
+
+        // 情况4：类型变量（如 T extends List）
+        if (type instanceof java.lang.reflect.TypeVariable) {
+            java.lang.reflect.TypeVariable<?> typeVariable = (java.lang.reflect.TypeVariable<?>) type;
+            Type[] bounds = typeVariable.getBounds();
+            for (Type bound : bounds) {
+                if (isListType(bound)) { // 递归检查上界
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
     /**
      * 默认以utf-8读取文件内容
      * maven 打包需要注意在pom.xml 配置把resources的文件打包到jar中, 不配置默认不会打包, 永远找不到文件

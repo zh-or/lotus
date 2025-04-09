@@ -13,8 +13,9 @@ public abstract class TypeConvert<T> {
 
     /**
      * 从PreparedStatement中获取值
+     * column或index只会传入一个
      */
-    public abstract T decode(ResultSet rs, int index) throws SQLException;
+    public abstract T decode(ResultSet rs, String columnName) throws SQLException;
 
     /**设置参数时调用*/
     public abstract void encode(PreparedStatement ps, int index, T obj) throws SQLException;

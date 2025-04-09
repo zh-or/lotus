@@ -1,5 +1,8 @@
 package or.lotus.orm.db;
 
+/**
+ * 排序
+ */
 public class OrderItem {
     String m;
     String field;
