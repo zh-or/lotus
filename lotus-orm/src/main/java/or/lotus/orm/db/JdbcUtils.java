@@ -16,6 +16,7 @@ import java.sql.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 public abstract class JdbcUtils {
@@ -376,41 +377,45 @@ public abstract class JdbcUtils {
         return sqlFromResources(path, "UTF-8", params);
     }
 
-
+    public static ConcurrentHashMap<String, String> resourcesSqlCache = new ConcurrentHashMap<>();
     /**
      * maven 打包需要注意在pom.xml 配置把resources的文件打包到jar中, 不配置默认不会打包, 永远找不到文件
      * @param path 不要以 / 开头,
      * */
     public static String sqlFromResources(String path, String charsetName, Object ...params) throws IOException {
-        ClassLoader cl = Thread.currentThread().getContextClassLoader();
-        try(InputStream in = cl.getResourceAsStream(path)) {
-            byte[] bytes = new byte[in.available()];
-            in.read(bytes);
-            String sqlStr = new String(bytes, charsetName);
-            if(params.length <= 0) {
-                return sqlStr;
+        String sqlStr = resourcesSqlCache.get(path);
+
+        if(Utils.CheckNull(sqlStr)) {
+            ClassLoader cl = Thread.currentThread().getContextClassLoader();
+            try(InputStream in = cl.getResourceAsStream(path)) {
+                byte[] bytes = new byte[in.available()];
+                in.read(bytes);
+                sqlStr = new String(bytes, charsetName);
+                resourcesSqlCache.put(path, sqlStr);
             }
-
-            StringBuilder sb = new StringBuilder(sqlStr.length() + 100);
-
-            int len = sqlStr.length();
-            int i = 0;
-            int paramIndex = 0;
-            do {
-                char v = sqlStr.charAt(i);
-                if(v == '{') {
-                    sb.append(params[paramIndex].toString());
-                    i++;
-                } else {
-                    sb.append(v);
-                }
-                i++;
-                if(i >= len) {
-                    break;
-                }
-            } while(true);
-
-            return sb.toString();
         }
+        if(params.length <= 0) {
+            return sqlStr;
+        }
+        StringBuilder sb = new StringBuilder(sqlStr.length() + 100);
+
+        int len = sqlStr.length();
+        int i = 0;
+        int paramIndex = 0;
+        do {
+            char v = sqlStr.charAt(i);
+            if(v == '{') {
+                sb.append(params[paramIndex].toString());
+                i++;
+            } else {
+                sb.append(v);
+            }
+            i++;
+            if(i >= len) {
+                break;
+            }
+        } while(true);
+
+        return sb.toString();
     }
 }

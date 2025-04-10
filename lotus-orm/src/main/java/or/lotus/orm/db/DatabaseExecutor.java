@@ -670,7 +670,7 @@ public class DatabaseExecutor<T> {
 
             while(rs.next()) {
 
-                Object res = resultSetToBean(rs, clazz, rowPrimaryCache, null, config.getPrimaryKeyName());
+                Object res = resultSetToBean(rs, clazz, rowPrimaryCache, null, config.getPrimaryKeyName(), 0);
                 if(res != null) {
                     resObj.add((T) res);
                 }
@@ -688,7 +688,7 @@ public class DatabaseExecutor<T> {
     }
 
 
-    private Object resultSetToBean(ResultSet rs, Class<?> clazz,  Map<Object, Object> cache, String currentPrefix, String currentPrimaryKey) throws SQLException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+    private Object resultSetToBean(ResultSet rs, Class<?> clazz,  Map<Object, Object> cache, String currentPrefix, String currentPrimaryKey, int lvl) throws SQLException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         ToMany toMany = clazz.getAnnotation(ToMany.class);
         boolean isFromCache = true;//当从缓存取到对象后, 就不返回了, 实现一对多
         if(currentPrefix == null) {
@@ -705,6 +705,10 @@ public class DatabaseExecutor<T> {
         Object primaryColumnValue = null;
         try {
             primaryColumnValue = rs.getObject(currentPrimaryKey, String.class);
+            if(primaryColumnValue == null && lvl > 0) {
+                //主键为空则认为未查询到数据
+                return null;
+            }
             bean = cache.get(primaryColumnValue);
         } catch (SQLException e) {
             /*如果rs结果集没有 主键 则会报错*/
@@ -770,13 +774,13 @@ public class DatabaseExecutor<T> {
                         childCache = new HashMap<>();
                         childCache.put(rawFieldName, childCache);
                     }
-                    Object listItem = resultSetToBean(rs, fieldGenericType, childCache, mcColumnAndPrefix.get(rawFieldName), mcPrimaryKeys.get(rawFieldName));
+                    Object listItem = resultSetToBean(rs, fieldGenericType, childCache, mcColumnAndPrefix.get(rawFieldName), mcPrimaryKeys.get(rawFieldName), lvl + 1);
                     if(listItem != null) {
                         listField.add(listItem);
                     }
 
                 } else {//单独对象?
-                    Object signItem = resultSetToBean(rs, f.getType(), new HashMap<>(), mcColumnAndPrefix.get(rawFieldName), mcPrimaryKeys.get(rawFieldName));
+                    Object signItem = resultSetToBean(rs, f.getType(), new HashMap<>(), mcColumnAndPrefix.get(rawFieldName), mcPrimaryKeys.get(rawFieldName), lvl + 1);
                     JdbcUtils.invokeSetter(bean, clazz, rawFieldName, signItem);
                 }
 
