@@ -362,6 +362,7 @@ public abstract class RestfulContext {
     /** 扫描指定包名并添加拥有 @RestfulController 注解的类为 Controller, 返回扫描到的 Controller 数量
      * 此方法需要在 addBeans 后调用, 否则无法正确使用 @Autowired 注入
      * 注意 Controller 类只会在加载时创建一次, 并不会每次调用时都创建
+     * @param packageName 当结尾为 .* 时则枚举所有子目录
      * */
     public void scanController(String packageName) throws URISyntaxException, IOException, ClassNotFoundException, InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
         if(isRunning) {
@@ -371,9 +372,11 @@ public abstract class RestfulContext {
         Utils.assets(packageName, "包名不能为空");
         List<String> clazzs = BeanUtils.getClassPathByPackage(packageName);
 
-        for (String path : clazzs) {
-            Class<?> c = Thread.currentThread().getContextClassLoader().loadClass(path);
-            addController(c);
+        if(clazzs != null && !clazzs.isEmpty()) {
+            for (String path : clazzs) {
+                Class<?> c = Thread.currentThread().getContextClassLoader().loadClass(path);
+                addController(c);
+            }
         }
     }
 
@@ -427,17 +430,20 @@ public abstract class RestfulContext {
      * 3. 注入Bean
      * 4. 添加该类到Bean缓存
      * 注意: 该方法只适合没有构造参数的类, 否则会报错
+     * @param packageName 当结尾为 .* 时则枚举所有子目录
      * */
     public void addBeansFromPackage(String packageName) throws Exception {
         Utils.assets(packageName, "包名不能为空");
         List<String> clazzs = BeanUtils.getClassPathByPackage(packageName);
-        for (String path : clazzs) {
-            Class<?> c = Thread.currentThread().getContextClassLoader().loadClass(path);
-            Bean b = c.getAnnotation(Bean.class);
-            if(b != null) {
-                Constructor constructor = c.getDeclaredConstructor();
-                constructor.setAccessible(true);
-                addBean(constructor.newInstance());
+        if(clazzs != null && !clazzs.isEmpty()) {
+            for (String path : clazzs) {
+                Class<?> c = Thread.currentThread().getContextClassLoader().loadClass(path);
+                Bean b = c.getAnnotation(Bean.class);
+                if(b != null) {
+                    Constructor constructor = c.getDeclaredConstructor();
+                    constructor.setAccessible(true);
+                    addBean(constructor.newInstance());
+                }
             }
         }
     }
