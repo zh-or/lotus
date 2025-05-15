@@ -401,7 +401,7 @@ public abstract class RestfulContext {
 
         Method initBean = null;
         for(Method m : ms) {
-            if("initBean".equals(m.getName())) {
+            if(initBeanMethodName.equals(m.getName())) {
                 initBean = m;
                 break;
             }
