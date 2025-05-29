@@ -107,7 +107,7 @@ public class NettyStaticFileHandler extends SimpleChannelInboundHandler<FullHttp
     public void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
         File file = null;
         if(this.server.fileFilter != null) {
-            this.server.fileFilter.getFile(request.uri(), request);
+            file = this.server.fileFilter.getFile(request.uri(), request);
         }
 
         if(this.server.fileFilter != null && this.server.fileFilter.before(request)) {
