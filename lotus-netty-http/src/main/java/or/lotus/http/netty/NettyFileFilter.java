@@ -1,5 +1,6 @@
 package or.lotus.http.netty;
 
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 
@@ -17,7 +18,7 @@ public abstract class NettyFileFilter {
     }
 
     /**处理本地文件之前调用, 如果此方法返回了file对象则直接返回给客户端*/
-    public File getFile(String path, FullHttpRequest request) {
+    public File getFile(String path, ChannelHandlerContext ctx, FullHttpRequest request) {
         return null;
     }
 }
