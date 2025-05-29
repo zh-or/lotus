@@ -168,7 +168,7 @@ public class LocalFileManager {
     }
 
     /**生成kv存储的文件路径*/
-    protected Path getKeyPath(String key) throws UnsupportedEncodingException, NoSuchAlgorithmException {
+    public Path getKeyPath(String key) throws UnsupportedEncodingException, NoSuchAlgorithmException {
         Utils.assets(Utils.CheckNull(key), "key 不能为空");
         //路径的特殊字符需要处理掉
         key = key.replaceAll(":", "_");
@@ -184,16 +184,5 @@ public class LocalFileManager {
 
         return p.resolve(key);
     }
-
-        /*
-    *https://frps-05.hotdoc.fun/browser
-    * 代码参考 https://zhuanlan.zhihu.com/p/654273720
-    * //最低java8
-<dependency>
-    <groupId>io.minio</groupId>
-    <artifactId>minio</artifactId>
-    <version>8.5.7</version>
-</dependency>
-    * */
 
 }
