@@ -105,6 +105,11 @@ public class NettyStaticFileHandler extends SimpleChannelInboundHandler<FullHttp
 
     @Override
     public void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
+        File file = null;
+        if(this.server.fileFilter != null) {
+            this.server.fileFilter.getFile(request.uri(), request);
+        }
+
         if(this.server.fileFilter != null && this.server.fileFilter.before(request)) {
             sendError(ctx, request, HttpResponseStatus.NOT_FOUND, this.server.getCharset());
             return;
@@ -120,9 +125,10 @@ public class NettyStaticFileHandler extends SimpleChannelInboundHandler<FullHttp
             return;
         }
 
-        final String uri = request.uri();
-
-        File file = sanitizeUri(uri);
+        if(file == null) {
+            final String uri = request.uri();
+            file = sanitizeUri(uri);
+        }
         if(file == null) {
             sendError(ctx, request, HttpResponseStatus.NOT_FOUND, this.server.getCharset());
             return;

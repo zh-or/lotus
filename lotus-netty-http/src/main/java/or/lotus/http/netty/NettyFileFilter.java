@@ -15,4 +15,9 @@ public abstract class NettyFileFilter {
     public boolean request(File file, FullHttpRequest request, HttpResponse response) {
         return false;
     }
+
+    /**处理本地文件之前调用, 如果此方法返回了file对象则直接返回给客户端*/
+    public File getFile(String path, FullHttpRequest request) {
+        return null;
+    }
 }
