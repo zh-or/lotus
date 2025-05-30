@@ -52,7 +52,6 @@
         <module>lotus-mybatis-generator</module>
         <module>lotus-wx</module>
         <module>lotus-orm</module>
-        <module>lotus-orm-check</module>
         <module>lotus-v8</module>
     </modules>
 

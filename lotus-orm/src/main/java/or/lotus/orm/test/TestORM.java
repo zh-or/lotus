@@ -1,4 +1,4 @@
-package test;
+package or.lotus.orm.test;
 
 import or.lotus.core.common.DateUtils;
 import or.lotus.orm.db.*;
