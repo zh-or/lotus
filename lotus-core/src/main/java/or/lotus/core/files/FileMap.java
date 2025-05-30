@@ -14,18 +14,18 @@ import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.atomic.AtomicLong;
 
 /** 本地kv存储 */
-public class LocalFileManager {
-    protected static Logger log = LoggerFactory.getLogger(LocalFileManager.class);
+public class FileMap {
+    protected static Logger log = LoggerFactory.getLogger(FileMap.class);
     protected String basePath;
     protected long maxLocalSize;
     protected AtomicLong nowSize;
     protected String charset;
 
-    public LocalFileManager(String basePath, String charset) {
+    public FileMap(String basePath, String charset) {
         this(basePath, Utils.formatSize("10GB"), charset);
     }
 
-    public LocalFileManager(String basePath, long maxLocalSize, String charset) {
+    public FileMap(String basePath, long maxLocalSize, String charset) {
         this.basePath = basePath;
         this.maxLocalSize = maxLocalSize;
         this.nowSize = new AtomicLong(0l);
