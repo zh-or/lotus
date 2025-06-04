@@ -491,7 +491,9 @@ public class DatabaseExecutor<T> {
              PreparedStatement ps = conn.prepareStatement(sql);
         ) {
             boolean isAuto = conn.getAutoCommit();
-            conn.setAutoCommit(false);
+            if(!db.isInTransaction()) {
+                conn.setAutoCommit(false);
+            }
 
             ArrayList<Object> insertParams = new ArrayList<>(20);
             String primaryKey = config.getPrimaryKeyName();
@@ -522,8 +524,10 @@ public class DatabaseExecutor<T> {
             }
 
             int[] updateCounts = ps.executeBatch();
-            conn.commit();
-            conn.setAutoCommit(isAuto);
+            if(!db.isInTransaction()) {
+                conn.commit();
+                conn.setAutoCommit(isAuto);
+            }
             updateCount = Arrays.stream(updateCounts).sum();
 
             return updateCount;
@@ -569,7 +573,9 @@ public class DatabaseExecutor<T> {
              PreparedStatement ps = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS);
         ) {
             boolean isAuto = conn.getAutoCommit();
-            conn.setAutoCommit(false);
+            if(!db.isInTransaction()) {
+                conn.setAutoCommit(false);
+            }
 
             ArrayList<Object> insertParams = new ArrayList<>(20);
             String primaryKey = config.getPrimaryKeyName();
@@ -599,8 +605,10 @@ public class DatabaseExecutor<T> {
             }
 
             int[] updateCounts = ps.executeBatch();
-            conn.commit();
-            conn.setAutoCommit(isAuto);
+            if(!db.isInTransaction()) {
+                conn.commit();
+                conn.setAutoCommit(isAuto);
+            }
             updateCount = Arrays.stream(updateCounts).sum();
 
             rs = ps.getGeneratedKeys();

@@ -121,6 +121,12 @@ public class Database {
         return connection;
     }
 
+    /** 当前是否在事务范围内 */
+    public boolean isInTransaction() {
+        Connection connection = transactionConnection.get();
+        return connection != null;
+    }
+
     /**事物一定要调用close
      * 通常用法
      * try(Transaction transaction = db.beginTransaction()) {
