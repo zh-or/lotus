@@ -394,8 +394,12 @@ public abstract class RestfulContext {
     protected ArrayList<BeanSortWrap> tmpBeanList = new ArrayList<>();
     protected ArrayList<Object> tmpControllers = new ArrayList<>();
 
-    /** 手动注册Bean */
     public RestfulContext addBean(Object bean) {
+        return addBean(bean, 0);
+    }
+
+    /** 手动注册Bean */
+    public RestfulContext addBean(Object bean, int order) {
         Class<?> clazz = bean.getClass();
         Method[] ms = clazz.getMethods();
 
@@ -409,7 +413,7 @@ public abstract class RestfulContext {
         Bean b = clazz.getAnnotation(Bean.class);
 
         if(b == null) {
-            tmpBeanList.add(new BeanSortWrap(bean, clazz.getName(), 0, initBean));
+            tmpBeanList.add(new BeanSortWrap(bean, clazz.getName(), order, initBean));
         } else {
             String name = b.value();
             if(Utils.CheckNull(name)) {
@@ -421,7 +425,11 @@ public abstract class RestfulContext {
     }
 
     public RestfulContext addBean(String name, Object bean) {
-        tmpBeanList.add(new BeanSortWrap(bean, name, 0, null));
+        return addBean(name, bean, 0);
+    }
+
+    public RestfulContext addBean(String name, Object bean, int order) {
+        tmpBeanList.add(new BeanSortWrap(bean, name, order, null));
         return this;
     }
 
