@@ -6,6 +6,7 @@ public enum PostBodyType {
     URLENCODED("application/x-www-form-urlencoded"),
     MULTIPART("multipart/form-data"),
     JSON("application/json"),
+    TEXT("text/html"),
     XML("application/xml");
 
     private String type;

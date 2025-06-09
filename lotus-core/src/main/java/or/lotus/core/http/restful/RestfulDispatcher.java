@@ -133,7 +133,8 @@ public class RestfulDispatcher {
 
                     if(Utils.CheckNull(name)) {
                         /** post-> json 直接转换为对象 */
-                        if(reqMethod == RestfulHttpMethod.POST && request.getPostBodyType() == PostBodyType.JSON) {
+                        PostBodyType contentType = request.getPostBodyType();
+                        if(reqMethod == RestfulHttpMethod.POST && (contentType == PostBodyType.JSON || contentType == PostBodyType.TEXT)) {
                             String bodyString = request.getBodyString();
                             if(Utils.CheckNull(bodyString)) {
                                 return null;
