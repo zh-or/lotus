@@ -357,24 +357,20 @@ public abstract class JdbcUtils {
 
         return false;
     }
+
     /**
-     * 默认以utf-8读取文件内容
+     * 默认以utf-8读取文件内容, 内容支持 段落, 示例:
+     * #userById
+     * select * from user where id = ?
+     *
+     * #userByName
+     * select * from user where name = ?
+     *
      * maven 打包需要注意在pom.xml 配置把resources的文件打包到jar中, 不配置默认不会打包, 永远找不到文件
-     * @param path 不要以 / 开头,
+     * @param path 不要以 / 开头, path结尾可以跟上 #name
      * */
     public static String sqlFromResources(String path) throws IOException {
         return sqlFromResources(path, "UTF-8");
-    }
-
-
-
-    /**
-     * 默认以utf-8读取文件内容
-     * maven 打包需要注意在pom.xml 配置把resources的文件打包到jar中, 不配置默认不会打包, 永远找不到文件
-     * @param path 不要以 / 开头,
-     * */
-    public static String sqlFromResources(String path, Object ...params) throws IOException {
-        return sqlFromResources(path, "UTF-8", params);
     }
 
     public static ConcurrentHashMap<String, String> resourcesSqlCache = new ConcurrentHashMap<>();
@@ -382,40 +378,44 @@ public abstract class JdbcUtils {
      * maven 打包需要注意在pom.xml 配置把resources的文件打包到jar中, 不配置默认不会打包, 永远找不到文件
      * @param path 不要以 / 开头,
      * */
-    public static String sqlFromResources(String path, String charsetName, Object ...params) throws IOException {
+    public static String sqlFromResources(String path, String charsetName) throws IOException {
         String sqlStr = resourcesSqlCache.get(path);
 
         if(Utils.CheckNull(sqlStr)) {
+
+            int sp = path.indexOf("#");
+            String name = null, newPath = path;
+            if(sp != -1) {
+                name = path.substring(sp);
+                newPath = path.substring(0, sp);
+            }
+
             ClassLoader cl = Thread.currentThread().getContextClassLoader();
-            try(InputStream in = cl.getResourceAsStream(path)) {
+            try(InputStream in = cl.getResourceAsStream(newPath)) {
                 byte[] bytes = new byte[in.available()];
                 in.read(bytes);
                 sqlStr = new String(bytes, charsetName);
+
+                if(name != null) {
+                    sp = sqlStr.indexOf(name);
+                    if(sp == -1) {
+                        throw new RuntimeException("sql:" + path + " 中未找到 " + name);
+                    }
+                    sp += name.length();
+                    int end = sqlStr.indexOf("#", sp + 1);
+                    if(end == -1) {
+                        end = sqlStr.length() - 1;
+                        end = Math.max(end, sp);
+                    }
+                    sqlStr = sqlStr.substring(sp, end);
+                }
+
                 resourcesSqlCache.put(path, sqlStr);
             }
         }
-        if(params.length <= 0) {
-            return sqlStr;
-        }
-        StringBuilder sb = new StringBuilder(sqlStr.length() + 100);
-
-        int len = sqlStr.length();
-        int i = 0;
-        int paramIndex = 0;
-        do {
-            char v = sqlStr.charAt(i);
-            if(v == '{') {
-                sb.append(params[paramIndex].toString());
-                i++;
-            } else {
-                sb.append(v);
-            }
-            i++;
-            if(i >= len) {
-                break;
-            }
-        } while(true);
-
-        return sb.toString();
+        return sqlStr;
     }
+
+
+
 }

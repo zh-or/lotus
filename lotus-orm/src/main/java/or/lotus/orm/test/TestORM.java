@@ -26,6 +26,13 @@ import java.util.Map;
 public class TestORM {
     static final Logger log = LoggerFactory.getLogger(TestORM.class);
     public static void main(String[] args) throws Exception {
+        testSqlRes();
+    }
+
+    public static void testSqlRes() {
+    }
+
+    public static void testDs() throws Exception {
         DataSourceConfig config = new DataSourceConfig("jdbc:mysql://127.0.0.1:3306/test", "root", "123456");
         //DataSourceConfig config = new DataSourceConfig("jdbc:mysql://192.168.1.3:3306/test", "root", "");
 
