@@ -116,21 +116,27 @@ public class DatabaseExecutor<T> {
 
     /**left like right*/
     public DatabaseExecutor<T> whereLike(Object left, Object right) {
-       return whereLike(left, right, false);
+        return whereLike(left, right, false);
+    }
+
+    /**left like right*/
+    public DatabaseExecutor<T> whereLike(Object left, Object right, boolean addPs) {
+        return whereLike(left, right, addPs, false);
     }
 
     /**left like right
      * @param ifRightNotEmpty 如果为true则增加空判断, 如果为空则不加入条件
      * */
-    public DatabaseExecutor<T> whereLike(Object left, Object right, boolean ifRightNotEmpty) {
-        return whereLike(null, left, right, ifRightNotEmpty);
+    public DatabaseExecutor<T> whereLike(Object left, Object right, boolean addPs, boolean ifRightNotEmpty) {
+        return whereLike(null, left, right, addPs, ifRightNotEmpty);
     }
 
     /**left like right
      * @param before 如果 right 不为空, 并且 before不为空 则添加在 like前面, 用于多条件时使用
+     * @param  addPs right两边添加%
      * @param ifRightNotEmpty 如果为true则增加空判断, 如果为空则不加入条件
      * */
-    public DatabaseExecutor<T> whereLike(WhereItem before, Object left, Object right, boolean ifRightNotEmpty) {
+    public DatabaseExecutor<T> whereLike(WhereItem before, Object left, Object right, boolean addPs, boolean ifRightNotEmpty) {
         if(ifRightNotEmpty) {
             if(right == null) {
                 return this;
@@ -144,7 +150,11 @@ public class DatabaseExecutor<T> {
             builder.addWhere(before);
         }
         builder.addWhere(WhereItem.like(left, "?"));
-        whereParams.add(right);
+        if(addPs) {
+            whereParams.add("%" + right + "%");
+        } else {
+            whereParams.add(right);
+        }
         return this;
     }
 
