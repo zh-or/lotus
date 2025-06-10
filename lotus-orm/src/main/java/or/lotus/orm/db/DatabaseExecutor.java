@@ -73,6 +73,13 @@ public class DatabaseExecutor<T> {
         return this;
     }
 
+    /** 指定索引 */
+    public DatabaseExecutor<T> useIndex(String... indexs) {
+        builder.useIndex(indexs);
+        return this;
+    }
+
+
     public DatabaseExecutor<T> params(Object ...ps) {
         for(Object p : ps) {
             Class<?> paramType = p.getClass();

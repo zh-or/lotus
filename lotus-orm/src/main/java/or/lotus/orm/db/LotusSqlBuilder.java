@@ -18,6 +18,8 @@ public class LotusSqlBuilder {
     /**key = params的下标(不算默认值)*/
     SparseArray<String> sqlHolder = new SparseArray<>(16);
 
+    ArrayList<String> indexs = new ArrayList<>(10);
+
     int limitStart = -1;
     int limitSize = -1;
     String table;
@@ -55,6 +57,12 @@ public class LotusSqlBuilder {
         limitSize = size;
     }
 
+    public void useIndex(String ...index) {
+        for(String i : index) {
+            indexs.add(i);
+        }
+    }
+
     public void addDefFields(String ...fs) {
         for(String f : fs) {
             defFields.add(f);
@@ -82,7 +90,11 @@ public class LotusSqlBuilder {
         sb.append(countField);
         sb.append(") from ");
         sb.append(table);
-
+        if(indexs.size() > 0) {
+            sb.append(" use index(");
+            sb.append(String.join(",", indexs));
+            sb.append(") ");
+        }
         buildWhere(sb);
         return sb.toString();
     }
@@ -106,7 +118,13 @@ public class LotusSqlBuilder {
 
         sql.append(" from ");
         sql.append(table);
-        sql.append(" ");
+        if(indexs.size() > 0) {
+            sql.append(" use index(");
+            sql.append(String.join(",", indexs));
+            sql.append(") ");
+        } else {
+            sql.append(" ");
+        }
         buildComSql(sql);
         return sql.toString();
     }
