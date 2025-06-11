@@ -44,6 +44,10 @@ public class LotusSqlBuilder {
         sqlHolder.put(key, value);
     }
 
+    public int whereSize() {
+        return wheres.size();
+    }
+
     public void addWhere(WhereItem item) {
         wheres.add(item);
     }

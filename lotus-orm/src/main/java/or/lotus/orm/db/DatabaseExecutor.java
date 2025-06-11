@@ -146,7 +146,7 @@ public class DatabaseExecutor<T> {
                 return this;
             }
         }
-        if(before != null) {
+        if(before != null && builder.whereSize() > 0) {
             builder.addWhere(before);
         }
         builder.addWhere(WhereItem.like(left, "?"));
@@ -196,7 +196,7 @@ public class DatabaseExecutor<T> {
                 return this;
             }
         }
-        if(before != null) {
+        if(before != null && builder.whereSize() > 0) {
             builder.addWhere(before);
         }
         builder.addWhere(WhereItem.not(left, "?"));
@@ -228,7 +228,7 @@ public class DatabaseExecutor<T> {
                 return this;
             }
         }
-        if(before != null) {
+        if(before != null && builder.whereSize() > 0) {
             builder.addWhere(before);
         }
         builder.addWhere(WhereItem.eq(left, "?"));
@@ -262,7 +262,7 @@ public class DatabaseExecutor<T> {
                 return this;
             }
         }
-        if(before != null) {
+        if(before != null && builder.whereSize() > 0) {
             builder.addWhere(before);
         }
         builder.addWhere(WhereItem.lt(left, "?"));
@@ -296,7 +296,7 @@ public class DatabaseExecutor<T> {
                 return this;
             }
         }
-        if(before != null) {
+        if(before != null && builder.whereSize() > 0) {
             builder.addWhere(before);
         }
         builder.addWhere(WhereItem.gt(left, "?"));
