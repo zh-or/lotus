@@ -34,7 +34,15 @@ public class DatabaseExecutor<T> {
         if(clazz == null) {
             builder = new LotusSqlBuilder(db, "unknow");
         } else {
-            builder = new LotusSqlBuilder(db, JdbcUtils.convertPropertyNameToUnderscoreName(clazz.getSimpleName()));
+            Table reTable = clazz.getAnnotation(Table.class);
+            String tabName;
+            if(reTable != null) {
+                tabName = reTable.tableName();
+            } else {
+                tabName = JdbcUtils.convertPropertyNameToUnderscoreName(clazz.getSimpleName());
+            }
+
+            builder = new LotusSqlBuilder(db, tabName);
         }
     }
 
