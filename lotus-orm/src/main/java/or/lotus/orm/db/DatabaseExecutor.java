@@ -37,7 +37,7 @@ public class DatabaseExecutor<T> {
             Table reTable = clazz.getAnnotation(Table.class);
             String tabName;
             if(reTable != null) {
-                tabName = reTable.tableName();
+                tabName = reTable.value();
             } else {
                 tabName = JdbcUtils.convertPropertyNameToUnderscoreName(clazz.getSimpleName());
             }
