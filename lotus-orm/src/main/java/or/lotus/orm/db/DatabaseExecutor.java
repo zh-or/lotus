@@ -25,6 +25,8 @@ public class DatabaseExecutor<T> {
     ArrayList<Object> params = new ArrayList<>(20);
     ArrayList<Object> whereParams = new ArrayList<>(20);
 
+    long startTime;
+
     public DatabaseExecutor(Database db, SqlMethod m, Class<T> clazz, Object object) {
         this.db = db;
         this.config = db.getConfig();
@@ -44,6 +46,7 @@ public class DatabaseExecutor<T> {
 
             builder = new LotusSqlBuilder(db, tabName);
         }
+        startTime = System.currentTimeMillis();
     }
 
     public LotusSqlBuilder getSqlBuilder() {
@@ -385,15 +388,24 @@ public class DatabaseExecutor<T> {
 
     public int execute() throws SQLException {
 
-        switch (sqlMethod) {
-            case SELECT: return (int) findCount();
-            case INSERT: return runInsert(builder.buildInsert());
-            case INSERT_BATCH: return runInsertBatch(builder.buildInsert(), (List<Object>) object);
-            case UPDATE: return runUpdate(builder.buildUpdate());
-            case UPDATE_BATCH: return runUpdateBatch(builder.buildUpdate(), (List<Object>) object);
-            case DELETE: return runDelete(builder.buildDelete());
-        }
+        try {
+            switch (sqlMethod) {
+                case SELECT: return (int) findCount();
+                case INSERT: return runInsert(builder.buildInsert());
+                case INSERT_BATCH: return runInsertBatch(builder.buildInsert(), (List<Object>) object);
+                case UPDATE: return runUpdate(builder.buildUpdate());
+                case UPDATE_BATCH: return runUpdateBatch(builder.buildUpdate(), (List<Object>) object);
+                case DELETE: return runDelete(builder.buildDelete());
+            }
 
+        } catch (SQLException e) {
+            throw e;
+        } finally {
+            long t = System.currentTimeMillis() - startTime;
+            if(config.isPrintSlowSqlStack() && t > config.getSlowSqlTime()) {
+                printSql(builder.toString(), t + "ms - slow sql");
+            }
+        }
         return 0;
     }
 
@@ -841,41 +853,46 @@ public class DatabaseExecutor<T> {
 
     private void printSqlLog(String sql) {
         if(config.isPrintSqlLog()) {
-            StringBuilder sb = new StringBuilder(2048);
-            sb.append("\n┌================================== Lotus ORM ===========================================");
-            if(config.isPrintStack()) {
-                StackTraceElement stack[] = Thread.currentThread().getStackTrace();
-                String printStackPackagePrefix = config.getPrintStackPackagePrefix();
-                boolean foundPrefix = false;
-                for(int i = 1; i < stack.length; i++) {
-                    if(printStackPackagePrefix != null) {
-                        if(stack[i].getClassName().startsWith(printStackPackagePrefix)) {
-                            foundPrefix = true;
-                            sb.append("\n\t");
-                            sb.append(stack[i].toString());
-                        } else if(foundPrefix) {
-                            //如果遇到了其他包则跳出循环, 以免误导(堆栈会和实际链路不一样)
-                            break;
-                        }
-                    } else if(!stack[i].getClassName().startsWith("lotus.or.orm.db")) {
+            printSql(sql, null);
+        }
+    }
+
+    private void printSql(String sql, String title) {
+        StringBuilder sb = new StringBuilder(2048);
+        sb.append("\n┌================================== ");
+        sb.append(Utils.CheckNull(title) ? "Lotus ORM" : title);
+        sb.append(" ===========================================");
+        if(config.isPrintStack()) {
+            StackTraceElement stack[] = Thread.currentThread().getStackTrace();
+            String printStackPackagePrefix = config.getPrintStackPackagePrefix();
+            boolean foundPrefix = false;
+            for(int i = 1; i < stack.length; i++) {
+                if(printStackPackagePrefix != null) {
+                    if(stack[i].getClassName().startsWith(printStackPackagePrefix)) {
+                        foundPrefix = true;
                         sb.append("\n\t");
                         sb.append(stack[i].toString());
+                    } else if(foundPrefix) {
+                        //如果遇到了其他包则跳出循环, 以免误导(堆栈会和实际链路不一样)
+                        break;
                     }
+                } else if(!stack[i].getClassName().startsWith("lotus.or.orm.db")) {
+                    sb.append("\n\t");
+                    sb.append(stack[i].toString());
                 }
             }
-
-            sb.append("\n\tSQL ===> ");
-            sb.append(sql);
-            sb.append("\n\tbind(");
-            sb.append(params);
-            sb.append(" ");
-            sb.append(whereParams);
-            sb.append(" )");
-
-            sb.append("\n└========================================================================================\n");
-            log.debug(sb.toString());
         }
 
+        sb.append("\n\tSQL ===> ");
+        sb.append(sql);
+        sb.append("\n\tbind(");
+        sb.append(params);
+        sb.append(" ");
+        sb.append(whereParams);
+        sb.append(" )");
+
+        sb.append("\n└========================================================================================\n");
+        log.debug(sb.toString());
     }
 
     private void setParamsToStatement(PreparedStatement ps, List<Object> params) throws SQLException {

@@ -270,4 +270,9 @@ public class LotusSqlBuilder {
         }
     }
 
+    @Override
+    public String toString() {
+        //返回最后的sql
+        return sql.toString();
+    }
 }
