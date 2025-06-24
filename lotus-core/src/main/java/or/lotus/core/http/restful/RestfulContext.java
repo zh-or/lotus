@@ -84,22 +84,40 @@ public abstract class RestfulContext {
         tmpBeanList.sort(Comparator.comparingInt(BeanSortWrap::getSort).reversed());
 
         beansCache.put(this.getClass().getName(), this);
-
+        //1. 先直接把bean全部加入
         for(BeanSortWrap tmp : tmpBeanList) {
-            beansCache.put(tmp.name, tmp.obj);
+            if(!tmp.useReturn) {
+                beansCache.put(tmp.name, tmp.obj);
+            }
+        }
+        //2. 初始化 返回的bean
+        for(BeanSortWrap tmp : tmpBeanList) {
+            RestfulUtils.injectBeansToObject(this, tmp.obj);
+            if(tmp.useReturn) {
+                if(tmp.method == null) {
+                    throw new RuntimeException(tmp.name + " 没有对应的方法");
+                }
+                //通过返回值创建bean
+                Object obj = RestfulUtils.injectPropAndInvokeMethod(this, tmp.obj, tmp.method);
+                tmp.obj = obj;
+                beansCache.put(tmp.name, obj);
+            }
         }
 
         for(BeanSortWrap tmp : tmpBeanList) {
             RestfulUtils.injectBeansToObject(this, tmp.obj);
 
-            if(tmp.method != null) {
-                Object obj = RestfulUtils.injectPropAndInvokeMethod(this, tmp.obj, tmp.method);
+            //initBean 方法
+            if(tmp.method != null && !tmp.useReturn) {
+                RestfulUtils.injectPropAndInvokeMethod(this, tmp.obj, tmp.method);
+
+                /*Object obj = RestfulUtils.injectPropAndInvokeMethod(this, tmp.obj, tmp.method);
                 if(obj != null && tmp.useReturn) {
                     // addBeansFromMethodReturn 方法的返回值
                     beansCache.put(tmp.name, obj);
                     //先注入bean, 再执行方法
                     RestfulUtils.injectBeansToObject(this, obj);
-                }
+                }*/
             }
         }
 
@@ -450,7 +468,7 @@ public abstract class RestfulContext {
                 if(b != null) {
                     Constructor constructor = c.getDeclaredConstructor();
                     constructor.setAccessible(true);
-                    addBean(constructor.newInstance());
+                    addBean(constructor.newInstance(), b.order());
                 }
             }
         }
