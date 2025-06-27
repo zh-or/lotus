@@ -20,12 +20,22 @@ public class SensitiveWordFilter {
     private final static char[] skip = new char[] { // 遇到这些字符就会跳过，例如,如果"AB"是敏感词，那么"A B","A=B"也会被屏蔽
             ' ', '!', '*', '-', '+', '_', '=', ',', '.', '@'
     };
+    private File lastFile;
+
+    public void reloadFile() throws Exception {
+        if(lastFile != null) {
+            load(lastFile);
+        } else {
+            throw new Exception("只有通过file加载的才能再次调用");
+        }
+    }
 
     /**
      * 加载敏感词txt文件，每个敏感词独占一行，不可出现空格，空行，逗号等非文字内容,必须使用UTF-8编码
      * 有读写锁, 可运行时重新加载敏感词
      */
     public void load(File file) throws IOException {
+        lastFile = file;
         List<String> list = Files.readAllLines(file.toPath(), Charset.forName("utf-8"));
         Set<String> set = new HashSet<>();
         List<String> nList = new ArrayList<>(list.size());
@@ -95,6 +105,7 @@ public class SensitiveWordFilter {
     public WordFilterResult filter(String text, char rep) {
         WordFilterResult res = new WordFilterResult();
         rlock.lock();
+
         try {
             if (wordList == null || wordList.size() == 0) {
                 return res.setResult(text);
