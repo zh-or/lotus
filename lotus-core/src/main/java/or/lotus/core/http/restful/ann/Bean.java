@@ -16,4 +16,7 @@ public @interface Bean {
 
     /** 交叉引用时需要明确哪个 bean 先加载, 数值大的优先加载 */
     int order() default 0;
+
+    /** bean初始化方法, 初始化时会先调用此名字的方法 */
+    String initMethod() default "";
 }

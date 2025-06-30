@@ -421,15 +421,19 @@ public abstract class RestfulContext {
         Class<?> clazz = bean.getClass();
         Method[] ms = clazz.getMethods();
 
+        Bean b = clazz.getAnnotation(Bean.class);
+        String initBeanName = b == null ? null : b.initMethod();
+        if(Utils.CheckNull(initBeanName)) {
+            initBeanName = initBeanMethodName;
+        }
+
         Method initBean = null;
         for(Method m : ms) {
-            if(initBeanMethodName.equals(m.getName())) {
+            if(initBeanName.equals(m.getName())) {
                 initBean = m;
                 break;
             }
         }
-        Bean b = clazz.getAnnotation(Bean.class);
-
         if(b == null) {
             tmpBeanList.add(new BeanSortWrap(bean, clazz.getName(), order, initBean));
         } else {
@@ -439,6 +443,8 @@ public abstract class RestfulContext {
             }
             tmpBeanList.add(new BeanSortWrap(bean, name, b.order(), initBean));
         }
+
+
         return this;
     }
 
