@@ -415,6 +415,7 @@ public class Database implements AutoCloseable {
     private Runnable queueRunner = new Runnable() {
         @Override
         public void run() {
+            //todo 需要修改为批量插入
             List<InertQueueObj> tmpList = new ArrayList<>(100);
             while(isRun || queue.size() > 0) {
                 try {
