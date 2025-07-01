@@ -14,6 +14,8 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 约定:
@@ -23,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *  4. bean的字段不要用基本数据类型, 全部使用包装类型 比如 int => Integer
  *
  * */
-public class Database {
+public class Database implements AutoCloseable {
     static final Logger log = LoggerFactory.getLogger(Database.class);
     ConcurrentHashMap<String, DataSource> dataSources = null;
     String name = "default";
@@ -32,12 +34,18 @@ public class Database {
 
     static final ThreadLocal<Connection> transactionConnection = new ThreadLocal<Connection>();
 
+    protected Thread queueThread;
+    protected boolean isRun = true;
+
     public Database() {
+        queueThread =  new Thread(queueRunner, "lotus-orm queue thread");
+        queueThread.start();
     }
 
     /**如果每个DataSource的close方法不一样就多多调用几次, 数据源被关闭后将被移除注册*/
     public void close(String dataSourceCloseMethodName, Object ... args) {
         Utils.assets(dataSourceCloseMethodName, "dataSourceCloseMethodName is null");
+
         if(dataSources != null) {
             for(Map.Entry<String, DataSource> entry : dataSources.entrySet()) {
                 try {
@@ -384,5 +392,77 @@ public class Database {
         exec.fieldList(fieldNames);
 
         return exec.execute();
+    }
+
+    LinkedBlockingQueue<InertQueueObj> queue = new LinkedBlockingQueue();
+
+    /**
+     * 插入到一个队列, 不会在当前线程执行插入
+     * @return 返回当前队列大小*/
+    public int insertToQueue(Object obj) {
+        queue.add(new InertQueueObj(obj));
+        return queue.size();
+    }
+
+    /**
+     * 插入到一个队列, 不会在当前线程执行插入
+     * @return 返回当前队列大小*/
+    public int insertToQueue(InertQueueObj obj) {
+        queue.add(obj);
+        return queue.size();
+    }
+
+    private Runnable queueRunner = new Runnable() {
+        @Override
+        public void run() {
+            List<InertQueueObj> tmpList = new ArrayList<>(100);
+            while(isRun || queue.size() > 0) {
+                try {
+                    do {
+                        InertQueueObj obj = queue.poll(1, TimeUnit.SECONDS);
+                        if(obj != null) {
+                            tmpList.add(obj);
+                        } else {
+                            break;
+                        }
+                    } while(true);
+                } catch (InterruptedException e) {
+                } catch (Exception e) {
+                    log.error("从队列保存到数据库出错:", e);
+                }
+
+                if(tmpList.size() > 0) {
+                    InertQueueObj lastObj = null;
+                    try(Transaction transaction = beginTransaction()) {
+                        for(InertQueueObj obj : tmpList) {
+                            lastObj = obj;
+                            int r = insert(obj.obj);
+                            if(obj.callback != null) {
+                                if(r > 0) {
+                                    obj.callback.success(obj.obj);
+                                } else {
+                                    obj.callback.fail(new Exception("插入操作返回的 0"));
+                                }
+                            }
+                        }
+                        transaction.commit();
+                    } catch (SQLException e) {
+                        if(lastObj != null && lastObj.callback != null) {
+                            lastObj.callback.fail(e);
+                        } else {
+                            log.error("队列批量插入失败!");
+                        }
+                    }
+                    tmpList.clear();
+                }
+            }
+        }
+    };
+
+    @Override
+    public void close() throws Exception {
+        isRun = false;
+        queueThread.interrupt();
+        queueThread.join();
     }
 }
