@@ -352,6 +352,26 @@ public class DatabaseExecutor<T> {
         return this;
     }
 
+    public DatabaseExecutor<T> where(WhereItem before, WhereItem where, boolean ifRightNotEmpty) throws SQLException {
+        if(ifRightNotEmpty) {
+            if(where.v == null) {
+                return this;
+            }
+
+            if(where.v instanceof String && Utils.CheckNull((String) where.v)) {
+                return this;
+            }
+        }
+        if(before != null && builder.whereSize() > 0) {
+            builder.addWhere(before);
+        }
+
+        whereParams.add(where.v);
+        where.v = "?";
+        builder.addWhere(where);
+        return this;
+    }
+
     /**如果受影响行数小于 1 则抛出异常*/
     public void executeOrError() throws SQLException {
         executeOrError(1);
