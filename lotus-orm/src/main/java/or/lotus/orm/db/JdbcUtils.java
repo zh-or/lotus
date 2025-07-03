@@ -372,7 +372,8 @@ public abstract class JdbcUtils {
     public static String sqlFromResources(String path) throws IOException {
         return sqlFromResources(path, "UTF-8");
     }
-
+    /** 路径中的分割符, 用 '?' 可以支持ctl+单击跳到文件*/
+    public static String pathSplit = "?";
     public static ConcurrentHashMap<String, String> resourcesSqlCache = new ConcurrentHashMap<>();
     /**
      * maven 打包需要注意在pom.xml 配置把resources的文件打包到jar中, 不配置默认不会打包, 永远找不到文件
@@ -383,7 +384,7 @@ public abstract class JdbcUtils {
 
         if(Utils.CheckNull(sqlStr)) {
 
-            int sp = path.indexOf("#");
+            int sp = path.indexOf(pathSplit);
             String name = null, newPath = path;
             if(sp != -1) {
                 name = path.substring(sp);
@@ -402,7 +403,7 @@ public abstract class JdbcUtils {
                         throw new RuntimeException("sql:" + path + " 中未找到 " + name);
                     }
                     sp += name.length();
-                    int end = sqlStr.indexOf("#", sp + 1);
+                    int end = sqlStr.indexOf(pathSplit, sp + 1);
                     if(end == -1) {
                         end = sqlStr.length() - 1;
                         end = Math.max(end, sp);
