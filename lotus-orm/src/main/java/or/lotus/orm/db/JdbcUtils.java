@@ -374,6 +374,7 @@ public abstract class JdbcUtils {
     }
     /** 路径中的分割符, 用 '?' 可以支持ctl+单击跳到文件*/
     public static String pathSplit = "?";
+    public static String sqlNameStart = "#";
     public static ConcurrentHashMap<String, String> resourcesSqlCache = new ConcurrentHashMap<>();
     /**
      * maven 打包需要注意在pom.xml 配置把resources的文件打包到jar中, 不配置默认不会打包, 永远找不到文件
@@ -387,7 +388,7 @@ public abstract class JdbcUtils {
             int sp = path.indexOf(pathSplit);
             String name = null, newPath = path;
             if(sp != -1) {
-                name = path.substring(sp);
+                name = sqlNameStart + path.substring(sp + 1);
                 newPath = path.substring(0, sp);
             }
 
@@ -396,14 +397,32 @@ public abstract class JdbcUtils {
                 byte[] bytes = new byte[in.available()];
                 in.read(bytes);
                 sqlStr = new String(bytes, charsetName);
+                //删除注释
+                StringBuilder sb = new StringBuilder(sqlStr.length());
+                int state = 0;
+                for(char c : sqlStr.toCharArray()) {
+                    if(c == '-') {
+                        state ++;
 
+                        if(state == 2) {
+                            sb.deleteCharAt(sb.length() - 1);
+                        }
+
+                    } else if((c == '\r' || c == '\n') && state == 2) {
+                        state = 0;
+                    }
+                    if(state < 2) {
+                        sb.append(c);
+                    }
+                }
+                sqlStr = sb.toString();
                 if(name != null) {
                     sp = sqlStr.indexOf(name);
                     if(sp == -1) {
                         throw new RuntimeException("sql:" + path + " 中未找到 " + name);
                     }
                     sp += name.length();
-                    int end = sqlStr.indexOf(pathSplit, sp + 1);
+                    int end = sqlStr.indexOf(sqlNameStart, sp + 1);
                     if(end == -1) {
                         end = sqlStr.length() - 1;
                         end = Math.max(end, sp);
