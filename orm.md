@@ -1,4 +1,45 @@
-## 注意目前只支持可mysql
+## 注意目前只测试mysql
+
+## 约定
+1. 所有表的主键统一, 名称设置方法`dataSourceConfig.setPrimaryKeyName("id");`
+2. 默认表名为类名 User -> user, UserOrder -> user_order, 如果不对应则使用 `@Table` 注解注明
+3. 一对多查询&一对一查询 使用注解 `@ToMany` 
+4. `@ToMany` 的 `prefix` 对应的实体类的字段不要添加该前缀
+
+## `@ToMany` 注解使用说明 实体类对应注解与sql, 表: user, attachments, tweet
+
+1. @ToMany -> columns 对应类的属性名称
+2. @ToMany -> primaryKeys 对应主键名称, 该字段用于解析查询结果集时处理一对多一对一关系
+3. @ToMany -> prefix 一对多或一对一的字段的前缀, 实体类的字段不要有该前缀, 会自动处理 
+
+```java
+@ToMany(columns = {"attachments", "user"}, primaryKeys = {"atth_id", "user_id"}, prefix = {"atth_", "u_"})
+class Tweet {
+    String content;
+    
+    User user;
+    
+    List<Atth> attachments;
+    getter... 
+    setter...
+}
+```
+
+```sql
+
+SELECT
+a.*,
+b.id as atth_id,
+b.atth_data as atth_atth_data,
+u.id as u_id,
+u.nickname as u_nickname,
+
+FROM tweet AS a 
+LEFT JOIN attachments AS b ON b.tweet_id = a.id
+LEFT JOIN `user` as u ON u.id = a.user_id
+
+```
+
 ## 使用方法
 1. 创建配置
 ```java
@@ -72,5 +113,18 @@ db.select(User.class).whereEq("id", 1).findPage(1, 10);
 db.selectDto(User.class, "select a.xx, b.cc from xx");
 db.selectList(User.class, "select * from xx");
 ```
+
+> 如果sql很长可使用`JdbcUtils.sqlFromResources("file.sql?marker")`读取`resources`文件夹下的文件 `#marker` 后面的sql<br>
+> 路径后面的问号表示标记<br>
+> 文件支持`-- 注释`
+
+file.sql
+```sql
+#marker
+--#号开始表示标记开始 两个减号开始表示注释开始, 注释到换行符结束
+select * from user where id = ?
+```
+
+
 
 ## 其他方法可查看 `DatabaseExecutor` 类
