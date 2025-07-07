@@ -56,6 +56,11 @@ public class NettyHttpServer extends RestfulContext {
         if(Utils.CheckNull(wsPathPrefix)) {
             throw new RuntimeException("由于netty规则的原因需要设置一个前缀");
         }
+
+        if(!webSocketMessageHandler.getPath().startsWith(wsPathPrefix)) {
+            throw new RuntimeException("handler的前缀和 wsPathPrefix 不符");
+        }
+
         //tmpControllers.add(webSocketMessageHandler);
         addBean(webSocketMessageHandler);
         webSocketHandlers.put(webSocketMessageHandler.getPath(), webSocketMessageHandler);
