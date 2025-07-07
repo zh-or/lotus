@@ -6,12 +6,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 
-@Target ({ElementType.TYPE, ElementType.METHOD})
+/** 自动读取 request 的 path中的参数 */
+@Target ({ElementType.TYPE, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Put {
-    /** path */
+public @interface PathVar {
+    /** url 路径中的key 如 {name}  */
     String value();
-    boolean required() default true;
-
-    String defaultValue() default "";
 }

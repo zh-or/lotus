@@ -1,9 +1,7 @@
 package or.lotus.core.test;
 
 
-import or.lotus.core.common.BeanUtils;
-import or.lotus.core.common.NetWorkAddress;
-import or.lotus.core.common.Utils;
+import or.lotus.core.common.*;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -14,6 +12,24 @@ import java.util.regex.Pattern;
 
 public class TestCommon {
     public static void main(String[] args) throws Exception {
+        UrlMatcher<String> uMatcher = new UrlMatcher<>();
+
+        uMatcher.add("/", "base");
+        uMatcher.add("/a/b/c/{userId}", "1");
+        uMatcher.add("/a/b/d/2", "2");
+        uMatcher.add("/a/b/d/2/a", "2a");
+
+        TestTime tt = new TestTime();
+        tt.start("get");
+        UrlMatcher.Node tmp = uMatcher.findNode("/a/b/c/1");
+        tmp = uMatcher.findNode("/");
+        tmp = uMatcher.findNode("/a/b/d/2");
+        tmp = uMatcher.findNode("/a/b/d/2/a");
+        for(int i = 0; i < 1000000; i++) {
+        }
+        tt.end();
+        tt.print();
+
         int[] a = Utils.getNumberFromStr("1,------2-,3,4,5,6,7,8aaa9dd,10", true);
 
 

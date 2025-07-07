@@ -22,7 +22,6 @@ import static or.lotus.core.http.restful.ann.Parameter.DEF_NULL_VALUE;
 public class RestfulDispatcher {
     static final Logger log = LoggerFactory.getLogger(RestfulDispatcher.class);
     public String url;
-    public boolean isPattern;
     public RestfulHttpMethod httpMethod;
     public Object controllerObject;
     public Method method;
@@ -33,12 +32,10 @@ public class RestfulDispatcher {
 
     private Class[] genericTypes;
 
-    private Pattern pattern;
 
-    public RestfulDispatcher(String url, Object controllerObject, Method method, RestfulHttpMethod httpMethod, boolean isPattern) {
+    public RestfulDispatcher(String url, Object controllerObject, Method method, RestfulHttpMethod httpMethod) {
         this.url = url.replaceAll("//", "/");
         this.httpMethod = httpMethod;
-        this.isPattern = isPattern;
 
         this.controllerObject = controllerObject;
         this.method = method;
@@ -63,11 +60,11 @@ public class RestfulDispatcher {
                 if(t == Parameter.class
                    || t == Autowired.class
                    || t == Attr.class
+                   || t == PathVar.class
                    || t == Header.class
                    || t == Prop.class) {
                     annotations[i] = ann;
                 }
-
             }
 
             genericTypes[i] = null;//泛型类型
@@ -82,19 +79,9 @@ public class RestfulDispatcher {
             }
         }
 
-        if(isPattern) {
-            pattern = Pattern.compile(url);
-        }
 
     }
 
-    /** 检查当前正则是否匹配url */
-    public boolean checkPattern(RestfulRequest request) {
-        if(!isPattern) {
-            return false;
-        }
-        return pattern.matcher(request.getPath()).matches();
-    }
 
     public Object dispatch(RestfulContext context, RestfulRequest request, RestfulResponse response) throws Exception {
         Object[] params = new Object[parameterTypes.length];
@@ -228,7 +215,17 @@ public class RestfulDispatcher {
             } else if(annotationType == Header.class) {
                 Header header = (Header) annotation;
                 String headerName = header.value();
-                return request.getHeader(headerName);
+                return RestfulUtils.valueToType(type, request.getHeader(headerName));
+            } else if(annotationType == PathVar.class) {
+                PathVar pathVar = (PathVar) annotation;
+                String name = "{" + pathVar.value() + "}";
+                String[] paths = url.split("/");
+                for(int i = paths.length - 1; i >= 0; i--) {
+                    if(name.equals(paths[i])) {
+                        //虽然方法备注为从1开始, 但是这里还是从0开始算
+                        return RestfulUtils.valueToType(type, request.getPathParamByIndexL(i));
+                    }
+                }
             }
         } else {
             if(type.isInstance(request)) {

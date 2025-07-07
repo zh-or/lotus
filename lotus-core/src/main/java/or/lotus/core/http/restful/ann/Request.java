@@ -14,7 +14,4 @@ public @interface Request {
     boolean required() default true;
 
     String defaultValue() default "";
-
-    /**是否正则表达式*/
-    boolean isPattern() default false;
 }

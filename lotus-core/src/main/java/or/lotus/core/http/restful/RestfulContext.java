@@ -1,6 +1,7 @@
 package or.lotus.core.http.restful;
 
 import or.lotus.core.common.BeanUtils;
+import or.lotus.core.common.UrlMatcher;
 import or.lotus.core.common.Utils;
 import or.lotus.core.http.restful.ann.*;
 import or.lotus.core.http.restful.support.*;
@@ -41,9 +42,8 @@ public abstract class RestfulContext {
     protected ConcurrentHashMap<String, Object> beansCache;
     protected String initBeanMethodName = "initBean";
 
-    /** key = url + http-method-str*/
-    protected ConcurrentHashMap<String, RestfulDispatchMapper> dispatcherAbsMap;
-    protected ArrayList<RestfulDispatcher> dispatcherPatternList;
+
+    protected UrlMatcher<RestfulDispatchMapper> urlMatcher;
 
     /** 业务线程池 */
     protected ExecutorService executorService;
@@ -57,8 +57,8 @@ public abstract class RestfulContext {
 
     public RestfulContext() {
         beansCache = new ConcurrentHashMap<>();
-        dispatcherAbsMap = new ConcurrentHashMap<>();
-        dispatcherPatternList = new ArrayList<>();
+
+        urlMatcher = new UrlMatcher<>();
     }
 
     /**如果加载了配置, 此时启动端口会读取配置文件的 server.port 的值*/
@@ -146,33 +146,30 @@ public abstract class RestfulContext {
                 RestfulDispatcher dispatcher = null;
                 if(method.isAnnotationPresent(Get.class)) {
                     Get get = method.getAnnotation(Get.class);
-                    dispatcher = new RestfulDispatcher(url1 + get.value(), controller, method, RestfulHttpMethod.GET, get.isPattern());
+                    dispatcher = new RestfulDispatcher(url1 + get.value(), controller, method, RestfulHttpMethod.GET);
                 } else if(method.isAnnotationPresent(Post.class)) {
                     Post post = method.getAnnotation(Post.class);
-                    dispatcher = new RestfulDispatcher(url1 + post.value(), controller, method, RestfulHttpMethod.POST, post.isPattern());
+                    dispatcher = new RestfulDispatcher(url1 + post.value(), controller, method, RestfulHttpMethod.POST);
                 } else if(method.isAnnotationPresent(Put.class)) {
                     Put put = method.getAnnotation(Put.class);
-                    dispatcher = new RestfulDispatcher(url1 + put.value(), controller, method, RestfulHttpMethod.PUT, put.isPattern());
+                    dispatcher = new RestfulDispatcher(url1 + put.value(), controller, method, RestfulHttpMethod.PUT);
                 } else if(method.isAnnotationPresent(Delete.class)) {
                     Delete delete = method.getAnnotation(Delete.class);
-                    dispatcher = new RestfulDispatcher(url1 + delete.value(), controller, method, RestfulHttpMethod.DELETE, delete.isPattern());
+                    dispatcher = new RestfulDispatcher(url1 + delete.value(), controller, method, RestfulHttpMethod.DELETE);
                 } else if(method.isAnnotationPresent(Request.class)) {
                     Request map = method.getAnnotation(Request.class);
-                    dispatcher = new RestfulDispatcher(url1 + map.value(), controller, method, RestfulHttpMethod.REQUEST, map.isPattern());
+                    dispatcher = new RestfulDispatcher(url1 + map.value(), controller, method, RestfulHttpMethod.REQUEST);
                 }
 
                 if(dispatcher != null) {
-
-                    if(dispatcher.isPattern) {
-                        dispatcherPatternList.add(dispatcher);
-                    } else {
-                        RestfulDispatchMapper old = dispatcherAbsMap.get(dispatcher.url);
-                        if(old == null) {
-                            old = new RestfulDispatchMapper();
-                            dispatcherAbsMap.put(dispatcher.url, old);
-                        }
+                    RestfulDispatchMapper old = urlMatcher.match(dispatcher.url);
+                    if(old != null) {
                         old.setDispatcher(dispatcher);
+                    } else {
+                        old = new RestfulDispatchMapper(dispatcher);
+                        urlMatcher.add(dispatcher.url, old);
                     }
+
                 }
             }
 
@@ -207,9 +204,8 @@ public abstract class RestfulContext {
                 log.error("等待业务线程池退出失败:", e);
             }
         }
+        urlMatcher.clear();
 
-        dispatcherAbsMap.clear();
-        dispatcherPatternList.clear();
 
         for(Object b : beansCache.values()) {
             try {
@@ -258,7 +254,7 @@ public abstract class RestfulContext {
             try {
 
                 // 普通请求
-                RestfulDispatchMapper mapper = getDispatcher(request);
+                RestfulDispatchMapper mapper = urlMatcher.match(request.getPath());
                 if(mapper != null) {
                     RestfulDispatcher dispatcher = mapper.getDispatcher(request.getMethod());
 
@@ -359,22 +355,9 @@ public abstract class RestfulContext {
     }
 
     protected RestfulDispatchMapper getDispatcher(RestfulRequest request) {
-        //todo 需要优化url匹配算法
 
-        // 普通请求
-        RestfulDispatchMapper mapper = dispatcherAbsMap.get(request.getPath());
-        if(mapper != null) {
-            return mapper;
-        }
+        return urlMatcher.match(request.getPath());
 
-        //正则url验证
-        for(RestfulDispatcher dispatcher : dispatcherPatternList) {
-            if(dispatcher.checkPattern(request)) {
-                return new RestfulDispatchMapper(dispatcher);
-            }
-        }
-
-        return null;
     }
 
     /** 扫描指定包名并添加拥有 @RestfulController 注解的类为 Controller, 返回扫描到的 Controller 数量

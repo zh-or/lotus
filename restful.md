@@ -16,13 +16,19 @@
 4. `@Prop`
    - `filter/bean/controller`中成员变量自动注入`context.property`
    - `controller` 的参数注入`context.property`
-3. `@RestfulController` 用于标注controller, `scanController`只会加载有该注解的类并解析
-4. `@Request` 用于标注controller中的方法
-5. `@Get` 用于标注controller中的方法
-6. `@Post` 用于标注controller中的方法
-7. `@Put` 用于标注controller中的方法
-8. `@Delete` 用于标注controller中的方法
-9. `@Parameter`  用于标注controller方法中的参数
+5. `@Parameter`  用于标注controller方法中的参数
+6. `@PathVar` url路径参数
+7. `@RestfulController` 用于标注controller, `scanController`只会加载有该注解的类并解析
+8. `@Request` 用于标注controller中的方法
+9. `@Get` 用于标注controller中的方法
+10. `@Post` 用于标注controller中的方法
+11. `@Put` 用于标注controller中的方法
+12. `@Delete` 用于标注controller中的方法
+
+## url匹配
+1. `/api/hello` 匹配 `/api/hello`
+2. `/api/{id}` 匹配 `/api/[任意字符]` 可通过`@PathVar("id")` 注解取值
+3. `/api/*` 匹配 `/api/[任意字符]`  不可通过`@PathVar("id")` 注解取值
 
 
 ## 使用

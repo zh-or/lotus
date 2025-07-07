@@ -70,7 +70,7 @@ public abstract class RestfulRequest {
 
         String[] pars = path.split("/");
         int len = pars.length;
-        if(len > 0 && len >= index) {
+        if(index >= 0 && len > index) {
             try {
                 return URLDecoder.decode(pars[index/* - 1*/], context.charset.displayName());//分割字符串后前面会有个空的字符串
             } catch (UnsupportedEncodingException e) {
@@ -88,7 +88,7 @@ public abstract class RestfulRequest {
 
         String[] pars = path.split("/");
         int len = pars.length;
-        if(len > 0 && len > index) {
+        if(index >= 0 && len > index) {
             try {
                 return URLDecoder.decode(pars[len - index], context.charset.displayName());
             } catch (UnsupportedEncodingException e) {
