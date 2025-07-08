@@ -30,12 +30,12 @@ public class IP2RegionByMMDB implements AutoCloseable {
 
     /**下载超时时间, 0为不超时*/
     public static int dbDownloadTimeout = 1000 * 60 * 60;
-    public void uploadDb(String savePath) {
-        uploadDb(dbDownloadUrl, savePath);
+    public void updateDb(String savePath) {
+        updateDb(dbDownloadUrl, savePath);
     }
 
     /** 下载gz时直接解压 */
-    public void uploadDb(String url, String savePath) {
+    public void updateDb(String url, String savePath) {
         InputStream in = null;
         FileOutputStream fileOut = null;
         try {
