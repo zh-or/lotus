@@ -8,6 +8,7 @@ import java.lang.annotation.Target;
 /**
  * 连表查询 一对多, 一对一
  * 注意: 使用此注解后, 统计分页总数可能会有错误需要另写sql查询总数
+ * 注意: 主表记录需要排在前面
  * */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
