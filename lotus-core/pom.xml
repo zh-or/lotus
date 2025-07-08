@@ -63,6 +63,12 @@
             <artifactId>ip2region</artifactId>
             <version>${lionsoul.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.maxmind.db</groupId>
+            <artifactId>maxmind-db</artifactId>
+            <version>${maxmind.version}</version>
+        </dependency>
     </dependencies>
 </project>
 

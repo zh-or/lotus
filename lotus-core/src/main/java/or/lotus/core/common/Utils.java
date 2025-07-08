@@ -1,5 +1,6 @@
 package or.lotus.core.common;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
@@ -11,6 +12,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 public class Utils {
 
@@ -767,5 +769,15 @@ public class Utils {
         }
 
         return sb.toString();
+    }
+
+    public static void closeable(Closeable close) {
+        if (close != null) {
+            try {
+                close.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 }
