@@ -169,7 +169,7 @@ public class RestfulDispatcher {
                             JsonNode val = request.getJsonNodeForPath(name);
                             if(val.isMissingNode()) {
                                 String defVal = parameter.def();
-                                if(Objects.equals(val, DEF_NULL_VALUE)) {
+                                if(Objects.equals(defVal, DEF_NULL_VALUE)) {
                                     return null;
                                 }
                                 /** 基本数据类型 */
