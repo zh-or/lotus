@@ -7,8 +7,8 @@ import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.eclipsesource.v8.V8;
-import com.eclipsesource.v8.V8Function;
+import or.lotus.v8.src.V8;
+import or.lotus.v8.src.V8Function;
 import or.lotus.v8.Message;
 import or.lotus.v8.V8Context;
 import or.lotus.v8.support.JavaLibBase;

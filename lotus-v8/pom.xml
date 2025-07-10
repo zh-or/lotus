@@ -22,13 +22,6 @@
             <artifactId>lotus-netty-http</artifactId>
             <version>${revision}</version>
         </dependency>
-        <dependency>
-            <groupId>com.eclipsesource.j2v8</groupId>
-            <artifactId>j2v8</artifactId>
-            <version>6.2.0</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/jar/j2v8_linux_x86_64-6.2.0.jar</systemPath>
-        </dependency>
 
 
         <!-- https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc -->

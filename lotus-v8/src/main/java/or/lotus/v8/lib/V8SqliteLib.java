@@ -11,11 +11,11 @@ import java.util.Arrays;
 import java.util.List;
 
 
-import com.eclipsesource.v8.JavaVoidCallback;
-import com.eclipsesource.v8.V8;
-import com.eclipsesource.v8.V8Array;
-import com.eclipsesource.v8.V8Function;
-import com.eclipsesource.v8.V8Object;
+import or.lotus.v8.src.JavaVoidCallback;
+import or.lotus.v8.src.V8;
+import or.lotus.v8.src.V8Array;
+import or.lotus.v8.src.V8Function;
+import or.lotus.v8.src.V8Object;
 import or.lotus.core.common.Utils;
 import or.lotus.v8.Message;
 import or.lotus.v8.V8Context;

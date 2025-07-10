@@ -1,10 +1,10 @@
 package or.lotus.v8;
 
-import com.eclipsesource.v8.V8;
-import com.eclipsesource.v8.V8Object;
 import or.lotus.core.common.Utils;
 import or.lotus.core.intmap.SparseArray;
 import or.lotus.v8.lib.*;
+import or.lotus.v8.src.V8;
+import or.lotus.v8.src.V8Object;
 import or.lotus.v8.support.JavaLibBase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,6 +1,6 @@
 package or.lotus.v8.support;
 
-import com.eclipsesource.v8.*;
+import or.lotus.v8.src.*;
 import or.lotus.core.common.Utils;
 import or.lotus.core.json.JSONArray;
 import or.lotus.core.json.JSONObject;

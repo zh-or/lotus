@@ -7,8 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-import com.eclipsesource.v8.V8;
-import com.eclipsesource.v8.V8Object;
+import or.lotus.v8.src.V8;
+import or.lotus.v8.src.V8Object;
 
 public class V8LogLib extends JavaLibBase {
     protected static final Logger log = LoggerFactory.getLogger(V8Context.class);

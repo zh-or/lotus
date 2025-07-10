@@ -8,12 +8,12 @@ import java.net.Proxy.Type;
 import java.util.HashMap;
 
 
-import com.eclipsesource.v8.JavaVoidCallback;
-import com.eclipsesource.v8.V8;
-import com.eclipsesource.v8.V8Array;
-import com.eclipsesource.v8.V8Function;
-import com.eclipsesource.v8.V8Object;
-import com.eclipsesource.v8.utils.V8ObjectUtils;
+import or.lotus.v8.src.JavaVoidCallback;
+import or.lotus.v8.src.V8;
+import or.lotus.v8.src.V8Array;
+import or.lotus.v8.src.V8Function;
+import or.lotus.v8.src.V8Object;
+import or.lotus.v8.src.utils.V8ObjectUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import or.lotus.core.common.BeanUtils;
 import or.lotus.core.common.Utils;
