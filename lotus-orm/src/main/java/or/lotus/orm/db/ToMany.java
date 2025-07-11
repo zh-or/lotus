@@ -9,6 +9,7 @@ import java.lang.annotation.Target;
  * 连表查询 一对多, 一对一
  * 注意: 使用此注解后, 统计分页总数可能会有错误需要另写sql查询总数
  * 注意: 主表记录需要排在前面
+ * 注意: 使用该注解时, 不要调用findOne() 方法来获取结果, 会导致最后只取一条数据
  * */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
