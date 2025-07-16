@@ -64,8 +64,6 @@ public class Utils {
         map.put("已启动线程总数", threadMXBean.getTotalStartedThreadCount());
 
         for (GarbageCollectorMXBean gc : ManagementFactory.getGarbageCollectorMXBeans()) {
-            System.out.println(gc.getName() + " -> 次数: " + gc.getCollectionCount() +
-                    ", 时间: " + gc.getCollectionTime() + " ms");
 
             map.put("GC-" + gc.getName(), "次数: " + gc.getCollectionCount() + ",时间: " + gc.getCollectionTime() + " ms");
         }
