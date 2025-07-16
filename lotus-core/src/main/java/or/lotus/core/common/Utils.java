@@ -1,8 +1,14 @@
 package or.lotus.core.common;
 
+import or.lotus.core.files.FileSize;
+
 import java.io.Closeable;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
+import java.lang.management.ThreadMXBean;
 import java.math.BigDecimal;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -41,6 +47,34 @@ public class Utils {
         System.out.println(substring("1天, 价格: 1, 购买天数: 1, 当前到期时间: 2025-05-30 15:09:33, deviceId:  4860, iccid: 8986062463009035420, userId: 1 , goodsId: 3", 120));
         System.out.println(substring("a空留一个开发了哇", 3));
 
+    }
+
+
+    public static Map<String, Object> systemInfo() {
+        Runtime runtime = Runtime.getRuntime();
+        Map<String, Object> map = new HashMap<>();
+        map.put("已使用内存", new FileSize(runtime.totalMemory()).toString());
+        map.put("空闲内存", new FileSize(runtime.freeMemory()).toString());
+        map.put("最大内存", new FileSize(runtime.maxMemory()).toString());
+
+        ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
+        map.put("线程总数", threadMXBean.getThreadCount());
+        map.put("峰值线程数", threadMXBean.getPeakThreadCount());
+        map.put("守护线程数", threadMXBean.getDaemonThreadCount());
+        map.put("已启动线程总数", threadMXBean.getTotalStartedThreadCount());
+
+        for (GarbageCollectorMXBean gc : ManagementFactory.getGarbageCollectorMXBeans()) {
+            System.out.println(gc.getName() + " -> 次数: " + gc.getCollectionCount() +
+                    ", 时间: " + gc.getCollectionTime() + " ms");
+
+            map.put("GC-" + gc.getName(), "次数: " + gc.getCollectionCount() + ",时间: " + gc.getCollectionTime() + " ms");
+        }
+
+        OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
+
+        map.put("系统负载", osBean.getSystemLoadAverage());
+
+        return map;
     }
 
     public static String getSysTmpDir() {
