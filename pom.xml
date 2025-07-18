@@ -32,6 +32,9 @@
         <client5.version>5.2.1</client5.version>
         <jts.version>1.19.0</jts.version>
         <maxmind.version>2.1.0</maxmind.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
     </properties>
 
 
@@ -80,6 +83,7 @@
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
+                    <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
 
