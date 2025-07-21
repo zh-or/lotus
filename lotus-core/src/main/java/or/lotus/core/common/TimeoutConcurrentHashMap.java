@@ -37,7 +37,7 @@ public class TimeoutConcurrentHashMap<K, V> extends TimerTask implements AutoClo
         return checkDiff;
     }
 
-    public void setListener(TimeoutListener listener) {
+    public void setListener(TimeoutListener<K, V> listener) {
         this.listener = listener;
     }
 
