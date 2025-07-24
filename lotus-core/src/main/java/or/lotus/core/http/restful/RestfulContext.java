@@ -235,6 +235,16 @@ public abstract class RestfulContext {
     protected abstract void onStart() throws InterruptedException;
     protected abstract void onStop();
 
+    protected void sendResponseBefore(boolean isHandle, RestfulRequest request, RestfulResponse response) {
+        if(request.isRewriteUrl()) {
+            request.handledRewrite();
+            dispatch(request, response);
+            return;
+        }
+
+        sendResponse(isHandle, request, response);
+    }
+
     /**
      * 业务处理完毕后会调用此方法发送返回
      * 如果开启线程池处理业务, 那么此回调则是在业务线程池中执行
@@ -250,6 +260,7 @@ public abstract class RestfulContext {
              * 1. filter->beforeRequest 过滤器
              * 2. 普通全字匹配 controller 匹配并调用
              * 3. 正则url controller匹配并调用
+             * 4. filter->afterRequest 过滤器
              * */
             try {
 
@@ -261,16 +272,17 @@ public abstract class RestfulContext {
                     if(dispatcher == null) {
                         response.setStatus(RestfulResponseStatus.CLIENT_ERROR_METHOD_NOT_ALLOWED);
                         //response.clearWrite().write("");
-                        sendResponse(true, request, response);
+                        sendResponseBefore(true, request, response);
                         return ;
                     }
 
                     if(filter != null && filter.beforeRequest(dispatcher, request, response)) {
-                        sendResponse(true, request, response);
+                        sendResponseBefore(true, request, response);
                         return ;
                     }
 
-                    Object ret = dispatcher.dispatch(this, request, response);
+                    Object ret  = dispatcher.dispatch(this, request, response);
+
                     if(filter != null) {
                         if(filter.afterRequest(request, response, ret)) {
                             return;
@@ -291,18 +303,18 @@ public abstract class RestfulContext {
                         response.write(ret.toString());
                     }
 
-                    sendResponse(true, request, response);
+                    sendResponseBefore(true, request, response);
                     return;
                 }
                 //未匹配, 未处理当前请求
-                sendResponse(false, request, response);
+                sendResponseBefore(false, request, response);
 
             } catch (Throwable rawException) {
                 response.clearWrite();
                 response.setStatus(RestfulResponseStatus.SERVER_ERROR_INTERNAL_SERVER_ERROR);
                 Throwable e = rawException instanceof InvocationTargetException ? ((InvocationTargetException) rawException).getTargetException() : rawException;
                 if(filter != null && filter.exception(e, request, response)) {
-                    sendResponse(true, request, response);
+                    sendResponseBefore(true, request, response);
                 } else {
 
                     try {
@@ -310,7 +322,7 @@ public abstract class RestfulContext {
                     } catch (IOException ex) {
                         throw new RuntimeException(ex);
                     }
-                    sendResponse(true, request, response);
+                    sendResponseBefore(true, request, response);
                     log.error("处理请求出错:", e);
                 }
             }

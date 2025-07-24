@@ -50,6 +50,28 @@ public class NettyRequest extends RestfulRequest {
         }
     }
 
+    boolean isRewrited = false;
+    @Override
+    public boolean isRewriteUrl() {
+        return isRewrited;
+    }
+
+    @Override
+    public void handledRewrite() {
+        isRewrited = false;
+    }
+
+    @Override
+    public void rewriteUrl(String url) {
+        qsd = new QueryStringDecoder(url);
+        isRewrited = true;
+    }
+
+    @Override
+    public String rawPath() {
+        return msg.uri();
+    }
+
     @Override
     public String getPath() {
         return qsd.rawPath();

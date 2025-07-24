@@ -40,6 +40,17 @@ public abstract class RestfulRequest {
         attributes.remove(name);
     }
 
+    /** 是否已重写url, 当此方法返回true时将再次调用请求流程 */
+    public abstract boolean isRewriteUrl();
+
+    /** 调用此方法表示此次重写url已处理, 需要下次调用 isRewriteUrl() 时请返回false */
+    public abstract void handledRewrite();
+
+    public abstract void rewriteUrl(String url);
+
+    /** 返回原本的path, 不受rewriteUrl影响 */
+    public abstract String rawPath();
+
     /**不需要url中的参数部分*/
     public abstract String getPath();
 
