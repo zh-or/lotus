@@ -28,7 +28,7 @@ public class IP2Region implements AutoCloseable {
         try {
             return searcher.search(ip);
         } catch (Exception e) {
-            e.printStackTrace();
+            //e.printStackTrace();
         }
         return NULL_STR;
     }
