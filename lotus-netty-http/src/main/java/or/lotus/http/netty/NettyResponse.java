@@ -53,17 +53,21 @@ public class NettyResponse extends RestfulResponse {
         bodyBuffer.writeCharSequence(str.subSequence(off, off + len), charset);
     }
 
+
     @Override
     public void write(int c) throws IOException {
         getBuffer();
-        //bodyBuffer.writeChar(c);
+
+        bodyBuffer.writeCharSequence(String.valueOf((char) c), charset);
+        //bodyBuffer.writeChar(c); //字符集不对
         /*System.out.println("c:" + c + " -> " + Character.isBmpCodePoint(c));*/
-        if (Character.isBmpCodePoint(c))
+        //下面这种有乱码
+        /*if (Character.isBmpCodePoint(c))
             bodyBuffer.writeByte( c);
         else {
             bodyBuffer.writeByte((char) ((c >>> 10) + (MIN_HIGH_SURROGATE - (MIN_SUPPLEMENTARY_CODE_POINT >>> 10))));
             bodyBuffer.writeByte((char) ((c & 0x3ff) + MIN_LOW_SURROGATE));
-        }
+        }*/
         //Character.toSurrogates(c, v, j++);
         // bodyBuffer.writeByte( c);
     }
