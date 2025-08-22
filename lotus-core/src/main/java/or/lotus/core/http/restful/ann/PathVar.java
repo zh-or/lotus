@@ -10,6 +10,6 @@ import java.lang.annotation.Target;
 @Target ({ElementType.TYPE, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface PathVar {
-    /** url 路径中的key 如 {name}  */
+    /** url 路径中的key 如 {name} , 不能有空格 */
     String value();
 }
