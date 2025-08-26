@@ -65,7 +65,9 @@ public class TimeoutConcurrentHashMap<K, V> extends TimerTask implements AutoClo
        if(sec > 0) {
            ExpireWrap obj = new ExpireWrap(k, v, System.currentTimeMillis() + sec * 1000);
            map.put(k, obj);
-           delayQueue.add(obj);
+           if(!delayQueue.contains(obj)) {
+               delayQueue.add(obj);
+           }
        } else {
            map.put(k, new ExpireWrap(k, v, -1));
        }
@@ -139,6 +141,7 @@ public class TimeoutConcurrentHashMap<K, V> extends TimerTask implements AutoClo
         do {
             try {
                 v = delayQueue.poll(200, TimeUnit.MILLISECONDS);
+                v = map.get(v.k);
                 if(v != null) {
                     /** 有可能通过update更新了过期时间, 此处判断一下是否过期, 如果增加了时间需要加回队列 */
                     synchronized (v) {
@@ -194,7 +197,7 @@ public class TimeoutConcurrentHashMap<K, V> extends TimerTask implements AutoClo
         @Override
         public boolean equals(Object o) {
             ExpireWrap other = (ExpireWrap) o;
-            return this.obj.equals(other.obj);
+            return this.k.equals(other.k);
         }
 
         @Override
