@@ -153,7 +153,9 @@ public class TimeoutConcurrentHashMap<K, V> implements AutoCloseable, Runnable {
             do {
                 try {
                     v = delayQueue.poll(200, TimeUnit.MILLISECONDS);
-                    v = map.get(v.k);
+                    if(v != null) {
+                        v = map.get(v.k);
+                    }
                     if(v != null) {
                         synchronized (v) {
                             if(v.isTimeout()) {
