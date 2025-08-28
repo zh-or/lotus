@@ -1,5 +1,8 @@
 package or.lotus.core.common;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -12,29 +15,30 @@ import java.util.concurrent.TimeUnit;
  * @param <K>
  * @param <V>
  */
-public class TimeoutConcurrentHashMap<K, V> extends TimerTask implements AutoCloseable {
+public class TimeoutConcurrentHashMap<K, V> implements AutoCloseable, Runnable {
+    static Logger log = LoggerFactory.getLogger(TimeoutConcurrentHashMap.class);
     private ConcurrentHashMap<K, ExpireWrap> map;
     private DelayQueue<ExpireWrap<V>> delayQueue;
-    private Timer timer;
-
-    private int checkDiff;
-
+    private String name;
     private TimeoutListener listener = null;
+    private Thread runner;
+    private boolean isRun = true;
+    public static long maxItems = 100_000_000;//最大存储数量, 默认1亿
 
     public TimeoutConcurrentHashMap() {
-        this(16, 1000);
+        this("-");
     }
 
-    public TimeoutConcurrentHashMap(int initialCapacity, int checkDiff) {
-        this.checkDiff = checkDiff;
+    public TimeoutConcurrentHashMap(String name) {
+        this(16, name);
+    }
+
+    public TimeoutConcurrentHashMap(int initialCapacity, String name) {
+        this.name = name;
         map = new ConcurrentHashMap<>(initialCapacity);
         delayQueue = new DelayQueue<>();
-        timer = new Timer();
-        timer.schedule(this, checkDiff, checkDiff);
-    }
-
-    public int getCheckDiff() {
-        return checkDiff;
+        runner = new Thread(this, "timeout checker[" + name + "]");
+        runner.start();
     }
 
     public void setListener(TimeoutListener<K, V> listener) {
@@ -62,15 +66,26 @@ public class TimeoutConcurrentHashMap<K, V> extends TimerTask implements AutoClo
      * @param sec 超时时间秒, 0为不超时
      */
     public void put(K k, V v, int sec) {
-       if(sec > 0) {
-           ExpireWrap obj = new ExpireWrap(k, v, System.currentTimeMillis() + sec * 1000);
-           map.put(k, obj);
-           if(!delayQueue.contains(obj)) {
-               delayQueue.add(obj);
-           }
-       } else {
-           map.put(k, new ExpireWrap(k, v, -1));
-       }
+        ExpireWrap obj = map.get(k);
+        long timeout = sec > 0 ? System.currentTimeMillis() + sec * 1000 : -1;
+        if (obj == null) {
+            obj = new ExpireWrap(k, v, timeout);
+        } else {
+            synchronized (obj) {
+                obj.obj = v;
+                obj.expire = timeout;
+            }
+        }
+        if (sec > 0) {
+            map.put(k, obj);
+            delayQueue.add(obj);
+        } else {
+            map.put(k, obj);
+        }
+        if (map.size() >= maxItems) {
+            log.warn("TimeoutConcurrentHashMap [{}] 元素已达警告数量 {} >= {}", name, map.size(), maxItems);
+        }
+
     }
 
     /** 更新对象的过期时间 */
@@ -81,7 +96,9 @@ public class TimeoutConcurrentHashMap<K, V> extends TimerTask implements AutoClo
                 if(sec > 0) {
                     obj.expire = System.currentTimeMillis() + sec * 1000;
                 } else {
+                    //原本是不超时的对象, 设置超时
                     obj.expire = sec;
+                    delayQueue.add(obj);
                 }
             }
         }
@@ -129,46 +146,44 @@ public class TimeoutConcurrentHashMap<K, V> extends TimerTask implements AutoClo
         return null;
     }
 
-    public void shutdown() {
-        if(timer != null) {
-            timer.cancel();
-        }
-    }
-
     @Override
     public void run() {
         ExpireWrap v = null;
-        do {
-            try {
-                v = delayQueue.poll(200, TimeUnit.MILLISECONDS);
-                v = map.get(v.k);
-                if(v != null) {
-                    /** 有可能通过update更新了过期时间, 此处判断一下是否过期, 如果增加了时间需要加回队列 */
-                    synchronized (v) {
-                        if(v.isTimeout()) {
-                            map.remove(v.k);
-                            if(listener != null) {
-                                listener.timeout(this, v.k, v.obj);
+        while(isRun) {
+            do {
+                try {
+                    v = delayQueue.poll(200, TimeUnit.MILLISECONDS);
+                    v = map.get(v.k);
+                    if(v != null) {
+                        synchronized (v) {
+                            if(v.isTimeout()) {
+                                map.remove(v.k);
+                                if(listener != null) {
+                                    listener.timeout(this, v.k, v.obj);
+                                }
+                            } else if(v.expire > 0) {
+                                //todo 优化此处的效率
+                                if(!delayQueue.contains(v)) {
+                                    delayQueue.add(v);
+                                }
                             }
-                        } else if(v.expire > 0) {
-                            delayQueue.add(v);
                         }
                     }
+                } catch (InterruptedException e) {
+                    v = null;
                 }
-            } catch (InterruptedException e) {
-                v = null;
-            }
-        } while(v != null);
-        /*for(Map.Entry<K, ExpireWrap> obj : map.entrySet()) {
-            if(obj.getValue().isTimeout()) {
-                map.remove(obj.getKey());
-            }
-        }*/
+            } while(v != null);
+        }
+        Utils.SLEEP(1);
     }
 
     @Override
-    public void close() throws IOException {
-        shutdown();
+    public void close() throws Exception {
+        clear();
+        isRun = false;
+        runner.interrupt();
+        runner.join();
+        runner = null;
     }
 
     private class ExpireWrap <V> implements Delayed {
@@ -203,7 +218,7 @@ public class TimeoutConcurrentHashMap<K, V> extends TimerTask implements AutoClo
         @Override
         public int compareTo(Delayed o) {
             ExpireWrap other = (ExpireWrap) o;
-            return (int)((expire - System.currentTimeMillis()) - (other.expire - System.currentTimeMillis()));
+            return Long.compare(this.expire, other.expire);
         }
     }
 

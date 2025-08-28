@@ -105,69 +105,74 @@ public class NettyStaticFileHandler extends SimpleChannelInboundHandler<FullHttp
 
     @Override
     public void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
-        File file = null;
-        if(this.server.fileFilter != null) {
-            URI uri2 = new URI(request.uri());
-            file = this.server.fileFilter.getFile(uri2.getPath(), ctx, request);
-        }
+        try {
+            File file = null;
+            if(this.server.fileFilter != null) {
+                URI uri2 = new URI(request.uri());
+                file = this.server.fileFilter.getFile(uri2.getPath(), ctx, request);
+            }
 
-        if(this.server.fileFilter != null && this.server.fileFilter.before(request)) {
-            sendError(ctx, request, HttpResponseStatus.NOT_FOUND, this.server.getCharset());
-            return;
-        }
-
-        if (!request.decoderResult().isSuccess()) {
-            sendError(ctx, request, HttpResponseStatus.BAD_REQUEST, this.server.getCharset());
-            return;
-        }
-
-        if (!HttpMethod.GET.equals(request.method())) {
-            sendError(ctx, request, HttpResponseStatus.METHOD_NOT_ALLOWED, this.server.getCharset());
-            return;
-        }
-
-        if(file == null) {
-            final String uri = request.uri();
-            file = sanitizeUri(uri);
-        }
-        if(file == null) {
-            sendError(ctx, request, HttpResponseStatus.NOT_FOUND, this.server.getCharset());
-            return;
-        }
-        final boolean keepAlive = HttpUtil.isKeepAlive(request);
-
-        // Cache Validation
-        String ifModifiedSince = request.headers().get(HttpHeaderNames.IF_MODIFIED_SINCE);
-        if (!Utils.CheckNull(ifModifiedSince)) {
-            Date ifModifiedSinceDate = null;
-            try {
-                SimpleDateFormat dateFormatter = new SimpleDateFormat(HTTP_DATE_FORMAT, Locale.US);
-                ifModifiedSinceDate = dateFormatter.parse(ifModifiedSince);
-                long ifModifiedSinceDateSeconds = ifModifiedSinceDate.getTime() / 1000;
-                long fileLastModifiedSeconds = file.lastModified() / 1000;
-                if (ifModifiedSinceDateSeconds == fileLastModifiedSeconds) {
-                    sendNotModified(ctx, request);
-                    return;
-                }
-            } catch (ParseException e) {
-                //格式化时间出错
-                log.error("格式化请求时间出错:" ,e);
-                sendError(ctx, request, HttpResponseStatus.FORBIDDEN, this.server.getCharset());
+            if(this.server.fileFilter != null && this.server.fileFilter.before(request)) {
+                sendError(ctx, request, HttpResponseStatus.NOT_FOUND, this.server.getCharset());
                 return;
             }
-        }
 
-        HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
-
-        if(this.server.fileFilter != null && this.server.fileFilter.request(file, request, response)) {
-            ChannelFuture flushPromise = ctx.writeAndFlush(response);
-            if(!keepAlive) {
-                flushPromise.addListener(ChannelFutureListener.CLOSE);
+            if (!request.decoderResult().isSuccess()) {
+                sendError(ctx, request, HttpResponseStatus.BAD_REQUEST, this.server.getCharset());
+                return;
             }
-            return;
-        }
 
-        sendFile(file, request, response, ctx, this.server.getCharset());
+            if (!HttpMethod.GET.equals(request.method())) {
+                sendError(ctx, request, HttpResponseStatus.METHOD_NOT_ALLOWED, this.server.getCharset());
+                return;
+            }
+
+            if(file == null) {
+                final String uri = request.uri();
+                file = sanitizeUri(uri);
+            }
+            if(file == null) {
+                sendError(ctx, request, HttpResponseStatus.NOT_FOUND, this.server.getCharset());
+                return;
+            }
+            final boolean keepAlive = HttpUtil.isKeepAlive(request);
+
+            // Cache Validation
+            String ifModifiedSince = request.headers().get(HttpHeaderNames.IF_MODIFIED_SINCE);
+            if (!Utils.CheckNull(ifModifiedSince)) {
+                Date ifModifiedSinceDate = null;
+                try {
+                    SimpleDateFormat dateFormatter = new SimpleDateFormat(HTTP_DATE_FORMAT, Locale.US);
+                    ifModifiedSinceDate = dateFormatter.parse(ifModifiedSince);
+                    long ifModifiedSinceDateSeconds = ifModifiedSinceDate.getTime() / 1000;
+                    long fileLastModifiedSeconds = file.lastModified() / 1000;
+                    if (ifModifiedSinceDateSeconds == fileLastModifiedSeconds) {
+                        sendNotModified(ctx, request);
+                        return;
+                    }
+                } catch (ParseException e) {
+                    //格式化时间出错
+                    log.error("格式化请求时间出错:" ,e);
+                    sendError(ctx, request, HttpResponseStatus.FORBIDDEN, this.server.getCharset());
+                    return;
+                }
+            }
+
+            HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+
+            if(this.server.fileFilter != null && this.server.fileFilter.request(file, request, response)) {
+                ChannelFuture flushPromise = ctx.writeAndFlush(response);
+                if(!keepAlive) {
+                    flushPromise.addListener(ChannelFutureListener.CLOSE);
+                }
+                return;
+            }
+
+            sendFile(file, request, response, ctx, this.server.getCharset());
+        } catch (Exception e) {
+            log.trace("请求异常: {}", request, e);
+            ctx.channel().close();
+        }
     }
 
     public static void sendFile(File file, FullHttpRequest request, HttpResponse response, ChannelHandlerContext ctx, Charset charset) {

@@ -75,9 +75,9 @@ public class HttpClient5 {
 
         // Http 默认请求配置
         RequestConfig requestConfig = RequestConfig.custom()
-                .setConnectTimeout(5000, TimeUnit.MILLISECONDS)
-                .setResponseTimeout(5000, TimeUnit.MILLISECONDS)
-                .setConnectionRequestTimeout(5000, TimeUnit.MILLISECONDS)
+                .setConnectTimeout(30000, TimeUnit.MILLISECONDS)
+                .setResponseTimeout(30000, TimeUnit.MILLISECONDS)
+                .setConnectionRequestTimeout(30000, TimeUnit.MILLISECONDS)
                 .build();
 
         // 设置 Cookie

@@ -42,26 +42,11 @@ public class FileMap {
     public void refreshSize() {
         try {
             nowSize.set(0);
-            Files.walkFileTree(Paths.get(basePath), new FileVisitor() {
-
-                @Override
-                public FileVisitResult preVisitDirectory(Object dir, BasicFileAttributes attrs) throws IOException {
-                    return FileVisitResult.CONTINUE;
-                }
+            Files.walkFileTree(Paths.get(basePath), new SimpleFileVisitor() {
 
                 @Override
                 public FileVisitResult visitFile(Object file, BasicFileAttributes attrs) throws IOException {
                     nowSize.addAndGet(attrs.size());
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult visitFileFailed(Object file, IOException exc) throws IOException {
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult postVisitDirectory(Object dir, IOException exc) throws IOException {
                     return FileVisitResult.CONTINUE;
                 }
             });
