@@ -18,8 +18,15 @@ public class TestCommon {
         uMatcher.add("/a/b/c/{userId}", "1");
         uMatcher.add("/a/b/d/2", "2");
         uMatcher.add("/a/b/d/2/a", "2a");
-
+        String[] paths = new String[]{"/", "/a/b/c/1", "/a/b/d/2", "/a/b/d/2/a"};
+        int len = paths.length;
         TestTime tt = new TestTime();
+        tt.start("url test");
+        for(int i = 0; i < 1000000; i++) {
+            uMatcher.match(paths[i % len]);
+        }
+        tt.end();
+
         tt.start("get");
         UrlMatcher.Node tmp = uMatcher.findNode("/a/b/c/1");
         tmp = uMatcher.findNode("/");

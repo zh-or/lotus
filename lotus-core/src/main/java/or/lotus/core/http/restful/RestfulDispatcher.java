@@ -97,7 +97,7 @@ public class RestfulDispatcher {
                         genericTypes[i],
                         annotations[i]);
             } catch (Throwable e) {
-                throw new RuntimeException("处理参数出错:" + controllerObject + "\n" + method, e);
+                throw new ParseParamsException("处理参数出错:" + controllerObject + "\n" + method, e);
             }
         }
 
