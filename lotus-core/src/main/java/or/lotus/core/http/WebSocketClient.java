@@ -127,9 +127,11 @@ public class WebSocketClient {
         cdWaitThreadQuit = new CountDownLatch(2);
 
         //握手
+        String requestPath = uri.getPath();
+        String query = uri.getQuery();
 
         String key = Base64.byteArrayToBase64(Utils.RandomNum(16).getBytes());
-        String tmp = String.format(request_package, uri, uri.getHost(), key);
+        String tmp = String.format(request_package, requestPath + (query == null ? "" : "?" + query), uri.getHost(), key);
 
         bOut.write(tmp.getBytes());
         bOut.flush();
