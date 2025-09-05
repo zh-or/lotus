@@ -5,6 +5,7 @@
 2. 默认表名为类名 User -> user, UserOrder -> user_order, 如果不对应则使用 `@Table` 注解注明
 3. 一对多查询&一对一查询 使用注解 `@ToMany` 
 4. `@ToMany` 的 `prefix` 对应的实体类的字段不要添加该前缀
+5. 项目方向主要是用于映射查询结果为实体
 
 ## `@ToMany` 注解使用说明 实体类对应注解与sql, 表: user, attachments, tweet
 
