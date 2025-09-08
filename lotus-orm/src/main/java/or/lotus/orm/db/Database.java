@@ -38,7 +38,7 @@ public class Database implements AutoCloseable {
     protected boolean isRun = true;
 
     public Database() {
-        queueThread =  new Thread(queueRunner, "lotus-orm queue thread");
+        queueThread = new Thread(queueRunner, "lotus-orm queue thread");
         queueThread.start();
     }
 
@@ -394,35 +394,35 @@ public class Database implements AutoCloseable {
         return exec.execute();
     }
 
-    LinkedBlockingQueue<InertQueueObj> queue = new LinkedBlockingQueue();
+    LinkedBlockingQueue<Object> queue = new LinkedBlockingQueue();
 
     /**
      * 插入到一个队列, 不会在当前线程执行插入
      * @return 返回当前队列大小*/
     public int insertToQueue(Object obj) {
-        queue.add(new InertQueueObj(obj));
-        return queue.size();
-    }
-
-    /**
-     * 插入到一个队列, 不会在当前线程执行插入
-     * @return 返回当前队列大小*/
-    public int insertToQueue(InertQueueObj obj) {
         queue.add(obj);
         return queue.size();
     }
 
+
     private Runnable queueRunner = new Runnable() {
         @Override
         public void run() {
-            //todo 需要修改为批量插入
-            List<InertQueueObj> tmpList = new ArrayList<>(100);
+
+            HashMap<String, List<Object>> map = new HashMap();
+
             while(isRun || queue.size() > 0) {
                 try {
                     do {
-                        InertQueueObj obj = queue.poll(1, TimeUnit.SECONDS);
+                        Object obj = queue.poll(1, TimeUnit.SECONDS);
                         if(obj != null) {
-                            tmpList.add(obj);
+                            String name = obj.getClass().getName();
+                            List<Object> list = map.get(name);
+                            if(list == null) {
+                                list = new ArrayList<>(100);
+                                map.put(name, list);
+                            }
+                            list.add(obj);
                         } else {
                             break;
                         }
@@ -432,29 +432,18 @@ public class Database implements AutoCloseable {
                     log.error("从队列保存到数据库出错:", e);
                 }
 
-                if(tmpList.size() > 0) {
-                    InertQueueObj lastObj = null;
-                    try(Transaction transaction = beginTransaction()) {
-                        for(InertQueueObj obj : tmpList) {
-                            lastObj = obj;
-                            int r = insert(obj.obj);
-                            if(obj.callback != null) {
-                                if(r > 0) {
-                                    obj.callback.success(obj.obj);
-                                } else {
-                                    obj.callback.fail(new Exception("插入操作返回的 0"));
-                                }
-                            }
-                        }
-                        transaction.commit();
-                    } catch (SQLException e) {
-                        if(lastObj != null && lastObj.callback != null) {
-                            lastObj.callback.fail(e);
-                        } else {
-                            log.error("队列批量插入失败!");
+                if(map.size() > 0) {
+                    Iterator<Map.Entry<String, List<Object>>> iterator = map.entrySet().iterator();
+                    while(iterator.hasNext()) {
+                        Map.Entry<String, List<Object>> entry = iterator.next();
+                        List<Object> list = entry.getValue();
+                        try{
+                            insertAll(list);
+                        } catch (SQLException e) {
+                            log.error("队列批量插入失败!", e);
                         }
                     }
-                    tmpList.clear();
+                    map.clear();
                 }
             }
         }
