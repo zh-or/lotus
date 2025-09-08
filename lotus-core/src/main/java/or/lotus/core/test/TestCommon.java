@@ -22,8 +22,14 @@ public class TestCommon {
         int len = paths.length;
         TestTime tt = new TestTime();
         tt.start("url test");
+        String p, r;
         for(int i = 0; i < 1000000; i++) {
-            uMatcher.match(paths[i % len]);
+            p = paths[i % len];
+            r = uMatcher.match(paths[i % len]);
+
+            if(r == null) {
+                System.out.println(p + ":" + r);
+            }
         }
         tt.end();
 

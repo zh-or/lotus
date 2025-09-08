@@ -162,12 +162,11 @@ public abstract class RestfulContext {
                 }
 
                 if(dispatcher != null) {
-                    RestfulDispatchMapper old = urlMatcher.match(dispatcher.url);
-                    if(old != null) {
-                        old.setDispatcher(dispatcher);
+                    UrlMatcher.Node node = urlMatcher.findNode(dispatcher.url, true);
+                    if(node == null || node.obj == null) {
+                        urlMatcher.add(dispatcher.url, new RestfulDispatchMapper(dispatcher));
                     } else {
-                        old = new RestfulDispatchMapper(dispatcher);
-                        urlMatcher.add(dispatcher.url, old);
+                        ((RestfulDispatchMapper) node.obj).setDispatcher(dispatcher);
                     }
 
                 }

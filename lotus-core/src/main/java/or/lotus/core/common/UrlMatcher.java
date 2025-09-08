@@ -8,7 +8,7 @@ public class UrlMatcher<T> {
     public class Node {
         String path;// {key} => key
         HashMap<String, Node> childs;
-        T obj;
+        public T obj;
 
         public Node(String path, Node next, T obj) {
             this.path = path;
@@ -50,7 +50,16 @@ public class UrlMatcher<T> {
             String[] paths = url.split("/");
             int len = paths.length;
             if(len == 0) {// `/`
-                root.childs.put("", new Node("", null, obj));
+                Node old = root.childs.get("");
+                if(old == null) {
+                    old = new Node("", null, obj);
+                    root.childs.put("", old);
+                } else {
+                    if(old.obj != null) {
+                        throw new RuntimeException(obj.getClass() + " " + url + " 重复定义");
+                    }
+                    old.obj = obj;
+                }
                 return;
             }
 
@@ -82,6 +91,10 @@ public class UrlMatcher<T> {
     }
 
     public Node findNode(String url) {
+        return findNode(url, false);
+    }
+
+    public Node findNode(String url, boolean isCheck) {
         String[] paths = url.split("/");
         if(paths.length == 0) {
             paths = new String[]{""};
@@ -96,7 +109,15 @@ public class UrlMatcher<T> {
                 String path = paths[i];
                 Node tmp = currentNode.childs.get(path);
                 if(tmp == null) {
-                    currentNode = currentNode.childs.get("*");
+                    if(isCheck) {
+                        if(path.startsWith("{")) {
+                            currentNode = currentNode.childs.get("*");
+                        } else {
+                            return null;
+                        }
+                    } else {
+                        currentNode = currentNode.childs.get("*");
+                    }
                 } else {
                     currentNode = tmp;
                 }
@@ -116,7 +137,7 @@ public class UrlMatcher<T> {
 
     /** 从url的path匹配 */
     public T match(String url) {
-        Node node = findNode(url);
+        Node node = findNode(url, false);
         if(node != null) {
             return node.obj;
         }
