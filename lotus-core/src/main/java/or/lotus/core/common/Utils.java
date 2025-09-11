@@ -468,6 +468,14 @@ public class Utils {
         }
     }
 
+    public static float tryFloat(String str, float def) {
+        try {
+            return Float.valueOf(str);
+        } catch (Exception e) {
+            return def;
+        }
+    }
+
     public static boolean tryBoolean(String str) {
         if (!CheckNull(str) && "true".equals(str))
             return true;
