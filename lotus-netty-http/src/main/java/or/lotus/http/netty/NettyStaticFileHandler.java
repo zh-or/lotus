@@ -186,7 +186,6 @@ public class NettyStaticFileHandler extends SimpleChannelInboundHandler<FullHttp
             return;
         }
         HttpUtil.setContentLength(response, fileLength);
-        response.headers().set(HttpHeaderNames.CONTENT_TYPE, RestfulUtils.getMimeType(charset.displayName(), file));
 
         SimpleDateFormat dateFormatter = new SimpleDateFormat(HTTP_DATE_FORMAT, Locale.US);
         dateFormatter.setTimeZone(TimeZone.getTimeZone(HTTP_DATE_GMT_TIMEZONE));
@@ -195,6 +194,9 @@ public class NettyStaticFileHandler extends SimpleChannelInboundHandler<FullHttp
         Calendar time = new GregorianCalendar();
         HttpHeaders headers = response.headers();
         headers.set(HttpHeaderNames.DATE, dateFormatter.format(time.getTime()));
+        if(!headers.contains(HttpHeaderNames.CONTENT_TYPE)) {
+            response.headers().set(HttpHeaderNames.CONTENT_TYPE, RestfulUtils.getMimeType(charset.displayName(), file));
+        }
 
         // Add cache headers
         time.add(Calendar.SECOND, HTTP_CACHE_SECONDS);
