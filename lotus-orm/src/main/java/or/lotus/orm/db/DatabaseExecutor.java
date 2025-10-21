@@ -704,7 +704,7 @@ public class DatabaseExecutor<T> {
             while(rs.next()) {
                 Map<String, Object> obj = new LinkedHashMap<>(mapSize);
                 for(int i = 1; i <= columnCount; i++) {
-                    String name = metaData.getColumnName(i);
+                    String name = metaData.getColumnLabel(i);
                     String fieldName = JdbcUtils.convertUnderscoreNameToPropertyName(name, false);
                     obj.put(fieldName, rs.getObject(i));
                 }

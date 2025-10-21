@@ -434,7 +434,7 @@ public class V8SqliteLib extends JavaLibBase {
                         while (rs.next()) {
                             SqliteRSObject[] row = new SqliteRSObject[columnCount];
                             for (j = 1; j <= columnCount; j++) {
-                                row[j - 1] = new SqliteRSObject(md.getColumnName(j), rs.getObject(j));
+                                row[j - 1] = new SqliteRSObject(md.getColumnLabel(j), rs.getObject(j));
                             }
                             data.add(row);
                         }
