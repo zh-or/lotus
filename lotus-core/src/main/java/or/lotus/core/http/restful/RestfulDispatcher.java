@@ -119,6 +119,10 @@ public class RestfulDispatcher {
                     RestfulHttpMethod reqMethod = request.getMethod();
 
                     if(Utils.CheckNull(name)) {
+                        /** 基本数据类型 */
+                        if(RestfulUtils.isBaseType(type)) {
+                            return RestfulUtils.valueToType(type, request.getBodyString());
+                        }
                         /** post-> json 直接转换为对象 */
                         PostBodyType contentType = request.getPostBodyType();
                         if(reqMethod == RestfulHttpMethod.POST && (contentType == PostBodyType.JSON || contentType == PostBodyType.TEXT)) {
