@@ -362,6 +362,10 @@ public abstract class RestfulContext {
                 } catch (IOException e) {}
             }
             response.setHeader("Content-Type", "text/html; charset=" + response.charset.displayName());
+            //不要缓存
+            response.setHeader("Cache-Control", "no-store");
+            response.setHeader("Pragrma", "no-cache");
+            response.setHeader("Expires", "0");
         }
     }
 
