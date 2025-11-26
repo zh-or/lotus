@@ -352,7 +352,11 @@ public class DatabaseExecutor<T> {
         return this;
     }
 
-    public DatabaseExecutor<T> where(WhereItem before, WhereItem where, boolean ifRightNotEmpty) throws SQLException {
+    public DatabaseExecutor<T> where(WhereItem before, WhereItem where) {
+        return where(before, where, false);
+    }
+
+    public DatabaseExecutor<T> where(WhereItem before, WhereItem where, boolean ifRightNotEmpty) {
         if(ifRightNotEmpty) {
             if(where.v == null) {
                 return this;
