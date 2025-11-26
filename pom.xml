@@ -159,8 +159,8 @@
                     <source>1.8</source>
                     <encoding>UTF-8</encoding>
                     <additionalparam>-Xdoclint:none</additionalparam>
-        <!-- 添加以下配置强制使用Unix路径 -->
-        <useDefaultExcludes>true</useDefaultExcludes>
+                    <!-- 添加以下配置强制使用Unix路径 -->
+                    <useDefaultExcludes>true</useDefaultExcludes>
                 </configuration>
                 <executions>
                     <execution>
