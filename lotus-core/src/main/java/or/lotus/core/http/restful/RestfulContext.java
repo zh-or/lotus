@@ -42,7 +42,6 @@ public abstract class RestfulContext {
     protected ConcurrentHashMap<String, Object> beansCache;
     protected String initBeanMethodName = "initBean";
 
-
     protected UrlMatcher<RestfulDispatchMapper> urlMatcher;
 
     /** 业务线程池 */
@@ -54,6 +53,7 @@ public abstract class RestfulContext {
     protected RestfulFilter filter;
 
     protected Properties properties = new Properties();
+
 
     public RestfulContext() {
         beansCache = new ConcurrentHashMap<>();
@@ -231,7 +231,7 @@ public abstract class RestfulContext {
     }
 
 
-    protected abstract void onStart() throws InterruptedException;
+    protected abstract void onStart() throws Exception;
     protected abstract void onStop();
 
     protected void sendResponseBefore(boolean isHandle, RestfulRequest request, RestfulResponse response) {
@@ -509,6 +509,8 @@ public abstract class RestfulContext {
     /** request & response buffer初始大小 */
     protected int bufferSize = 1024 * 4 * 2;
 
+    protected int maxInitialLineLength = 4096;//http第一行最大大小
+    protected int maxHeaderSize = 8192;//header最大大小
     /** 最大允许的请求体大小 */
     protected int maxContentLength = 1024 * 1024 * 2;
 
@@ -522,7 +524,6 @@ public abstract class RestfulContext {
     public void setMaxContentLength(int maxContentLength) {
         this.maxContentLength = maxContentLength;
     }
-
 
     public void setEnableGZIP(boolean enableGZIP) {
         isEnableGZIP = enableGZIP;
@@ -665,4 +666,19 @@ public abstract class RestfulContext {
     }
 
 
+    public void setMaxInitialLineLength(int maxInitialLineLength) {
+        this.maxInitialLineLength = maxInitialLineLength;
+    }
+
+    public void setMaxHeaderSize(int maxHeaderSize) {
+        this.maxHeaderSize = maxHeaderSize;
+    }
+
+    public int getMaxInitialLineLength() {
+        return maxInitialLineLength;
+    }
+
+    public int getMaxHeaderSize() {
+        return maxHeaderSize;
+    }
 }

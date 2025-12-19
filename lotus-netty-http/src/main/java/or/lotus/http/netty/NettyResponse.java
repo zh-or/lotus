@@ -16,7 +16,6 @@ public class NettyResponse extends RestfulResponse {
     public NettyResponse(NettyRequest request) {
         super(request);
         this.request = request;
-
     }
 
     public HttpResponse getResponse() {
@@ -87,12 +86,12 @@ public class NettyResponse extends RestfulResponse {
 
     @Override
     public void flush() throws IOException {
-
+        request.channel.flush();
     }
 
     @Override
     public void close() throws IOException {
-
+        request.channel.close();
     }
 
 }

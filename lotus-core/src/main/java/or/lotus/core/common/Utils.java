@@ -651,45 +651,59 @@ public class Utils {
         return ret;
     }
 
-    public static int byteArrSearch(byte[] src, byte[] dest) {
-        return byteArrSearch(src, dest, 0);
-    }
-
-    /**
-     * 在src中查找dest的位置
-     *
-     * @param src
-     * @param dest
-     * @return 找到了返回dest在src的起始下标 未找到返回-1 此下标从0开始
-     */
-    public static int byteArrSearch(byte[] src, byte[] dest, int offset) {
-        if (offset < 0) {
-            offset = 0;
-        }
-        if (dest == null || src == null || src.length < dest.length)
-            return -1;// fuck 了
-        int p = -1, destLenEP = dest.length - 1, srcLen = src.length - destLenEP, k = 0, i = offset;
-        if ((destLenEP + offset) > src.length) {
+    public static int kmpSearch(byte[] src, byte[] dest, int offset) {
+        if (src == null || dest == null || dest.length == 0) {
             return -1;
         }
-        boolean foundit = true;
-        for (; i < srcLen; i++) {
-            if (src[i] == dest[0] && src[i + destLenEP] == dest[destLenEP]) {// 第一个匹配 // 最后一个匹配
-                for (k = 0; k < destLenEP; k++) {
-                    if (src[i + k] != dest[k]) {
-                        foundit = false;
-                        break;
-                    }
-                }
-                if (foundit) {
-                    p = i;
-                    break;
+
+        // 构建部分匹配表
+        int[] lps = computeLPS(dest);
+
+        int i = offset; // src的索引
+        int j = 0;      // dest的索引
+
+        while (i < src.length) {
+            if (dest[j] == src[i]) {
+                i++;
+                j++;
+            }
+
+            if (j == dest.length) {
+                return i - j;
+            } else if (i < src.length && dest[j] != src[i]) {
+                if (j != 0) {
+                    j = lps[j - 1];
+                } else {
+                    i++;
                 }
             }
         }
-        return p;
+
+        return -1;
     }
 
+    private static int[] computeLPS(byte[] pattern) {
+        int[] lps = new int[pattern.length];
+        int len = 0;
+        int i = 1;
+
+        while (i < pattern.length) {
+            if (pattern[i] == pattern[len]) {
+                len++;
+                lps[i] = len;
+                i++;
+            } else {
+                if (len != 0) {
+                    len = lps[len - 1];
+                } else {
+                    lps[i] = 0;
+                    i++;
+                }
+            }
+        }
+
+        return lps;
+    }
     /**
      * 生成范围包含开始和结束
      *

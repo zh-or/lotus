@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public abstract class RestfulRequest {
+public abstract class RestfulRequest implements AutoCloseable {
     protected RestfulContext context;
     protected HashMap<String, RestfulCookie> cookies = null;
     protected HashMap<String, Object> attributes;

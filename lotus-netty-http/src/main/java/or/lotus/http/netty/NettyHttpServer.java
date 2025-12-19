@@ -24,6 +24,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static io.netty.handler.codec.http.HttpObjectDecoder.DEFAULT_MAX_CHUNK_SIZE;
+
 public class NettyHttpServer extends RestfulContext {
 
     EventLoopGroup bossGroup = null;
@@ -105,7 +107,7 @@ public class NettyHttpServer extends RestfulContext {
                 if (sslContext != null) {
                     pipeline.addLast(sslContext.newHandler(socketChannel.alloc()));
                 }
-                pipeline.addLast("httpCodec", new HttpServerCodec());// HTTP 编解码
+                pipeline.addLast("httpCodec", new HttpServerCodec(maxInitialLineLength, maxHeaderSize, DEFAULT_MAX_CHUNK_SIZE));// HTTP 编解码
                 if(isEnableGZIP) {
                     pipeline.addLast("decompressor", new HttpContentDecompressor());// HttpContent 解压缩
                     pipeline.addLast("compressor", new HttpContentCompressor());// HttpContent 压缩
@@ -162,7 +164,6 @@ public class NettyHttpServer extends RestfulContext {
         }
 
         protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest msg) throws Exception {
-
             NettyRequest request = new NettyRequest(NettyHttpServer.this, ctx, msg);
             NettyResponse response = new NettyResponse(request);
             request.retain();

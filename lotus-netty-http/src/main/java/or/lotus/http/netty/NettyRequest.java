@@ -48,6 +48,9 @@ public class NettyRequest extends RestfulRequest {
             useCount --;
             msg.release();
         }
+        if(useCount <= 0) {
+            close();
+        }
     }
 
     boolean isRewrited = false;
@@ -140,4 +143,8 @@ public class NettyRequest extends RestfulRequest {
         return (InetSocketAddress) channel.channel().remoteAddress();
     }
 
+    @Override
+    public void close() {
+
+    }
 }

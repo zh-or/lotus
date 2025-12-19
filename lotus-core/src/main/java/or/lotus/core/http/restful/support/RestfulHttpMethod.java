@@ -7,4 +7,18 @@ public enum RestfulHttpMethod {
     DELETE,
     OPTIONS,
     REQUEST//其他请求
+
+    ;
+
+    public static RestfulHttpMethod byName(String type) {
+        if(type == null) {
+            return null;
+        }
+        for(RestfulHttpMethod m : RestfulHttpMethod.values()) {
+            if(m.name().equalsIgnoreCase(type)) {
+                return m;
+            }
+        }
+        return null;
+    }
 }

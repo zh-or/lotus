@@ -1,7 +1,12 @@
 package or.lotus.v8;
 
 
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
+
 public class Message {
+    private final ReentrantLock lock = new ReentrantLock();
+    private final Condition condition = lock.newCondition();
     private int type;
     private Object msg;
     private Object result;
@@ -29,33 +34,34 @@ public class Message {
     }
 
     public void waitResult(long timeout) {
-        if(isSetResult) {
-            return;
-        }
-        synchronized (this) {
+        lock.lock();
+        try {
             try {
-                if(result != null || isSetResult){
-                    //已经有值了
-                    return ;
-                }
-                this.wait(timeout);
-            } catch (InterruptedException e) {}
+                condition.await(timeout, java.util.concurrent.TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                Thread.interrupted();
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
-    public Object getMsg(){
+    public Object getMsg() {
         return this.msg;
     }
 
-    public int getType(){
+    public int getType() {
         return this.type;
     }
 
-    public void setResult(Object obj){
-        synchronized (this) {
-            this.isSetResult = true;
+    public void setResult(Object obj) {
+        lock.lock();
+        try {
             this.result = obj;
-            this.notifyAll();
+            this.isSetResult = true;
+            condition.signalAll(); // 唤醒所有等待线程
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -99,7 +105,7 @@ public class Message {
         return attr4;
     }
 
-    public boolean isSetResult(){
+    public boolean isSetResult() {
         return isSetResult;
     }
 
@@ -107,7 +113,7 @@ public class Message {
     public static final int  CALL            = 1;
     public static final int  LOAD            = 2;
 
-    public static Message createQuit(){
+    public static Message createQuit() {
         return new Message(QUIT);
     }
 

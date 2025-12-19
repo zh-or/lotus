@@ -71,6 +71,7 @@ public class FileQueue implements AutoCloseable {
                     wait.wait(timeout);
                 }
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
         }
         return poll();

@@ -1,78 +1,69 @@
 package or.lotus.core.nio.tcp;
 
 
-import or.lotus.core.nio.support.ProtocolCodec;
+import or.lotus.core.nio.IoProcess;
+import or.lotus.core.nio.Session;
 
 import java.io.IOException;
-import java.net.SocketAddress;
+import java.net.InetSocketAddress;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
-import java.util.concurrent.ConcurrentHashMap;
 
 
-public class NioTcpSession  {
-	protected ConcurrentHashMap<Object, Object> attrs;
-	protected long lastActive;
-	protected ProtocolCodec codec = null;
-	private SocketChannel channel;
-	private SelectionKey key;
+public class NioTcpSession  extends Session {
+	protected SocketChannel channel;
+	protected SelectionKey key;
 
-	public NioTcpSession(SocketChannel channel) {
+	public NioTcpSession(NioTcpServer context, SocketChannel channel, IoProcess ioProcess) {
+		super(context, ioProcess);
 		this.channel = channel;
-		this.attrs = new ConcurrentHashMap<Object, Object>();
+
 	}
 
-	public void setKey(SelectionKey key){
-	    this.key = key;
+	@Override
+	public void write(Object data) {
+		super.write(data);
+
+		ioProcess.addPendingTask(() -> {
+			key.interestOps(key.interestOps() | SelectionKey.OP_WRITE);
+		});
+		key.selector().wakeup();
 	}
 
-	public SocketAddress getRemoteAddress() {
+	protected Object pollMessage() {
+		Object msg = waitSendMessageList.poll();
+
+		return msg;
+	}
+
+	/** 会触发关闭事件 */
+	@Override
+	public void closeNow() {
+		super.closeNow();
+		if(key != null) {
+			try {
+				key.channel().close();
+			} catch (IOException e) {}
+			key.cancel();
+			key.selector().wakeup();//清理关闭的 key
+		}
+	}
+
+	@Override
+	public InetSocketAddress getRemoteAddress() {
 		try {
-            return channel.getRemoteAddress();
+            return (InetSocketAddress) channel.getRemoteAddress();
         } catch (IOException e) {
         }
 		return null;
 	}
 
-	public SocketAddress getLocalAddress() {
+	@Override
+	public InetSocketAddress getLocalAddress() {
 	    try {
-            return channel.getLocalAddress();
+            return (InetSocketAddress) channel.getLocalAddress();
         } catch (IOException e) {}
 	    return null;
-	}
-
-	public synchronized void setLastActive(long t) {
-		lastActive = t;
-	}
-
-	public long getLastActive() {
-		return lastActive;
-	}
-
-	public Object getAttr(Object key, Object def) {
-		Object val = attrs.get(key);
-		if(val == null) return def;
-		return val;
-	}
-
-	public Object getAttr(Object key) {
-		return getAttr(key, null);
-	}
-
-	public void setAttr(Object key, Object val) {
-		attrs.put(key, val);
-	}
-
-	public Object removeAttr(Object key){
-		return attrs.remove(key);
-	}
-
-	public ProtocolCodec getCodec() {
-		return codec;
-	}
-
-	public void setCodec(ProtocolCodec codec) {
-		this.codec = codec;
 	}
 
 }

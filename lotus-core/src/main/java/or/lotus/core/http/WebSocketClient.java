@@ -51,7 +51,7 @@ public class WebSocketClient {
     }
 
 
-    private static final String request_package =
+    private static final String requestPackage =
             "GET %s HTTP/1.1\r\n" +
             "Host: %s\r\n" +
             "Connection: Upgrade\r\n" +
@@ -131,7 +131,7 @@ public class WebSocketClient {
         String query = uri.getQuery();
 
         String key = Base64.byteArrayToBase64(Utils.RandomNum(16).getBytes());
-        String tmp = String.format(request_package, requestPath + (query == null ? "" : "?" + query), uri.getHost(), key);
+        String tmp = String.format(requestPackage, requestPath + (query == null ? "" : "?" + query), uri.getHost(), key);
 
         bOut.write(tmp.getBytes());
         bOut.flush();
