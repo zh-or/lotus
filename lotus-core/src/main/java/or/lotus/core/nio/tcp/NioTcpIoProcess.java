@@ -40,32 +40,7 @@ public class NioTcpIoProcess extends IoProcess {
     @Override
     public void process() {
         //1. 处理连接的session
-        NioTcpSession session = null;
-        while((session = connectedSession.poll()) != null) {
-            try {
-
-                IoHandler handler = session.getHandler();
-                try {
-                    handler.onBeforeConnection(session);
-                } catch (Exception e) {
-                    log.debug("连接前处理出错:", e);
-                    session.channel.close();
-                    session = null;
-                    return;
-                }
-                session.channel.configureBlocking(false);
-            } catch (IOException e) {
-                log.debug("连接 配置异步/关闭 出错:", e);
-            }
-
-            try {
-                session.key = session.channel.register(selector, SelectionKey.OP_READ, /*atth*/session);
-            } catch (ClosedChannelException e) {
-                log.debug("链接在连接成功之前关闭:", e);
-                continue;
-            }
-            session.pushEventRunnable(new IoEventRunnable(null, IoEventRunnable.IoEventType.SESSION_CONNECTION, session, context));
-        }
+        handleConnected();
         //selector.wakeup();
 
         //2. 处理事件
@@ -82,6 +57,7 @@ public class NioTcpIoProcess extends IoProcess {
             log.error("轮训事件出错:", e);
         }
 
+        NioTcpSession session;
         Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
 
         while(keys.hasNext()) {
@@ -122,6 +98,59 @@ public class NioTcpIoProcess extends IoProcess {
                 session.closeNow();
             } catch (Exception e) {
                 session.pushEventRunnable(new IoEventRunnable(e, IoEventRunnable.IoEventType.SESSION_EXCEPTION, session, context));
+            }
+        }
+    }
+
+    protected void handleConnected() {
+        NioTcpSession session;
+        while((session = connectedSession.poll()) != null) {
+            try {
+
+                IoHandler handler = session.getHandler();
+                try {
+                    handler.onBeforeConnection(session);
+                } catch (Exception e) {
+                    log.debug("连接前处理出错:", e);
+                    session.channel.close();
+                    session = null;
+                    return;
+                }
+                session.channel.configureBlocking(false);
+            } catch (IOException e) {
+                log.debug("连接 配置异步/关闭 出错:", e);
+            }
+
+            try {
+                session.key = session.channel.register(selector, SelectionKey.OP_READ, /*atth*/session);
+            } catch (ClosedChannelException e) {
+                log.debug("链接在连接成功之前关闭:", e);
+                continue;
+            }
+            session.pushEventRunnable(new IoEventRunnable(null, IoEventRunnable.IoEventType.SESSION_CONNECTION, session, context));
+        }
+    }
+
+    protected void handleIdle() {
+        //只处理当前IoProcess注册的session
+        Iterator<SelectionKey> keys = selector.keys().iterator();
+        long nowTime = System.currentTimeMillis();
+        while(keys.hasNext()) {
+            SelectionKey key = keys.next();/*这里报错?*/
+            if(!context.isRunning()) break;
+
+            if (key.channel() instanceof ServerSocketChannel) {
+                continue;
+            }
+
+            if (key.isValid() == false) {
+                continue;
+            }
+            NioTcpSession session = (NioTcpSession) key.attachment();
+
+            if(session != null && !session.isClosed() && nowTime - session.getLastActive() >= context.getSessionIdleTime()) {
+                /*call on idle */
+                session.pushEventRunnable(new IoEventRunnable(null, IoEventRunnable.IoEventType.SESSION_IDLE, session, context));
             }
         }
     }
@@ -180,37 +209,14 @@ public class NioTcpIoProcess extends IoProcess {
                 } finally {
                     out.release();
                 }
+                session.setLastActive(System.currentTimeMillis());
                 context.executeEvent(new IoEventRunnable(msg, IoEventRunnable.IoEventType.SESSION_SENT, session, context));
             } while(sent == false);
-            session.setLastActive(System.currentTimeMillis());
         }
 
         key.interestOps(key.interestOps() & (~SelectionKey.OP_WRITE));
     }
 
-    protected void handleIdle() {
-        //只处理当前IoProcess注册的session
-        Iterator<SelectionKey> keys = selector.keys().iterator();
-        long nowTime = System.currentTimeMillis();
-        while(keys.hasNext()) {
-            SelectionKey key = keys.next();/*这里报错?*/
-            if(!context.isRunning()) break;
-
-            if (key.channel() instanceof ServerSocketChannel) {
-                continue;
-            }
-
-            if (key.isValid() == false) {
-                continue;
-            }
-            NioTcpSession session = (NioTcpSession) key.attachment();
-
-            if(session != null && !session.isClosed() && nowTime - session.getLastActive() >= context.getSessionIdleTime()) {
-                /*call on idle */
-                session.pushEventRunnable(new IoEventRunnable(null, IoEventRunnable.IoEventType.SESSION_IDLE, session, context));
-            }
-        }
-    }
 
     @Override
     public void close() {

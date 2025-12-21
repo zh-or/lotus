@@ -28,7 +28,7 @@ public abstract class JdbcUtils {
      */
     public static final int TYPE_UNKNOWN = Integer.MIN_VALUE;
 
-    private static final Logger log = LoggerFactory.getLogger(LotusDataSource.class);
+    private static final Logger log = LoggerFactory.getLogger(JdbcUtils.class);
 
     private static final Map<Integer, String> typeNames = new HashMap<>();
 

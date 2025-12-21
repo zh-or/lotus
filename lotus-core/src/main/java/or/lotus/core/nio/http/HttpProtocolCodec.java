@@ -6,7 +6,6 @@ import or.lotus.core.nio.*;
 import or.lotus.core.nio.tcp.NioTcpSession;
 
 import java.io.File;
-import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
@@ -18,7 +17,7 @@ public class HttpProtocolCodec implements ProtocolCodec {
     private static final String CONTENT_LENGTH = "content-length";
     private static final String REQUEST = "http-request";
     private static final String HTTP_BODY = "http-body";
-    private HttpServer context = null;
+    private HttpServer context;
     private static final byte[] lineChars = "\r\n".getBytes();
     private static final byte[] headerChars = "\r\n\r\n".getBytes();
     public HttpProtocolCodec(HttpServer context) {
@@ -38,10 +37,10 @@ public class HttpProtocolCodec implements ProtocolCodec {
                 if(dataLength >= context.getMaxInitialLineLength()) {
                     throw new HttpServerException(431, "Request Header Fields Too Large");
                 }
-                if(in.search(lineChars) != -1) {
-                    session.setAttr(STATUS, HttpStatus.Head);
+                if(in.search(lineChars) == -1) {
+                    break;
                 }
-                break;
+                session.setAttr(STATUS, HttpStatus.Head);
             case Head: {
                 if(dataLength >= context.getMaxHeaderSize()) {
                     throw new HttpServerException(431, "Request Header Fields Too Large");
@@ -49,17 +48,20 @@ public class HttpProtocolCodec implements ProtocolCodec {
                 int headerEndPost = in.search(headerChars);
                 if(headerEndPost == -1) {
                     //未接收到完整的http头
+                    System.out.println("session:" + session.getId() + " 未搜索到头结尾.");
                    break;
                 }
                 //in.mark();
-                byte[] headerBytes = new byte[headerEndPost];
+                byte[] headerBytes = new byte[headerEndPost + 4];
                 in.get(headerBytes);
                 HttpRequest request = new HttpRequest(
                         context,
                         (NioTcpSession) session,
                         new String(headerBytes, context.getCharset())
                 );
-
+                if(request.method == null) {
+                    throw new HttpServerException(431, "Method error");
+                }
                 if( request.method == RestfulHttpMethod.GET ||
                     request.method == RestfulHttpMethod.OPTIONS ||
                     request.method == RestfulHttpMethod.DELETE
@@ -116,15 +118,20 @@ public class HttpProtocolCodec implements ProtocolCodec {
         //是块对象
         if(msg instanceof HttpSyncResponse) {
             HttpSyncResponse syncResponse = (HttpSyncResponse) msg;
-            if(syncResponse.buffer == null) {
-                return true;
+            Charset charset = context.getCharset();
+            int len = 0;
+            if(syncResponse.buffer != null) {
+                len = syncResponse.buffer.getCountPosition();
             }
-            Charset charset = syncResponse.request.getContext().getCharset();
-            //按块发送
-            int len = syncResponse.buffer.getDataLength();
             String hexLen = Integer.toHexString(len);
             out.append(hexLen.getBytes(charset));
-            out.append("\r\n".getBytes(charset));
+            out.append(lineChars);
+            if(len > 0) {
+                out.append(syncResponse.buffer.getAllDataBuffer(true));
+            } else if(syncResponse.buffer != null) {
+                syncResponse.buffer.release();
+            }
+            out.append(lineChars);
             return true;
         }
 
@@ -137,10 +144,10 @@ public class HttpProtocolCodec implements ProtocolCodec {
                         HttpHeaderNames.CONTENT_LENGTH,
                         response.isFileResponse() ?
                                 String.valueOf(response.getFile().length()) :
-                                String.valueOf(response.writeBuffer.getDataLength())
+                                String.valueOf(response.writeBuffer == null ? 0 : response.writeBuffer.getCountPosition())
                 );
             }
-            out.append(response.getHeaders().getBytes(response.charset));
+            out.append(response.getHeaders().getBytes(context.getCharset()));
             response.isSendHeader = true;
         }
         if(response.writeBuffer != null) {
@@ -150,13 +157,10 @@ public class HttpProtocolCodec implements ProtocolCodec {
                 String hexLen = Integer.toHexString(len);
                 //len = len + 4 + hexLen.length();
                 out.append(hexLen.getBytes(response.charset));
-                out.append("\r\n".getBytes(response.charset));
+                out.append(lineChars);
             }
 
-            ByteBuffer[] buffers = ((LotusByteBuffer) response.writeBuffer).getAllDataBuffer(true);
-            for(ByteBuffer buff : buffers) {
-                out.append(buff);
-            }
+            out.append(response.writeBuffer.getAllDataBuffer(true));
         } else if(response.isFileResponse()) {
             File file = response.getFile();
 

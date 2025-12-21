@@ -11,7 +11,7 @@ public interface LotusByteBuf {
 
     /** 用于检查内存泄漏, 加个名字方便查找 */
     public void retain(String name);
-
+    public void append(ByteBuffer[] buff);
     public void append(ByteBuffer buff);
     public void append(byte[] src);
     public void append(byte[] src, int offset, int length);
@@ -37,6 +37,6 @@ public interface LotusByteBuf {
     public int get(byte[] dst, int dstOffset, int length);
     public byte get();
 
-    /** 搜索指定字符串的位置, 未搜索到返回-1, 不需要调用mark, reset*/
+    /** 搜索指定子串的位置如果找到则返回首个位置, 未搜索到返回-1, 不需要调用mark, reset*/
     public int search(byte[] bytes);
 }

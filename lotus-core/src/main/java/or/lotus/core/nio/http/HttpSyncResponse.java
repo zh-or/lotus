@@ -1,13 +1,15 @@
 package or.lotus.core.nio.http;
 
 import or.lotus.core.nio.LotusByteBuf;
+import or.lotus.core.nio.LotusByteBuffer;
 import or.lotus.core.nio.tcp.NioTcpSession;
 
 public class HttpSyncResponse implements AutoCloseable {
     protected NioTcpSession session;
     protected HttpRequest request;
-    protected LotusByteBuf buffer;
+    protected LotusByteBuffer buffer;
     protected boolean isEnd = false;
+    protected long lastSendData = 0;
 
     public HttpSyncResponse(NioTcpSession session, HttpRequest request) {
         this.session = session;
@@ -26,25 +28,32 @@ public class HttpSyncResponse implements AutoCloseable {
         return this;
     }
 
+    /** 发送当前缓冲区的数据, 如果当前未写入数据则效果同 syncEnd() */
     public synchronized void flush() {
-        if(buffer != null && buffer.getDataLength() > 0) {
-            HttpSyncResponse obj = new HttpSyncResponse(session, request);
-            session.write(obj);
+        HttpSyncResponse obj = new HttpSyncResponse(session, request);
+        if(buffer != null && buffer.getCountPosition() > 0) {
             obj.buffer = buffer;
             buffer = null;
+        } else {
+            isEnd = true;
         }
+        lastSendData = System.currentTimeMillis();
+        session.write(obj);
     }
 
+    /** 发送结束 */
     public void syncEnd() {
-        write("0\r\n\r\n");
+        if(buffer != null && buffer.getCountPosition() > 0) {
+            flush();
+        }
+        //write("0\r\n\r\n");
         flush();
-        isEnd = true;
     }
 
 
     private void checkBuffer() {
         if(buffer == null) {
-            buffer = request.getContext().server.pulledByteBuffer();
+            buffer = (LotusByteBuffer) request.getContext().server.pulledByteBuffer();
         }
     }
 

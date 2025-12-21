@@ -81,5 +81,8 @@ public class HttpBodyData extends RestfulFormData {
         if(fileChannel != null) {
             fileChannel.close();
         }
+        if(bodyBuffer != null) {
+            while(!bodyBuffer.release());
+        }
     }
 }

@@ -54,7 +54,9 @@ public class HttpRequest extends RestfulRequest {
                     version = HttpVersion.HTTP_1_0;
                 }
             }
-
+            if(method == null) {
+                System.out.println("method == null");
+            }
             if(context.isEnableWebSocket()){
                 String connection = getHeader(HttpHeaderNames.CONNECTION);
                 if(!Utils.CheckNull(connection) &&  connection.indexOf("Upgrade") != -1
@@ -68,6 +70,10 @@ public class HttpRequest extends RestfulRequest {
             }
         }
 
+    }
+
+    public boolean isWebSocket() {
+        return isWebSocket;
     }
 
     @Override

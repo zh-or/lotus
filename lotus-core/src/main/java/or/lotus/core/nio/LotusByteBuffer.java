@@ -1,5 +1,7 @@
 package or.lotus.core.nio;
 
+import or.lotus.core.common.Utils;
+
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.util.ArrayList;
@@ -188,6 +190,13 @@ public class LotusByteBuffer implements LotusByteBuf {
     }
 
     @Override
+    public void append(ByteBuffer[] buff) {
+        for(ByteBuffer buf : buff) {
+            append(buf);
+        }
+    }
+
+    @Override
     public void append(ByteBuffer buff) {
         ByteBuffer currentBuff = buffers[writeIndex];
         if(currentBuff.position() <= 0) {//无数据直接替换
@@ -241,6 +250,17 @@ public class LotusByteBuffer implements LotusByteBuf {
             }
             size += pos;
         }
+    }
+
+    /** 写模式下读取当前写入数据的数量 */
+    public int getCountPosition() {
+        int size = 0;
+        ByteBuffer buff;
+        for(int i = 0; i <= writeIndex; i++) {
+            buff = buffers[i];
+            size += buff.position();
+        }
+        return size;
     }
 
     /** 读模式为返回可读取数据总长度, 写模式时返回值无效 */
@@ -369,10 +389,9 @@ public class LotusByteBuffer implements LotusByteBuf {
                 bufEnd = buff.remaining();
             }
             if(dst != null) {
-
                 for(d = bufStart; d < bufEnd; d++) {
                     for(b = mid; b < bLen; b++) {
-                        if(dst[d] == bytes[b]) {
+                        if(dst[d + b] == bytes[b]) {
                             mid = b;
                             if(matchStart == -1) {
                                 matchStart = d + step;
@@ -380,16 +399,18 @@ public class LotusByteBuffer implements LotusByteBuf {
                         } else {
                             matchStart = -1;
                             mid = 0;
+                            break;
                         }
                     }
-                    if(mid != b) {
-                        mid = 0;
+                    if(matchStart != -1 && mid == bLen - 1) {
+                        break;
                     }
                 }
 
                 step += (bufEnd - bufStart);
             }
         }
+
         return matchStart;
     }
 }

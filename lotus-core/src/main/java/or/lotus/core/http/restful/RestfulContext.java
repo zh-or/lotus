@@ -176,10 +176,12 @@ public abstract class RestfulContext {
         }
 
         /** 给filter注入bean */
-        try {
-            RestfulUtils.injectBeansToObject(this, filter);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
+        if(filter != null) {
+            try {
+                RestfulUtils.injectBeansToObject(this, filter);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
         }
 
         this.bindAddress = bindAddress;

@@ -3,12 +3,10 @@ package or.lotus.core.nio.tcp;
 
 import or.lotus.core.nio.IoProcess;
 import or.lotus.core.nio.Session;
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
-
 
 public class NioTcpSession  extends Session {
 	protected SocketChannel channel;
@@ -17,15 +15,18 @@ public class NioTcpSession  extends Session {
 	public NioTcpSession(NioTcpServer context, SocketChannel channel, IoProcess ioProcess) {
 		super(context, ioProcess);
 		this.channel = channel;
-
 	}
 
 	@Override
 	public void write(Object data) {
+		if(closed) {
+			return;
+		}
 		super.write(data);
-
 		ioProcess.addPendingTask(() -> {
-			key.interestOps(key.interestOps() | SelectionKey.OP_WRITE);
+			if(key.isValid()) {
+				key.interestOps(key.interestOps() | SelectionKey.OP_WRITE);
+			}
 		});
 		key.selector().wakeup();
 	}
@@ -35,6 +36,7 @@ public class NioTcpSession  extends Session {
 
 		return msg;
 	}
+
 
 	/** 会触发关闭事件 */
 	@Override

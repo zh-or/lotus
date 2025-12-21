@@ -10,14 +10,17 @@ import or.lotus.core.nio.tcp.NioTcpServer;
 import javax.net.ssl.SSLContext;
 
 public class HttpServer extends RestfulContext {
-    NioTcpServer server;
-    private boolean enableWebSocket = false;
-    private String uploadTmpDir = null;
-    String defaultIndexFile = "index.html";
-    private boolean enableSSL = false;
-    private SSLContext sslContext = null;
+    protected NioTcpServer server;
+    protected boolean enableWebSocket = false;
+    protected String uploadTmpDir = null;
+    protected String defaultIndexFile = "index.html";
+    protected boolean enableSSL = false;
+    protected SSLContext sslContext = null;
     /** 如果http内容超过此值, 则缓存到文件 */
-    private int cacheContentToFileLimit = 1024 * 1024 * 4;
+    protected int cacheContentToFileLimit = 1024 * 1024 * 4;
+
+    /** 每个连接最大请求数量 */
+    protected int keepLiveRequestCount = 10;
 
     public HttpServer() {
         server = new NioTcpServer();
@@ -74,6 +77,18 @@ public class HttpServer extends RestfulContext {
         this.defaultIndexFile = defaultIndexFile;
     }
 
+    public void setKeepLiveRequestCount(int keepLiveRequestCount) {
+        this.keepLiveRequestCount = keepLiveRequestCount;
+    }
+
+    public void setKeepLiveTimeout(int keepLiveTimeout) {
+        server.setSessionIdleTime(keepLiveTimeout);
+    }
+
+    public NioTcpServer getNioTcpServer() {
+        return server;
+    }
+
     @Override
     protected void sendResponse(boolean isHandle, RestfulRequest request, RestfulResponse response) {
         HttpRequest httpRequest = (HttpRequest) request;
@@ -85,26 +100,48 @@ public class HttpServer extends RestfulContext {
 
     private class HttpIoHandler extends IoHandler {
         @Override
-        public void onIdle(Session session) throws Exception { }
+        public void onIdle(Session session) throws Exception {
+            //todo 空闲时说明超时了直接关闭
+            log.info("超时: {}", session.getId());
+            session.closeNow();
+        }
 
         @Override
         public void onReceiveMessage(Session session, Object msg) throws Exception {
-            HttpRequest request = (HttpRequest) msg;
-            dispatch(request, new HttpResponse(request));
+            if(msg != null) {
+                HttpRequest request = (HttpRequest) msg;
+                log.info("request: {}, path: {}", session.getId(), request.getPath());
+                dispatch(request, new HttpResponse(request));
+            }
         }
 
         @Override
         public void onSentMessage(Session session, Object msg) throws Exception {
-            HttpResponse httpResponse = (HttpResponse) msg;
-            if(httpResponse != null) {//发送完毕后调用关闭
-                httpResponse.request.close();
-                httpResponse.close();
+            //todo keeplive时一个连接最多处理请求数量问题
+            if(msg instanceof HttpSyncResponse) {
+                HttpSyncResponse syncResponse = (HttpSyncResponse) msg;
+                if(syncResponse.isEnd) {
+                    //发送完毕了
+                    //session.closeNow();
+                }
+            } else {
+                HttpResponse httpResponse = (HttpResponse) msg;
+                if(httpResponse != null) {//发送完毕后调用关闭
+
+                    httpResponse.request.close();
+                    httpResponse.close();
+                    if(httpResponse.isOpenSync) {
+
+                    } else {
+
+                    }
+                }
             }
         }
 
         @Override
         public void onClose(Session session) throws Exception {
-
+            log.info("close: {}", session.getId());
         }
 
         @Override
