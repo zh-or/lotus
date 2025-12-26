@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
  *  */
 public abstract class RestfulContext {
     public static final String TAG = "Lotus Restful";
-    protected static final Logger log = LoggerFactory.getLogger(RestfulContext.class);
+    public static final Logger log = LoggerFactory.getLogger(RestfulContext.class);
     protected InetSocketAddress bindAddress;
 
     /**key = @Bean->value | packageName*/
@@ -185,7 +185,7 @@ public abstract class RestfulContext {
         }
 
         this.bindAddress = bindAddress;
-        if(eventThreadPoolSize > 0) {
+        if(executorService == null && eventThreadPoolSize > 0) {
             executorService = Executors.newFixedThreadPool(
                     eventThreadPoolSize,
                     (run) -> new Thread(run, "lotus-restful-service-pool")

@@ -1,6 +1,5 @@
 package or.lotus.core.nio.http;
 
-import or.lotus.core.nio.LotusByteBuf;
 import or.lotus.core.nio.LotusByteBuffer;
 import or.lotus.core.nio.tcp.NioTcpSession;
 
@@ -38,7 +37,9 @@ public class HttpSyncResponse implements AutoCloseable {
             isEnd = true;
         }
         lastSendData = System.currentTimeMillis();
-        session.write(obj);
+        if(!session.write(obj)) {
+            obj.buffer.release();
+        }
     }
 
     /** 发送结束 */

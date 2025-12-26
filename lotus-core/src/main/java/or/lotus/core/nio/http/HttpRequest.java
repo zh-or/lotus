@@ -1,8 +1,6 @@
 package or.lotus.core.nio.http;
 
 import or.lotus.core.common.Utils;
-import or.lotus.core.http.restful.RestfulContext;
-import or.lotus.core.http.restful.RestfulFormData;
 import or.lotus.core.http.restful.RestfulRequest;
 import or.lotus.core.http.restful.support.RestfulHttpMethod;
 import or.lotus.core.nio.tcp.NioTcpSession;
@@ -11,6 +9,7 @@ import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 
+/** HttpRequest 将在调用后自动销毁, body 等参数将无法异步获取 */
 public class HttpRequest extends RestfulRequest {
     protected NioTcpSession session;
     protected HashMap<String, String> headers;
@@ -20,8 +19,9 @@ public class HttpRequest extends RestfulRequest {
     protected String path;
     protected String queryString;
     protected boolean isWebSocket = false;
-
+    protected boolean isRewrited = false;
     protected HttpBodyData bodyData;
+    protected long contentLength;
 
     public HttpRequest(HttpServer context, NioTcpSession session, String headerString) {
         super(context);
@@ -42,7 +42,7 @@ public class HttpRequest extends RestfulRequest {
                 rawPath = elements[1];
                 int mid = rawPath.lastIndexOf("?");
                 if(mid != -1) {
-                    queryString = rawPath.substring(mid, rawPath.length());
+                    queryString = rawPath.substring(mid + 1, rawPath.length());
                     path = rawPath.substring(0, mid);
                 } else {
                     path = rawPath;
@@ -54,9 +54,7 @@ public class HttpRequest extends RestfulRequest {
                     version = HttpVersion.HTTP_1_0;
                 }
             }
-            if(method == null) {
-                System.out.println("method == null");
-            }
+
             if(context.isEnableWebSocket()){
                 String connection = getHeader(HttpHeaderNames.CONNECTION);
                 if(!Utils.CheckNull(connection) &&  connection.indexOf("Upgrade") != -1
@@ -69,7 +67,12 @@ public class HttpRequest extends RestfulRequest {
                 }
             }
         }
+        contentLength = Utils.tryLong(getHeader(HttpHeaderNames.CONTENT_LENGTH), 0);
 
+    }
+
+    public long getContentLength() {
+        return contentLength;
     }
 
     public boolean isWebSocket() {
@@ -87,30 +90,36 @@ public class HttpRequest extends RestfulRequest {
 
     @Override
     public boolean isRewriteUrl() {
-        return false;
+        return isRewrited;
     }
 
     @Override
     public void handledRewrite() {
-
+        isRewrited = false;
     }
 
     @Override
     public void rewriteUrl(String url) {
-
+        int mid = url.lastIndexOf("?");
+        if(mid != -1) {
+            queryString = url.substring(mid + 1, rawPath.length());
+            path = url.substring(0, mid);
+        } else {
+            path = url;
+        }
+        isRewrited = true;
     }
 
     public void setBodyData(HttpBodyData bodyData) {
         this.bodyData = bodyData;
     }
 
-    private String bodyString = null;
     @Override
     public String getBodyString() {
-        if(bodyString == null && bodyData != null) {
-            bodyString = bodyData.toString();
+        if(bodyData != null) {
+            return bodyData.getBodyString();
         }
-        return bodyString;
+        return null;
     }
 
     @Override
@@ -130,7 +139,7 @@ public class HttpRequest extends RestfulRequest {
 
     @Override
     public String getUrl() {
-        return rawPath;
+        return path + (!Utils.CheckNull(queryString) ? "?" : "") + queryString;
     }
 
     @Override
@@ -172,11 +181,10 @@ public class HttpRequest extends RestfulRequest {
     }
 
     @Override
-    public void close() throws Exception {
-        //需要处理只发送头, 异步返回的情况
-        //todo 请求处理完成需要调用close
+    public synchronized void close() {
         if(bodyData != null) {
             bodyData.close();
+            bodyData = null;
         }
     }
 }

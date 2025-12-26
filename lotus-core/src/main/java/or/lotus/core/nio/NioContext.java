@@ -3,15 +3,20 @@ package or.lotus.core.nio;
 import or.lotus.core.intmap.SparseArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.misc.Cleaner;
+import sun.nio.ch.FileChannelImpl;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 
 public abstract class NioContext {
     public static final Logger log = LoggerFactory.getLogger(NioContext.class);
@@ -85,9 +90,22 @@ public abstract class NioContext {
         return r;
     }
 
+    public long getFlyByByteBufferCount() {
+        return flyByteBuffer.sum();
+    }
+
+    public int getCachedByteBufferSize() {
+        return bufferList.size();
+    }
+
+    public int getCachedDirectByteBufferSize() {
+        return directBufferList.size();
+    }
+
     public ByteBuffer getByteBufferFormCache() {
         return getByteBufferFormCache(bufferCapacity, isUseDirectBuffer);
     }
+    protected LongAdder flyByteBuffer = new LongAdder();
 
     public ByteBuffer getByteBufferFormCache(int size, boolean useDirectBuffer) {
         ByteBuffer buffer = null;
@@ -99,30 +117,46 @@ public abstract class NioContext {
             }else {
                 buffer = bufferList.poll();
             }
-
         }
 
-        if(buffer == null){
+        if(buffer == null) {
             if(useDirectBuffer) {
                 buffer = ByteBuffer.allocateDirect(size);
             }else {
                 buffer = ByteBuffer.allocate(size);
             }
         }
+        flyByteBuffer.add(size);
         return buffer;
     }
 
     public void putByteBufferToCache(ByteBuffer buffer) {
-        if(buffer != null && (buffer.capacity() == bufferCapacity) && (bufferList.size() < cacheBufferSize)) {
-            buffer.clear();
-            if(buffer.isDirect()) {
-                directBufferList.add(buffer);
+        if(buffer != null) {
+            if(buffer instanceof MappedByteBuffer) {
+                unmap(buffer);
             } else {
-                bufferList.add(buffer);
+                flyByteBuffer.add(-buffer.capacity());
+                if((buffer.capacity() == bufferCapacity) && (bufferList.size() < cacheBufferSize)) {
+                    buffer.clear();
+                    if(buffer.isDirect()) {
+                        directBufferList.add(buffer);
+                    } else {
+                        bufferList.add(buffer);
+                    }
+                }
             }
-        }else{/*丢弃被扩容过的buffer*/
-            buffer = null;
         }
+    }
+
+    /** 文件映射的map需要释放才能删除文件 */
+    protected void unmap(ByteBuffer buffer) {
+        if (buffer == null) return;
+        try {
+            Cleaner cleaner = ((sun.nio.ch.DirectBuffer) buffer).cleaner();
+            if (cleaner != null) {
+                cleaner.clean();
+            }
+        } catch (Exception e) { }
     }
 
     public LotusByteBuf pulledByteBuffer() {
@@ -130,7 +164,9 @@ public abstract class NioContext {
     }
 
     public LotusByteBuf pulledByteBuffer(ByteBuffer buff) {
-        return new LotusByteBuffer(this, isUseDirectBuffer, buff);
+        LotusByteBuffer buf = new LotusByteBuffer(this, isUseDirectBuffer);
+        buf.append(buff);
+        return buf;
     }
 
     public LotusByteBuf pulledByteBuffer(boolean isUseDirectBuffer) {

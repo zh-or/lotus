@@ -155,19 +155,29 @@ public class NioTcpIoProcess extends IoProcess {
         }
     }
 
+    protected ByteBuffer ioProcessByteBuffer = null;
+
     protected void handleReadData(SelectionKey key, NioTcpSession session) throws Exception {
-        LotusByteBuffer sessionReadCache = session.getReadCache();
         int readLen;
         boolean hasPack = false;
 
         do {
-            readLen = session.channel.read(sessionReadCache.getCurrentWriteBuffer());
+            //使用一个缓存在IoProcess的ByteBuffer, 避免缓存在session内 高并发时占用过多内存
+            //这里最多缓存当前开启的IoProcess线程相同数量的ByteBuffer
+            if(ioProcessByteBuffer == null) {
+                ioProcessByteBuffer = context.getByteBufferFormCache();
+            }
+
+            readLen = session.channel.read(ioProcessByteBuffer);
 
             if(readLen < 0) {/*EOF*/
                 session.closeNow();
                 return;
             }
             if(readLen > 0) {
+                LotusByteBuffer sessionReadCache = session.getReadCache();
+                sessionReadCache.append(ioProcessByteBuffer);
+                ioProcessByteBuffer = null;
                 session.setLastActive(System.currentTimeMillis());
                 ProtocolDecoderOutput out = new ProtocolDecoderOutput();
                 sessionReadCache.flip();
@@ -180,7 +190,7 @@ public class NioTcpIoProcess extends IoProcess {
                 }
                 sessionReadCache.compact();
             }
-        } while(readLen > 0 && hasPack/*没有收到正确的包则不一致接收, 以免恶意数据导致一直申请内存导致爆炸*/);
+        } while(readLen > 0 && hasPack/*没有收到正确的包则不一直接收, 以免恶意数据导致一直申请内存导致爆炸*/);
     }
 
     protected void handleWriteData(SelectionKey key, NioTcpSession session) throws Exception {
@@ -213,6 +223,7 @@ public class NioTcpIoProcess extends IoProcess {
                 context.executeEvent(new IoEventRunnable(msg, IoEventRunnable.IoEventType.SESSION_SENT, session, context));
             } while(sent == false);
         }
+        //todo closeOnFlush 判断是否需要关闭, 处理之
 
         key.interestOps(key.interestOps() & (~SelectionKey.OP_WRITE));
     }

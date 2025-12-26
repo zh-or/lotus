@@ -86,12 +86,14 @@ public class NettyHttpServer extends RestfulContext {
 
     @Override
     protected void onStart() throws InterruptedException {
-
-        try {
-            RestfulUtils.injectBeansToObject(this, fileFilter);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
+        if(fileFilter != null) {
+            try {
+                RestfulUtils.injectBeansToObject(this, fileFilter);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
         }
+
 
         //accept thread group
         bossGroup = new NioEventLoopGroup(Runtime.getRuntime().availableProcessors() + 1);

@@ -39,8 +39,8 @@ public abstract class Session {
         waitSendMessageList = new LinkedBlockingQueue<>(context.maxMessageSendListCapacity);
     }
 
-    public void write(Object data) {
-        waitSendMessageList.add(data);
+    public boolean write(Object data) {
+        return waitSendMessageList.add(data);
     }
 
     public int getWaitSendMessageCount() {

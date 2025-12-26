@@ -18,7 +18,7 @@ public abstract class IoProcess extends Thread {
     public IoProcess(NioContext context) {
         this.context = context;
         pendingTasks = new LinkedBlockingQueue<>();
-        setName("Lotus Nio IoProcess");
+        setName("Lotus Nio IoProcess:" + hashCode());
     }
 
     public void addPendingTask(Runnable run) {

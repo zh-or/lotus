@@ -2,7 +2,7 @@ package or.lotus.core.nio;
 
 import java.nio.ByteBuffer;
 
-/** 不支持多线程 */
+/** 不支持多线程, 支持release时释放append的MappedByteBuffer */
 public interface LotusByteBuf {
 
     public boolean release();
@@ -37,6 +37,10 @@ public interface LotusByteBuf {
     public int get(byte[] dst, int dstOffset, int length);
     public byte get();
 
-    /** 搜索指定子串的位置如果找到则返回首个位置, 未搜索到返回-1, 不需要调用mark, reset*/
     public int search(byte[] bytes);
+
+    /** 搜索指定子串的位置如果找到则返回首个位置, 未搜索到返回-1, 不需要调用mark, reset
+     * 对于DirectByteBuffer来说 此方法的效率并不好.
+     * */
+    public int search(int start, byte[] bytes);
 }

@@ -19,8 +19,8 @@ public class NioUdpSession extends Session {
     }
 
     @Override
-    public void write(Object data) {
-        super.write(data);
+    public boolean write(Object data) {
+        boolean r = super.write(data);
         ioProcess.addPendingTask(() -> {
             //在io线程运行并发送数据
             Object msg;
@@ -53,6 +53,7 @@ public class NioUdpSession extends Session {
             }
         });
         ioProcess.wakeup();
+        return r;
     }
 
     public synchronized LotusByteBuffer getReadCache(ByteBuffer buff) {

@@ -1,6 +1,5 @@
 package or.lotus.core.nio.http;
 
-import or.lotus.core.common.Utils;
 import or.lotus.core.http.restful.support.RestfulHttpMethod;
 import or.lotus.core.nio.*;
 import or.lotus.core.nio.tcp.NioTcpSession;
@@ -13,10 +12,8 @@ import java.nio.file.StandardOpenOption;
 
 
 public class HttpProtocolCodec implements ProtocolCodec {
-    private static final String STATUS = "http-status";
-    private static final String CONTENT_LENGTH = "content-length";
-    private static final String REQUEST = "http-request";
-    private static final String HTTP_BODY = "http-body";
+    public static final String STATE = "http-state";
+    public static final String REQUEST = "http-request";
     private HttpServer context;
     private static final byte[] lineChars = "\r\n".getBytes();
     private static final byte[] headerChars = "\r\n\r\n".getBytes();
@@ -26,29 +23,29 @@ public class HttpProtocolCodec implements ProtocolCodec {
 
     @Override
     public boolean decode(Session session, LotusByteBuf in, ProtocolDecoderOutput out) throws Exception {
-        HttpStatus status = (HttpStatus) session.getAttr(STATUS);
-        if (status == null) {
-            session.setAttr(STATUS, HttpStatus.InitialLine);
-            status = (HttpStatus) session.getAttr(STATUS);
+        HttpState state = (HttpState) session.getAttr(STATE);
+        if (state == null) {
+            session.setAttr(STATE, HttpState.InitialLine);
+            state = (HttpState) session.getAttr(STATE);
         }
         int dataLength = in.getDataLength();
-        switch (status) {
-            case InitialLine:
-                if(dataLength >= context.getMaxInitialLineLength()) {
-                    throw new HttpServerException(431, "Request Header Fields Too Large");
-                }
+        switch (state) {
+            case InitialLine://http协议第一行, 并验证第一行长度
                 if(in.search(lineChars) == -1) {
+                    if(dataLength >= context.getMaxInitialLineLength()) {
+                        throw new HttpServerException(431, "Request Header Fields Too Large");
+                    }
                     break;
                 }
-                session.setAttr(STATUS, HttpStatus.Head);
+                session.setAttr(STATE, HttpState.Head);
             case Head: {
-                if(dataLength >= context.getMaxHeaderSize()) {
-                    throw new HttpServerException(431, "Request Header Fields Too Large");
-                }
                 int headerEndPost = in.search(headerChars);
                 if(headerEndPost == -1) {
+                    if(dataLength >= context.getMaxHeaderSize()) {
+                        session.setAttr(STATE, HttpState.InitialLine);
+                        throw new HttpServerException(431, "Request Header Fields Too Large");
+                    }
                     //未接收到完整的http头
-                    System.out.println("session:" + session.getId() + " 未搜索到头结尾.");
                    break;
                 }
                 //in.mark();
@@ -60,30 +57,28 @@ public class HttpProtocolCodec implements ProtocolCodec {
                         new String(headerBytes, context.getCharset())
                 );
                 if(request.method == null) {
+                    session.setAttr(STATE, HttpState.InitialLine);
                     throw new HttpServerException(431, "Method error");
                 }
                 if( request.method == RestfulHttpMethod.GET ||
                     request.method == RestfulHttpMethod.OPTIONS ||
-                    request.method == RestfulHttpMethod.DELETE
+                    request.method == RestfulHttpMethod.DELETE ||
+                    request.contentLength <= 0 //有时候post也没得body直接返回
                 ) {
-                    request.setAttribute(STATUS, HttpStatus.InitialLine);
+                    session.setAttr(STATE, HttpState.InitialLine);
                     out.write(request);
                     return true;
                 }
-                session.setAttr(REQUEST, request);
-                final int contentLength = Utils.tryInt(request.getHeader(HttpHeaderNames.CONTENT_LENGTH), 0);
-
-                session.setAttr(CONTENT_LENGTH, contentLength);
-                if(contentLength > context.getMaxContentLength()) {
+                if(request.contentLength > context.getMaxContentLength()) {
+                    session.setAttr(STATE, HttpState.InitialLine);
                     throw new HttpServerException(413, "Request Content Too Large");
                 }
-                if(contentLength <= 0) {
-                    //没得body直接返回
-                    return true;
-                }
-                HttpBodyData bodyData = new HttpBodyData(request, contentLength, contentLength > context.getCacheContentToFileLimit());
+                session.setAttr(REQUEST, request);
+
+                //如果在接收body时断开了连接, 需要处理HttpBodyData的释放
+                HttpBodyData bodyData = new HttpBodyData(request, request.contentLength > context.getCacheContentToFileLimit());
                 request.setBodyData(bodyData);
-                session.setAttr(HTTP_BODY, HttpStatus.Body);
+                session.setAttr(STATE, HttpState.Body);
                 dataLength = in.getDataLength();
                 //还存在数据则直接跳到下面body处理, 否则返回等待接收数据
                 if(dataLength <= 0) {
@@ -91,19 +86,18 @@ public class HttpProtocolCodec implements ProtocolCodec {
                 }
             }
             case Body: {
-                final int contentLength = (Integer) session.getAttr(CONTENT_LENGTH, 0);
                 final HttpRequest request = (HttpRequest) session.getAttr(REQUEST);
                 HttpBodyData bodyData = request.getBodyFormData();
-                if (contentLength > 0) {
+                if (request.contentLength > 0) {
                     //写入磁盘缓存或者内存缓存
                     if(bodyData.appendData((LotusByteBuffer) in)) {
                         //数据已经接收完毕
-                        session.setAttr(STATUS, HttpStatus.InitialLine);
+                        session.setAttr(STATE, HttpState.InitialLine);
                         out.write(request);
                         session.removeAttr(REQUEST);
                     }
                 } else {
-                    session.setAttr(STATUS, HttpStatus.InitialLine);
+                    session.setAttr(STATE, HttpState.InitialLine);
                 }
                 return true;
             }
@@ -175,7 +169,7 @@ public class HttpProtocolCodec implements ProtocolCodec {
                     len -= step;
                 } while(len > 0);
 
-                channel.close();
+                //channel.close();
                 return true;
             }
         }

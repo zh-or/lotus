@@ -190,8 +190,6 @@ public class RestfulDispatcher {
                             }
                             /** list */
                             if(type.isAssignableFrom(List.class)) {
-                                //todo 需要测试
-
                                 return BeanUtils.OBJECT_MAPPER.readValue(
                                         val.toString(),
                                         new TypeReferenceDynamic<List>(List.class, childType));

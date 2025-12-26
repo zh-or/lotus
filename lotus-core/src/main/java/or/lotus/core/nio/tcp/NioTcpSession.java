@@ -18,17 +18,18 @@ public class NioTcpSession  extends Session {
 	}
 
 	@Override
-	public void write(Object data) {
+	public boolean write(Object data) {
 		if(closed) {
-			return;
+			return false;
 		}
-		super.write(data);
+		boolean r = super.write(data);
 		ioProcess.addPendingTask(() -> {
 			if(key.isValid()) {
 				key.interestOps(key.interestOps() | SelectionKey.OP_WRITE);
 			}
 		});
 		key.selector().wakeup();
+		return r;
 	}
 
 	protected Object pollMessage() {

@@ -1,9 +1,8 @@
 package or.lotus.core.nio;
 
-import or.lotus.core.common.Utils;
-
+import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,26 +14,25 @@ public class LotusByteBuffer implements LotusByteBuf {
     private int readIndex;
     private int writeIndex;
 
-    public LotusByteBuffer(NioContext context, boolean isUseDirectBuffer) {
-        this(context, isUseDirectBuffer, null);
-    }
 
-    public LotusByteBuffer(NioContext context, boolean isUseDirectBuffer, ByteBuffer buff) {
+    public LotusByteBuffer(NioContext context, boolean isUseDirectBuffer) {
         int initialCapacity = context.pooledBufferStepCount;
         this.context = context;
         this.buffers = new ByteBuffer[initialCapacity];
-        //默认先申请一个以免后面老是需要判断是否为空
-        if(buff == null) {
-            buff = context.getByteBufferFormCache(0, isUseDirectBuffer);
-        }
-        this.buffers[0] = buff;
         this.readIndex = 0;
-        this.writeIndex = 0;
+        this.writeIndex = -1;
         this.isUseDirectBuffer = isUseDirectBuffer;
+    }
+
+    public boolean isEmpty() {
+        return writeIndex == -1;
     }
 
     /** 切换到读模式 */
     public void flip() {
+        if(writeIndex == -1) {
+            return;
+        }
         for(int i = 0; i <= writeIndex; i++) {
             ByteBuffer buf = buffers[i];
             buf.flip();
@@ -43,6 +41,9 @@ public class LotusByteBuffer implements LotusByteBuf {
 
     /** 移除已经读取过的数据,并把未读取的数据移动到前面, 转变为写模式 */
     public void compact() {
+        if(writeIndex == -1) {
+            return;
+        }
         int endIndex = -1;
 
         for(int i = 0; i <= writeIndex; i ++) {
@@ -61,9 +62,11 @@ public class LotusByteBuffer implements LotusByteBuf {
         }
 
         if(endIndex == -1) {
-            //保证始终有一个可写的ByteBuffer在里面
-            writeIndex = 0;
-            buffers[0] = context.getByteBufferFormCache(0, isUseDirectBuffer);
+            //xxx保证始终有一个可写的ByteBuffer在里面xxx
+            //当使用大缓存时, 会导致每个session都占用一个 ByteBuffer 导致每个链接即使无数据交互也占用内存, 对高并发不友好
+            //writeIndex = 0;
+            //buffers[0] = context.getByteBufferFormCache(0, isUseDirectBuffer);
+            writeIndex = -1;
         } else {
             if(endIndex > 0) {
                 //大于0才需要复制
@@ -74,21 +77,52 @@ public class LotusByteBuffer implements LotusByteBuf {
         readIndex = 0;
     }
 
+    /** 写入length长度的数据到fileChannel中, 最大不超过当前buffer的长度, 会移动读写位置
+     * 如果不是追加模式打开的FileChannel, 需要自己控制文件的position
+     * */
+    public long writeToFile(FileChannel fileChannel, long length, long timeout) throws IOException {
+        long loss = Math.min(length, getDataLength());
+        long start = System.currentTimeMillis();
+        while(loss > 0) {
+            int remaining;
+            for(int i = 0; i <= writeIndex; i++) {
+                ByteBuffer t = buffers[i];
+                readIndex = i;
+                while((remaining = t.remaining()) > 0 && loss > 0) {
+                    if(loss > remaining) {
+                        loss -= fileChannel.write(t);
+                    } else {
+                        int limit = t.limit();
+                        t.limit(t.position() + (int) loss);
+                        loss -= fileChannel.write(t);
+                        t.limit(limit);
+                    }
+                    if(System.currentTimeMillis() - start > timeout) {
+                        throw new IOException("请检查所设置的临时目录是否已满, 请求body写入磁盘缓存时超时 > " + timeout + "ms");
+                    }
+                }
+            }
+        }
+        return length - loss;
+    }
+
     public ByteBuffer[] getAllDataBuffer() {
         return getAllDataBuffer(false);
     }
 
     /** 获取后是否清空当前buffer, 清空后buffer由调用者管理生命周期 */
     public ByteBuffer[] getAllDataBuffer(boolean clearBuffer) {
+        if(writeIndex == -1) {
+            return new ByteBuffer[0];
+        }
         ByteBuffer[] dataBuffer = new ByteBuffer[writeIndex + 1];
         System.arraycopy(buffers, 0, dataBuffer, 0, writeIndex + 1);
         if(clearBuffer) {
-            for(int i = 0; i < buffers.length; i++) {
+            for(int i = 0; i <= writeIndex; i++) {
                 buffers[i] = null;
             }
-            writeIndex = 0;
+            writeIndex = -1;
             readIndex = 0;
-            buffers[0] = EMPTY_BUFFER;
         }
         return dataBuffer;
     }
@@ -97,33 +131,31 @@ public class LotusByteBuffer implements LotusByteBuf {
         return mergeBuffer(base, buf, buf.getDataLength());
     }
 
-    public static final ByteBuffer EMPTY_BUFFER = ByteBuffer.allocate(0);//占位用
-
     /** 把buf合并到base, 如果base为空则创建一个新的buffer */
     public static LotusByteBuffer mergeBuffer(LotusByteBuffer base, LotusByteBuffer buf, long length) {
         LotusByteBuffer ret = null;
 
         if(base == null) {
-            ret = new LotusByteBuffer(buf.context, buf.isUseDirectBuffer, EMPTY_BUFFER);
+            ret = new LotusByteBuffer(buf.context, buf.isUseDirectBuffer);
         } else {
             ret = base;
         }
-        ByteBuffer[] buffers = buf.getAllDataBuffer();
+        ByteBuffer[] buffers = buf.getAllDataBuffer(true);
         ByteBuffer t;
         long loss = length, remaining;
         for(int i = 0; i < buffers.length; i++) {
             t = buffers[i];
             remaining = t.remaining();
             if(loss < remaining) {
+                //需要处理的是 有时候只需要 buf 中的一部分数据合并到 base
                 //这里强制转换为int是没有问题的, 因为单个buffer大小限制为int范围内
                 byte[] bytes = new byte[(int) loss];
                 t.get(bytes, 0, (int) loss);
                 ret.append(bytes, 0, (int) loss);
             } else {
                 ret.append(buffers[i]);
-                buf.buffers[i] = null;
             }
-            loss += remaining;
+            loss -= remaining;
         }
         return ret;
     }
@@ -137,13 +169,13 @@ public class LotusByteBuffer implements LotusByteBuf {
         // 释放所有ByteBuffer回缓存池
         for (int i = 0; i <= writeIndex; i++) {
             ByteBuffer buff = buffers[i];
-            if(buff != null && !(buff instanceof MappedByteBuffer)) {
+            if(buff != null) {
                 context.putByteBufferToCache(buff);
             }
         }
         buffers = null;
         readIndex = 0;
-        writeIndex = 0;
+        writeIndex = -1;
 
         if(retainName != null) {
             context.retainMap.remove(this);
@@ -167,8 +199,26 @@ public class LotusByteBuffer implements LotusByteBuf {
         context.retainMap.put(this, retainName);
     }
 
+    /** 如果当前只有一个ByteBuffer 如果未写入数据则释放之 */
+    public void freeZeroReadBuffer() {
+        if(writeIndex == 0) {
+            ByteBuffer buff = buffers[0];
+            //写模式但是无数据
+            if(buff.position() <= 0 && buff.limit() == buff.capacity()) {
+                buffers[0] = null;
+                context.putByteBufferToCache(buff);
+                writeIndex = -1;
+            }
+        }
+    }
+
     /** 获取一个能写的 ByteBuffer */
     public ByteBuffer getCurrentWriteBuffer() {
+        if(writeIndex == -1) {
+            writeIndex++;
+            buffers[writeIndex] = context.getByteBufferFormCache(0, isUseDirectBuffer);
+            return buffers[writeIndex];
+        }
         ByteBuffer buff = buffers[writeIndex];
         if(!buff.hasRemaining()) {
             checkAndExpansionBuffer();
@@ -198,15 +248,9 @@ public class LotusByteBuffer implements LotusByteBuf {
 
     @Override
     public void append(ByteBuffer buff) {
-        ByteBuffer currentBuff = buffers[writeIndex];
-        if(currentBuff.position() <= 0) {//无数据直接替换
-            context.putByteBufferToCache(currentBuff);
-        } else {
-            checkAndExpansionBuffer();
-            writeIndex ++;
-        }
+        checkAndExpansionBuffer();
+        writeIndex ++;
         buffers[writeIndex] = buff;
-
     }
 
     @Override
@@ -254,6 +298,9 @@ public class LotusByteBuffer implements LotusByteBuf {
 
     /** 写模式下读取当前写入数据的数量 */
     public int getCountPosition() {
+        if(writeIndex == -1) {
+            return 0;
+        }
         int size = 0;
         ByteBuffer buff;
         for(int i = 0; i <= writeIndex; i++) {
@@ -266,6 +313,9 @@ public class LotusByteBuffer implements LotusByteBuf {
     /** 读模式为返回可读取数据总长度, 写模式时返回值无效 */
     @Override
     public int getDataLength() {
+        if(writeIndex == -1) {
+            return 0;
+        }
         int size = 0;
         ByteBuffer buff;
         for(int i = 0; i <= writeIndex; i++) {
@@ -277,6 +327,9 @@ public class LotusByteBuffer implements LotusByteBuf {
 
     @Override
     public void mark() {
+        if(writeIndex == -1) {
+            return;
+        }
         for(int i = 0; i <= writeIndex; i++) {
             buffers[i].mark();
         }
@@ -284,6 +337,9 @@ public class LotusByteBuffer implements LotusByteBuf {
 
     @Override
     public void reset() {
+        if (writeIndex == -1) {
+            return;
+        }
         for(int i = 0; i <= writeIndex; i++) {
             buffers[i].reset();
         }
@@ -291,6 +347,9 @@ public class LotusByteBuffer implements LotusByteBuf {
 
     @Override
     public void rewind() {
+        if (writeIndex == -1) {
+            return;
+        }
         for(int i = 0; i <= writeIndex; i++) {
             buffers[i].rewind();
         }
@@ -299,15 +358,21 @@ public class LotusByteBuffer implements LotusByteBuf {
 
     @Override
     public void clear() {
+        if (writeIndex == -1) {
+            return;
+        }
         for(int i = 0; i <= writeIndex; i++) {
-            buffers[i].clear();
+            context.putByteBufferToCache(buffers[i]);
         }
         readIndex = 0;
-        writeIndex = 0;
+        writeIndex = -1;
     }
 
     @Override
     public byte get(int index) {
+        if (writeIndex == -1) {
+            throw new IndexOutOfBoundsException("index > dataLength");
+        }
         ByteBuffer buff;
         int size = 0, pos;
         for(int i = 0; i <= writeIndex; i++) {
@@ -329,6 +394,9 @@ public class LotusByteBuffer implements LotusByteBuf {
 
     @Override
     public int get(byte[] dst, int dstOffset, int length) {
+        if(writeIndex == -1) {
+            return 0;
+        }
         ByteBuffer buff;
         int pos = dstOffset, size, loss = length;
         do {
@@ -348,6 +416,9 @@ public class LotusByteBuffer implements LotusByteBuf {
 
     @Override
     public byte get() {
+        if(writeIndex == -1) {
+            throw new IndexOutOfBoundsException("no data can read!");
+        }
 
         ByteBuffer buff;
         do {
@@ -369,48 +440,39 @@ public class LotusByteBuffer implements LotusByteBuf {
 
     @Override
     public int search(byte[] bytes) {
-        int step = 0, bufStart = 0, bufEnd = 0;
-        ByteBuffer buff;
-        byte[] dst = null;
+        return search(0, bytes);
+    }
 
-        int d, b, bLen = bytes.length, mid = 0;
-        int matchStart = -1;
-
-        for(int i = 0; i <= writeIndex; i++) {
-            buff = buffers[i];
-            if(buff.isDirect()) {
-                bufStart = 0;
-                bufEnd = buff.remaining();
-                dst = new byte[bufEnd];
-                buff.duplicate().get(dst);//相当于复制到堆内来了
-            } else {
-                dst = buff.array();
-                bufStart = buff.arrayOffset();
-                bufEnd = buff.remaining();
+    /** 朴素搜索 */
+    @Override
+    public int search(int start, byte[] pattern) {
+        if (writeIndex == -1 || pattern == null || pattern.length == 0) {
+            return -1;
+        }
+        ByteBuffer buffer;
+        int patternLength = pattern.length;
+        int i = 0, remaining, globalPos = 0, bufferPos, bufferLimit, patternIndex = 0;
+        for(;i <= writeIndex; i++) {
+            buffer = buffers[i];
+            remaining = buffer.remaining();
+            globalPos += remaining;
+            if(globalPos <  start) {
+                continue;
             }
-            if(dst != null) {
-                for(d = bufStart; d < bufEnd; d++) {
-                    for(b = mid; b < bLen; b++) {
-                        if(dst[d + b] == bytes[b]) {
-                            mid = b;
-                            if(matchStart == -1) {
-                                matchStart = d + step;
-                            }
-                        } else {
-                            matchStart = -1;
-                            mid = 0;
-                            break;
-                        }
-                    }
-                    if(matchStart != -1 && mid == bLen - 1) {
+            bufferPos = buffer.position();
+            bufferLimit = buffer.limit();
+            for(; bufferPos < bufferLimit; bufferPos++) {
+                for(; patternIndex < patternLength; patternIndex++) {
+                    if(buffer.get(bufferPos + patternIndex) != pattern[patternIndex]) {
+                        patternIndex = 0;
                         break;
                     }
                 }
-
-                step += (bufEnd - bufStart);
+                if(patternIndex >= patternLength) {
+                    return globalPos - (bufferLimit - bufferPos);
+                }
             }
         }
-
-        return matchStart;
+        return -1;
     }
 }

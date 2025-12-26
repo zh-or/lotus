@@ -241,6 +241,9 @@ public class RestfulUtils {
 
     /** 注入Bean到对象 */
     public static void injectBeansToObject(RestfulContext context, Object obj) throws IllegalAccessException {
+        if(obj == null) {
+            return;
+        }
         Class clazz = obj.getClass();
 
         Field[] fields = clazz.getDeclaredFields();

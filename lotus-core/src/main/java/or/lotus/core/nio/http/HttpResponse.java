@@ -52,15 +52,13 @@ public class HttpResponse extends RestfulResponse {
 
 
     @Override
-    public void flush() throws IOException {
-
-    }
-
+    public void flush() throws IOException {}
 
     @Override
-    public void close() throws IOException {
+    public synchronized void close() {
         if(writeBuffer != null) {
             writeBuffer.release();
+            writeBuffer = null;
         }
     }
 
