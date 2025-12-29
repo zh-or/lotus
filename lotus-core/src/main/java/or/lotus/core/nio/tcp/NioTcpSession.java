@@ -11,6 +11,7 @@ import java.nio.channels.SocketChannel;
 public class NioTcpSession  extends Session {
 	protected SocketChannel channel;
 	protected SelectionKey key;
+	protected boolean isCloseOnFlush = false;
 
 	public NioTcpSession(NioTcpServer context, SocketChannel channel, IoProcess ioProcess) {
 		super(context, ioProcess);
@@ -50,6 +51,10 @@ public class NioTcpSession  extends Session {
 			key.cancel();
 			key.selector().wakeup();//清理关闭的 key
 		}
+	}
+
+	public void closeOnFlush() {
+		isCloseOnFlush = true;
 	}
 
 	@Override

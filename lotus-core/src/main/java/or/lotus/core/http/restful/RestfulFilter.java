@@ -24,7 +24,7 @@ public abstract class RestfulFilter {
     public boolean exception(Throwable e, RestfulRequest request, RestfulResponse response) {
         if(e instanceof RestfulApiException) {
             try {
-                response.clearWrite().write(ApiRes.error(e.getMessage()).toString());
+                if(response != null) response.clearWrite().write(ApiRes.error(e.getMessage()).toString());
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }

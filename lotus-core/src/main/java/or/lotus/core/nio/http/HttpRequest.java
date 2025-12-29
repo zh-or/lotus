@@ -55,7 +55,7 @@ public class HttpRequest extends RestfulRequest {
                 }
             }
 
-            if(context.isEnableWebSocket()){
+            if(context.isEnableWebSocket()) {
                 String connection = getHeader(HttpHeaderNames.CONNECTION);
                 if(!Utils.CheckNull(connection) &&  connection.indexOf("Upgrade") != -1
                     /*这里可能是多个值, 如 FireFox-> Connection:keep-alive, Upgrade*/

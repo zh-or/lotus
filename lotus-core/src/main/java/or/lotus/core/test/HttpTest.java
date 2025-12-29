@@ -2,6 +2,9 @@ package or.lotus.core.test;
 
 import or.lotus.core.common.Utils;
 import or.lotus.core.files.FileSize;
+import or.lotus.core.http.restful.RestfulFilter;
+import or.lotus.core.http.restful.RestfulRequest;
+import or.lotus.core.http.restful.RestfulResponse;
 import or.lotus.core.http.restful.ann.Get;
 import or.lotus.core.http.restful.ann.Parameter;
 import or.lotus.core.http.restful.ann.Post;
@@ -46,7 +49,15 @@ public class HttpTest {
         server.addStaticPath("./test");
         server.addController(HttpTest.class);
         server.setCacheContentToFileLimit(1024 * 5);
-
+        server.setFilter(
+                new RestfulFilter() {
+                    @Override
+                    public boolean exception(Throwable e, RestfulRequest request, RestfulResponse response) {
+                        log.error("发生错误:", e);
+                        return false;
+                    }
+                }
+        );
         server.start(9999);
         log.info("启动完成: 9999");
 
@@ -106,6 +117,11 @@ public class HttpTest {
     @Post("/par")
     public String postPar(@Parameter("par") String par) {
         return "par-"  + par;
+    }
+
+    @Get("/f")
+    public File f(@Parameter("par") String par) {
+        return new File("./orm.md");
     }
 
 }

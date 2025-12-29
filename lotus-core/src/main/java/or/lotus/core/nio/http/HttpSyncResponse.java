@@ -59,7 +59,9 @@ public class HttpSyncResponse implements AutoCloseable {
     }
 
     @Override
-    public synchronized void close() throws Exception {
-        flush();
+    public void close() throws Exception {
+        if(buffer != null) {
+            buffer.release();
+        }
     }
 }

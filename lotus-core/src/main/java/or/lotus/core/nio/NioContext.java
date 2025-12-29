@@ -4,7 +4,7 @@ import or.lotus.core.intmap.SparseArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.misc.Cleaner;
-import sun.nio.ch.FileChannelImpl;
+import sun.nio.ch.DirectBuffer;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -15,7 +15,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
 
 public abstract class NioContext {
@@ -152,7 +151,7 @@ public abstract class NioContext {
     protected void unmap(ByteBuffer buffer) {
         if (buffer == null) return;
         try {
-            Cleaner cleaner = ((sun.nio.ch.DirectBuffer) buffer).cleaner();
+            Cleaner cleaner = ((DirectBuffer) buffer).cleaner();
             if (cleaner != null) {
                 cleaner.clean();
             }

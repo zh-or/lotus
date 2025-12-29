@@ -181,8 +181,13 @@ public class NioTcpIoProcess extends IoProcess {
                 session.setLastActive(System.currentTimeMillis());
                 ProtocolDecoderOutput out = new ProtocolDecoderOutput();
                 sessionReadCache.flip();
-                hasPack = session.getCodec().decode(session, sessionReadCache, out);
-                if(session.isClosed()) {
+                try {
+                    hasPack = session.getCodec().decode(session, sessionReadCache, out);
+                    if(session.isClosed()) {
+                        return;
+                    }
+                } catch (Exception e) {
+                    context.executeEvent(new IoEventRunnable(e, IoEventRunnable.IoEventType.SESSION_EXCEPTION, session, context));
                     return;
                 }
                 if(hasPack) {
@@ -197,33 +202,50 @@ public class NioTcpIoProcess extends IoProcess {
         Object msg;
         LotusByteBuffer out;
         while((msg = session.pollMessage()) != null) {
-            boolean sent;
-            do {
-                out = (LotusByteBuffer) context.pulledByteBuffer();
-                try {
-                    sent = session.getCodec().encode(session, msg, out);
-                    if(session.isClosed()) {
-                        return;
-                    }
-                    ByteBuffer[] buffers = out.getAllDataBuffer();
-                    if(buffers.length <= 0) {
-                        return;
-                    }
-
-                    for(ByteBuffer buff : buffers) {
-                        buff.flip();
-                        while(buff.hasRemaining()) {//保证写完
-                            session.channel.write(buff);
+            try {
+                boolean sent = true;
+                do {
+                    out = (LotusByteBuffer) context.pulledByteBuffer();
+                    try {
+                        try {
+                            sent = session.getCodec().encode(session, msg, out);
+                            if(session.isClosed()) {
+                                return;
+                            }
+                        } catch (Exception e) {
+                            context.executeEvent(new IoEventRunnable(e, IoEventRunnable.IoEventType.SESSION_EXCEPTION, session, context));
+                            return;
                         }
+
+                        ByteBuffer[] buffers = out.getAllDataBuffer();
+                        if(buffers.length <= 0) {
+                            return;
+                        }
+
+                        for(ByteBuffer buff : buffers) {
+                            buff.flip();
+                            while(buff.hasRemaining()) {//保证写完
+                                session.channel.write(buff);
+                            }
+                        }
+                    } finally {
+                        out.release();
                     }
-                } finally {
-                    out.release();
+                    session.setLastActive(System.currentTimeMillis());
+                    context.executeEvent(new IoEventRunnable(msg, IoEventRunnable.IoEventType.SESSION_SENT, session, context));
+                } while(sent == false);
+            } finally {
+                if(msg instanceof AutoCloseable) {
+                    ((AutoCloseable) msg).close();
                 }
-                session.setLastActive(System.currentTimeMillis());
-                context.executeEvent(new IoEventRunnable(msg, IoEventRunnable.IoEventType.SESSION_SENT, session, context));
-            } while(sent == false);
+            }
         }
-        //todo closeOnFlush 判断是否需要关闭, 处理之
+
+        if(session.isCloseOnFlush) {
+            session.channel.shutdownInput();
+            session.channel.shutdownOutput();
+            session.closeNow();
+        }
 
         key.interestOps(key.interestOps() & (~SelectionKey.OP_WRITE));
     }

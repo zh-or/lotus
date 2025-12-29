@@ -1,6 +1,9 @@
 package or.lotus.core.nio.http;
 
+import or.lotus.core.common.Base64;
+import or.lotus.core.common.Utils;
 import or.lotus.core.http.restful.RestfulResponse;
+import or.lotus.core.http.restful.support.RestfulResponseStatus;
 import or.lotus.core.nio.LotusByteBuffer;
 
 import java.io.IOException;
@@ -20,8 +23,22 @@ public class HttpResponse extends RestfulResponse {
         if(connection != null) {
             setHeader(HttpHeaderNames.CONNECTION, connection);
         }
-        //todo 处理websocket头
         this.request = request;
+
+        if(request.isWebSocket() && request.getContext().isEnableWebSocket()) {
+            setStatus(RestfulResponseStatus.INFORMATIONAL_SWITCHING_PROTOCOLS);
+            setHeader(HttpHeaderNames.UPGRADE, request.getHeader(HttpHeaderNames.UPGRADE));
+            setHeader(HttpHeaderNames.CONNECTION, "Upgrade");
+            String sec = request.getHeader(HttpHeaderNames.SEC_WEBSOCKET_KEY) + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+            try {
+                sec = Base64.byteArrayToBase64(Utils.SHA1(sec));
+            }catch(Exception e) {
+                sec = "";
+            }
+
+            setHeader(HttpHeaderNames.SEC_WEBSOCKET_ACCEPT, sec);
+            //response.setHeader("Sec-WebSocket-Protocol", "");
+        }
     }
 
     /** 开启异步发送, 异步发送必须调用 HttpSyncResponse.flush() 方法才会发送数据 */
@@ -55,7 +72,7 @@ public class HttpResponse extends RestfulResponse {
     public void flush() throws IOException {}
 
     @Override
-    public synchronized void close() {
+    public void close() {
         if(writeBuffer != null) {
             writeBuffer.release();
             writeBuffer = null;

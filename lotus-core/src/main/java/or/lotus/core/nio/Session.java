@@ -1,8 +1,12 @@
 package or.lotus.core.nio;
 
+import or.lotus.core.nio.http.HttpServer;
+
 import java.net.InetSocketAddress;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public abstract class Session {
     protected ConcurrentHashMap<Object, Object> attrs = null;
@@ -19,7 +23,7 @@ public abstract class Session {
     protected LotusByteBuffer readCache = null;
 
     protected IoProcess ioProcess = null;
-
+    protected ReadWriteLock codecRwLock = new ReentrantReadWriteLock();
     public Session(NioContext context, IoProcess ioProcess) {
         this.context = context;
         this.ioProcess = ioProcess;
@@ -39,6 +43,7 @@ public abstract class Session {
         waitSendMessageList = new LinkedBlockingQueue<>(context.maxMessageSendListCapacity);
     }
 
+    /** 如果消息有需要释放的资源, 请实现 AutoCloseable 接口 */
     public boolean write(Object data) {
         return waitSendMessageList.add(data);
     }
@@ -69,6 +74,16 @@ public abstract class Session {
             }
         });
         pushEventRunnable(new IoEventRunnable(null, IoEventRunnable.IoEventType.SESSION_CLOSE, this, context));
+        waitSendMessageList.stream().forEach(obj -> {
+            if(obj instanceof AutoCloseable) {
+                try {
+                    ((AutoCloseable) obj).close();
+                } catch (Exception e) {
+                    HttpServer.log.error("msg close error:", e);
+                }
+            }
+        });
+        waitSendMessageList.clear();
     }
 
     public void pushEventRunnable(Runnable run) {
@@ -141,12 +156,22 @@ public abstract class Session {
         return id;
     }
 
-    public ProtocolCodec getCodec() {
-        return codec;
+    public  ProtocolCodec getCodec() {
+        try {
+            codecRwLock.readLock().lock();
+            return codec;
+        } finally {
+            codecRwLock.readLock().unlock();
+        }
     }
 
     public void setCodec(ProtocolCodec codec) {
-        this.codec = codec;
+        try {
+            codecRwLock.writeLock().lock();
+            this.codec = codec;
+        } finally {
+            codecRwLock.writeLock().unlock();
+        }
     }
 
     public IoHandler getHandler() {

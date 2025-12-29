@@ -2,6 +2,7 @@ package or.lotus.core.nio.http;
 
 import or.lotus.core.common.Utils;
 import or.lotus.core.http.HttpFileFilter;
+import or.lotus.core.http.WebSocketFrame;
 import or.lotus.core.http.restful.RestfulContext;
 import or.lotus.core.http.restful.RestfulRequest;
 import or.lotus.core.http.restful.RestfulResponse;
@@ -10,6 +11,7 @@ import or.lotus.core.http.restful.support.RestfulUtils;
 import or.lotus.core.nio.IoHandler;
 import or.lotus.core.nio.Session;
 import or.lotus.core.nio.tcp.NioTcpServer;
+import or.lotus.core.nio.tcp.NioTcpSession;
 
 import javax.net.ssl.SSLContext;
 import java.io.File;
@@ -20,8 +22,10 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Executors;
 
@@ -41,6 +45,8 @@ public class HttpServer extends RestfulContext {
     /** 每个连接最大请求数量 */
     protected int keepLiveRequestCount = 10;
     protected int bufferCapacity = 1024 * 16;
+
+    protected HashMap<String, HttpWebSocketMessageHandler> webSocketHandlers = new HashMap<>();
 
     public HttpServer() {
         server = new NioTcpServer();
@@ -158,6 +164,14 @@ public class HttpServer extends RestfulContext {
 
     public void setSupportSymbolicLink(boolean supportSymbolicLink) {
         isSupportSymbolicLink = supportSymbolicLink;
+    }
+
+    public void addWebSocketMessageHandler(HttpWebSocketMessageHandler webSocketMessageHandler) {
+        webSocketHandlers.put(webSocketMessageHandler.getPath(), webSocketMessageHandler);
+    }
+
+    public void removeWebSocketMessageHandler(HttpWebSocketMessageHandler webSocketMessageHandler) {
+        webSocketHandlers.remove(webSocketMessageHandler.getPath());
     }
 
     @Override
@@ -283,16 +297,45 @@ public class HttpServer extends RestfulContext {
         return null;
     }
 
+    private class WebSocketIoHandler extends IoHandler {
+        HttpRequest request;
+        HttpWebSocketMessageHandler handler;
+
+        public WebSocketIoHandler(HttpRequest request, HttpWebSocketMessageHandler handler) {
+            this.request = request;
+            this.handler = handler;
+        }
+
+        @Override
+        public void onReceiveMessage(Session session, Object msg) throws Exception {
+            handler.onMessage(session, (WebSocketFrame) msg);
+        }
+
+        @Override
+        public void onException(Session session, Throwable e) {
+            handler.onException(session, e);
+        }
+
+        @Override
+        public void onIdle(Session session) throws Exception {
+            handler.onIdle(session);
+        }
+
+        @Override
+        public void onClose(Session session) throws Exception {
+            handler.onClose(session);
+        }
+
+    }
 
     private class HttpIoHandler extends IoHandler {
 
         protected void freeSession(Session session) {
             //解码时有可能body收一半但是关闭了, 需要手动释放解码时的body
-            HttpRequest request = (HttpRequest) session.getAttr(HttpProtocolCodec.REQUEST);
+            HttpRequest request = (HttpRequest) session.removeAttr(HttpProtocolCodec.REQUEST);
             if(request != null) {
                 request.close();
             }
-
         }
 
         @Override
@@ -301,6 +344,7 @@ public class HttpServer extends RestfulContext {
             session.closeNow();
         }
 
+
         @Override
         public void onReceiveMessage(Session session, Object msg) throws Exception {
             HttpRequest request = (HttpRequest) msg;
@@ -308,28 +352,34 @@ public class HttpServer extends RestfulContext {
                 HttpResponse response = null;
                 try {
                     response = new HttpResponse(request);
+                    if(request.isWebSocket) {
+                        if(enableWebSocket) {
+                            HttpWebSocketMessageHandler handler = webSocketHandlers.get(request.getPath());
+                            if(handler != null) {
+                                session.setCodec(new WebSocketProtocolCodec(HttpServer.this));
+                                //虽然会释放request对象, 但是websocket请求没有数据在body里面
+                                session.setHandler(new WebSocketIoHandler(request, handler));
+                            } else {
+                                response.setHeader(HttpHeaderNames.CONNECTION, "close");
+                                response.removeHeader(HttpHeaderNames.SEC_WEBSOCKET_ACCEPT);
+                                response.removeHeader(HttpHeaderNames.SEC_WEBSOCKET_KEY);
+                                response.removeHeader(HttpHeaderNames.UPGRADE);
+                                response.setStatus(RestfulResponseStatus.CLIENT_ERROR_NOT_FOUND);
+                            }
+                            session.write(response);
+                            return;
+                        }
+                    }
+
+
                     dispatch(request, response);
                 } catch (Throwable e) {
                     response.close();
-                    throw e;
+                    throw new HttpServerException(500, request, e);
                 } finally {
                     request.close();
                 }
             }
-        }
-
-        @Override
-        public void onSentMessage(Session session, Object msg) throws Exception {
-            //todo keeplive时一个连接最多处理请求数量问题
-
-            /**
-             * 1. 发送HttpResponse时网络中断抛出异常, 此时无 onSentMessage 事件, 无法释放response
-             * 2. HttpSyncResponse 写入数据后也需要释放
-             * ==> 写session发送队列失败则直接释放, 成功则在编码完毕时释放
-             * ==> session close时判断message队列是否有数据, 全部取出来释放内存
-             * ==> 这里不处理内存释放问题
-             * */
-
         }
 
         @Override
@@ -339,21 +389,31 @@ public class HttpServer extends RestfulContext {
 
         @Override
         public void onException(Session session, Throwable e) {
-
-            session.removeAttr(HttpProtocolCodec.REQUEST);
+            //session.removeAttr(HttpProtocolCodec.REQUEST);
             session.removeAttr(HttpProtocolCodec.STATE);
-            if(filter != null) {
-                filter.exception(e, );
-            }
+            HttpRequest request = null;
+            HttpResponse response = null;
             if(e instanceof HttpServerException) {
-                //处理请求时发生的异常
-                log.error("server exception:", e);
-                //todo 需要发送response
-            } else {
-                log.error("server exception:", e);
+                request = ((HttpServerException) e).request;
+                if(request != null) {
+                    response = new HttpResponse(request);
+                }
             }
-            //todo closeOnFlush ->
-            //session.closeNow();
+
+            if(filter != null) {
+                if(filter.exception(e, request, response)) {
+                    return;
+                }
+            }
+            //处理请求时发生的异常
+            if(!session.isClosed() && response != null) {
+                response.setStatus(RestfulResponseStatus.SERVER_ERROR_INTERNAL_SERVER_ERROR);
+                session.write(response);
+                ((NioTcpSession) session).closeOnFlush();
+                return;
+            }
+
+            session.closeNow();
         }
     }
 }

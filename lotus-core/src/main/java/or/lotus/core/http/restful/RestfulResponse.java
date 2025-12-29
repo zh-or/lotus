@@ -32,9 +32,14 @@ public abstract class RestfulResponse extends Writer {
         status = RestfulResponseStatus.SUCCESS_OK;
     }
 
-    /** 支持 String, Object -> toString, ModelAndView */
+    /** 支持 File, String, Object -> toString, ModelAndView */
     public RestfulResponse writeObject(Object object) {
         try {
+            if(object instanceof File) {
+                file = (File) object;
+                return this;
+            }
+
             if(object instanceof ModelAndView) {
                 request.context.handleModelAndView(request, this, (ModelAndView) object);
                 return this;
