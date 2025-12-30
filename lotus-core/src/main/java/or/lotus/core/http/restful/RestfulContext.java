@@ -5,6 +5,7 @@ import or.lotus.core.common.UrlMatcher;
 import or.lotus.core.common.Utils;
 import or.lotus.core.http.restful.ann.*;
 import or.lotus.core.http.restful.support.*;
+import or.lotus.core.nio.http.HttpHeaderNames;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thymeleaf.TemplateEngine;
@@ -363,11 +364,11 @@ public abstract class RestfulContext {
                     response.write("<!-- handle time: " + ((System.nanoTime() - mv.createTime) / 1_000_000) + "ms -->");
                 } catch (IOException e) {}
             }
-            response.setHeader("Content-Type", "text/html; charset=" + response.charset.displayName());
+            response.setHeader(HttpHeaderNames.CONTENT_TYPE, "text/html; charset=" + response.charset.displayName());
             //不要缓存
-            response.setHeader("Cache-Control", "no-store");
-            response.setHeader("Pragrma", "no-cache");
-            response.setHeader("Expires", "0");
+            response.setHeader(HttpHeaderNames.CACHE_CONTROL, "no-store");
+            response.setHeader(HttpHeaderNames.PRAGMA, "no-cache");
+            response.setHeader(HttpHeaderNames.EXPIRES, "0");
         }
     }
 

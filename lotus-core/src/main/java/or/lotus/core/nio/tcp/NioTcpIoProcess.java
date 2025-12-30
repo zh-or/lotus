@@ -244,7 +244,9 @@ public class NioTcpIoProcess extends IoProcess {
         if(session.isCloseOnFlush) {
             session.channel.shutdownInput();
             session.channel.shutdownOutput();
-            session.closeNow();
+            addPendingTask(() -> {
+                session.closeNow();
+            });
         }
 
         key.interestOps(key.interestOps() & (~SelectionKey.OP_WRITE));

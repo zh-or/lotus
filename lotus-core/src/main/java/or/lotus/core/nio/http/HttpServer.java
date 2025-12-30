@@ -31,7 +31,6 @@ import java.util.concurrent.Executors;
 
 public class HttpServer extends RestfulContext {
     protected NioTcpServer server;
-    protected boolean enableWebSocket = false;
     protected String uploadTmpDir = null;
     protected HttpFileFilter fileFilter;
     protected List<String> staticPath = new ArrayList<>(3);
@@ -47,6 +46,8 @@ public class HttpServer extends RestfulContext {
     protected int bufferCapacity = 1024 * 16;
 
     protected HashMap<String, HttpWebSocketMessageHandler> webSocketHandlers = new HashMap<>();
+
+    protected WebSocketProtocolCodec webSocketProtocolCodec = null;
 
     public HttpServer() {
         server = new NioTcpServer();
@@ -75,6 +76,9 @@ public class HttpServer extends RestfulContext {
             } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
+        }
+        if(isEnableWebSocket()) {
+            webSocketProtocolCodec = new WebSocketProtocolCodec(HttpServer.this);
         }
 
         server.setBufferCapacity(bufferCapacity);
@@ -105,7 +109,7 @@ public class HttpServer extends RestfulContext {
     }
 
     public boolean isEnableWebSocket() {
-        return enableWebSocket;
+        return !webSocketHandlers.isEmpty();
     }
 
     public String getUploadTmpDir() {
@@ -179,6 +183,33 @@ public class HttpServer extends RestfulContext {
         HttpRequest httpRequest = (HttpRequest) request;
         HttpResponse httpResponse = (HttpResponse) response;
         if(!isHandle) {
+            if(httpRequest.isWebSocket) {
+                if(!webSocketHandlers.isEmpty()) {
+                    HttpWebSocketMessageHandler handler = webSocketHandlers.get(request.getPath());
+                    if(handler != null) {
+                        httpRequest.session.setCodec(webSocketProtocolCodec);
+                        //虽然会释放request对象, 但是websocket请求没有数据在body里面
+                        WebSocketIoHandler wsHandler = new WebSocketIoHandler(httpRequest, handler);
+                        httpRequest.session.setHandler(wsHandler);
+                        try {
+                            handler.onConnection(httpRequest.session);
+                        } catch (Exception e) {
+                            handler.onException(httpRequest.session, e);
+                        }
+                    } else {
+                        response.setHeader(HttpHeaderNames.CONNECTION, "close");
+                        response.removeHeader(HttpHeaderNames.SEC_WEBSOCKET_ACCEPT);
+                        response.removeHeader(HttpHeaderNames.SEC_WEBSOCKET_KEY);
+                        response.removeHeader(HttpHeaderNames.UPGRADE);
+                        response.setStatus(RestfulResponseStatus.CLIENT_ERROR_NOT_FOUND);
+                    }
+                    httpRequest.session.write(response);
+                    return;
+                }
+            }
+
+
+
             //未被restful处理则走静态文件处理
             try {
                 handleFileResponse(httpRequest, httpResponse);
@@ -229,9 +260,8 @@ public class HttpServer extends RestfulContext {
                 response.setStatus(RestfulResponseStatus.REDIRECTION_NOT_MODIFIED);
                 return ;
             }
-            if(response.getHeader(HttpHeaderNames.CONTENT_TYPE) != null) {
-                response.setHeader(HttpHeaderNames.CONTENT_TYPE, RestfulUtils.getMimeType(charset.displayName(), file));
-            }
+            //默认是text/html, 这里根据文件类型覆盖掉, 否则 浏览器识别会有问题
+            response.setHeader(HttpHeaderNames.CONTENT_TYPE, RestfulUtils.getMimeType(charset.displayName(), file));
             response.write(file);
         }
     }
@@ -352,26 +382,6 @@ public class HttpServer extends RestfulContext {
                 HttpResponse response = null;
                 try {
                     response = new HttpResponse(request);
-                    if(request.isWebSocket) {
-                        if(enableWebSocket) {
-                            HttpWebSocketMessageHandler handler = webSocketHandlers.get(request.getPath());
-                            if(handler != null) {
-                                session.setCodec(new WebSocketProtocolCodec(HttpServer.this));
-                                //虽然会释放request对象, 但是websocket请求没有数据在body里面
-                                session.setHandler(new WebSocketIoHandler(request, handler));
-                            } else {
-                                response.setHeader(HttpHeaderNames.CONNECTION, "close");
-                                response.removeHeader(HttpHeaderNames.SEC_WEBSOCKET_ACCEPT);
-                                response.removeHeader(HttpHeaderNames.SEC_WEBSOCKET_KEY);
-                                response.removeHeader(HttpHeaderNames.UPGRADE);
-                                response.setStatus(RestfulResponseStatus.CLIENT_ERROR_NOT_FOUND);
-                            }
-                            session.write(response);
-                            return;
-                        }
-                    }
-
-
                     dispatch(request, response);
                 } catch (Throwable e) {
                     response.close();

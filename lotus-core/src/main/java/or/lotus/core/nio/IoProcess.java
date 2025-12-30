@@ -21,6 +21,7 @@ public abstract class IoProcess extends Thread {
         setName("Lotus Nio IoProcess:" + hashCode());
     }
 
+    /** 添加下次循环再在IO线程执行的任务 */
     public void addPendingTask(Runnable run) {
         pendingTasks.add(run);
     }

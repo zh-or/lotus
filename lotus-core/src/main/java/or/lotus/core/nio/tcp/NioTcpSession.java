@@ -53,6 +53,7 @@ public class NioTcpSession  extends Session {
 		}
 	}
 
+	/** 将在最后一条消息发送后执行 closeNow */
 	public void closeOnFlush() {
 		isCloseOnFlush = true;
 	}

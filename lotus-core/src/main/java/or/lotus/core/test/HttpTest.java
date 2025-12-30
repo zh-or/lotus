@@ -2,6 +2,7 @@ package or.lotus.core.test;
 
 import or.lotus.core.common.Utils;
 import or.lotus.core.files.FileSize;
+import or.lotus.core.http.WebSocketFrame;
 import or.lotus.core.http.restful.RestfulFilter;
 import or.lotus.core.http.restful.RestfulRequest;
 import or.lotus.core.http.restful.RestfulResponse;
@@ -10,6 +11,7 @@ import or.lotus.core.http.restful.ann.Parameter;
 import or.lotus.core.http.restful.ann.Post;
 import or.lotus.core.http.restful.ann.RestfulController;
 import or.lotus.core.nio.LotusByteBuffer;
+import or.lotus.core.nio.Session;
 import or.lotus.core.nio.http.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,6 +60,7 @@ public class HttpTest {
                     }
                 }
         );
+        server.addWebSocketMessageHandler(wsHandler);
         server.start(9999);
         log.info("启动完成: 9999");
 
@@ -124,4 +127,36 @@ public class HttpTest {
         return new File("./orm.md");
     }
 
+    static HttpWebSocketMessageHandler wsHandler = new HttpWebSocketMessageHandler("/ws") {
+        @Override
+        public void onConnection(Session session) throws Exception {
+            log.info("ws onConnection: {}", session.getId());
+        }
+
+        @Override
+        public void onClose(Session session) throws Exception {
+            log.info("ws onClose: {}", session.getId());
+        }
+
+
+        @Override
+        public void onIdle(Session session) throws Exception {
+            log.info("ws onIdle: {}", session.getId());
+        }
+
+        @Override
+        public void onMessage(Session session, WebSocketFrame msg) throws Exception {
+            log.info("ws onMessage: {}, {}", session.getId(), msg);
+            if(msg.opcode == WebSocketFrame.OPCODE_PING) {
+                session.write(WebSocketFrame.pong());
+                return;
+            }
+            session.write(WebSocketFrame.text("echo:" + msg.getText()));
+        }
+
+        @Override
+        public void onException(Session session, Throwable e) {
+            log.info("ws onException: {}", session.getId(), e);
+        }
+    };
 }

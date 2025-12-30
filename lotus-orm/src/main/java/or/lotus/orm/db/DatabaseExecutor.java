@@ -287,6 +287,7 @@ public class DatabaseExecutor<T> {
         return this;
     }
 
+    /** 调用时会判断一次前面是否存在参数 */
     public DatabaseExecutor<T> whereAnd() {
         if(builder.whereSize() > 0) {
             builder.addWhere(WhereItem.and());

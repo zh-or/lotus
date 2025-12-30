@@ -15,7 +15,7 @@ public abstract class RestfulResponse extends Writer {
     protected RestfulRequest request;
     protected HashMap<String, String> headers;
 
-    public Charset charset = Charset.forName("UTF-8");
+    public Charset charset;
     public RestfulResponseStatus status;
 
 
@@ -23,12 +23,11 @@ public abstract class RestfulResponse extends Writer {
         this.request = request;
         this.headers = new HashMap<>();
         this.charset = request.context.getCharset();
-        setHeader("Server", RestfulContext.TAG);
-        //setHeader("Content-Type", "text/html; charset=" + charset.displayName());
+        setHeader("server", RestfulContext.TAG);
 
         Date time = new Date();
-        setHeader("Expires", time.toString());
-        setHeader("Date", time.toString());
+        setHeader("expires", time.toString());
+        setHeader("date", time.toString());
         status = RestfulResponseStatus.SUCCESS_OK;
     }
 
