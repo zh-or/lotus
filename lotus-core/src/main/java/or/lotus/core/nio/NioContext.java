@@ -147,15 +147,26 @@ public abstract class NioContext {
         }
     }
 
+    /** 是否大于java8 */
+    static boolean isGtJava8 = false;
+
+    static {
+        isGtJava8 = !System.getProperty("java.specification.version").startsWith("1.");
+    }
+
     /** 文件映射的map需要释放才能删除文件 */
     protected void unmap(ByteBuffer buffer) {
         if (buffer == null) return;
         try {
-            Cleaner cleaner = ((DirectBuffer) buffer).cleaner();
-            if (cleaner != null) {
-                cleaner.clean();
+            if(isGtJava8) {
+
+            } else {
+                Cleaner cleaner = ((DirectBuffer) buffer).cleaner();
+                if (cleaner != null) {
+                    cleaner.clean();
+                }
             }
-        } catch (Exception e) { }
+        } catch (Throwable e) { }
     }
 
     public LotusByteBuf pulledByteBuffer() {

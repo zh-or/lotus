@@ -171,6 +171,7 @@ public class LotusByteBuffer implements LotusByteBuf {
             ByteBuffer buff = buffers[i];
             if(buff != null) {
                 context.putByteBufferToCache(buff);
+                buffers[i] = null;
             }
         }
         buffers = null;
@@ -205,8 +206,8 @@ public class LotusByteBuffer implements LotusByteBuf {
             ByteBuffer buff = buffers[0];
             //写模式但是无数据
             if(buff.position() <= 0 && buff.limit() == buff.capacity()) {
-                buffers[0] = null;
                 context.putByteBufferToCache(buff);
+                buffers[0] = null;
                 writeIndex = -1;
             }
         }
@@ -363,6 +364,7 @@ public class LotusByteBuffer implements LotusByteBuf {
         }
         for(int i = 0; i <= writeIndex; i++) {
             context.putByteBufferToCache(buffers[i]);
+            buffers[i] = null;
         }
         readIndex = 0;
         writeIndex = -1;
