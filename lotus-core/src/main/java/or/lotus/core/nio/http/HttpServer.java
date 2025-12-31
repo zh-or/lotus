@@ -172,10 +172,12 @@ public class HttpServer extends RestfulContext {
 
     public void addWebSocketMessageHandler(HttpWebSocketMessageHandler webSocketMessageHandler) {
         webSocketHandlers.put(webSocketMessageHandler.getPath(), webSocketMessageHandler);
+        addBean(webSocketMessageHandler);
     }
 
     public void removeWebSocketMessageHandler(HttpWebSocketMessageHandler webSocketMessageHandler) {
         webSocketHandlers.remove(webSocketMessageHandler.getPath());
+
     }
 
     @Override
