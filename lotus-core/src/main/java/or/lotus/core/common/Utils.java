@@ -17,8 +17,8 @@ import java.net.UnknownHostException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 public class Utils {
 
@@ -248,7 +248,7 @@ public class Utils {
      * 获取随机数
      */
     public static int RandomNum(int start, int end) {
-        return (int) (start + Math.random() * (end - start + 1));
+        return ThreadLocalRandom.current().nextInt(start, end + 1);
     }
 
     public static String RandomNum(int length) {
@@ -651,59 +651,6 @@ public class Utils {
         return ret;
     }
 
-    public static int kmpSearch(byte[] src, byte[] dest, int offset) {
-        if (src == null || dest == null || dest.length == 0) {
-            return -1;
-        }
-
-        // 构建部分匹配表
-        int[] lps = computeLPS(dest);
-
-        int i = offset; // src的索引
-        int j = 0;      // dest的索引
-
-        while (i < src.length) {
-            if (dest[j] == src[i]) {
-                i++;
-                j++;
-            }
-
-            if (j == dest.length) {
-                return i - j;
-            } else if (i < src.length && dest[j] != src[i]) {
-                if (j != 0) {
-                    j = lps[j - 1];
-                } else {
-                    i++;
-                }
-            }
-        }
-
-        return -1;
-    }
-
-    private static int[] computeLPS(byte[] pattern) {
-        int[] lps = new int[pattern.length];
-        int len = 0;
-        int i = 1;
-
-        while (i < pattern.length) {
-            if (pattern[i] == pattern[len]) {
-                len++;
-                lps[i] = len;
-                i++;
-            } else {
-                if (len != 0) {
-                    len = lps[len - 1];
-                } else {
-                    lps[i] = 0;
-                    i++;
-                }
-            }
-        }
-
-        return lps;
-    }
     /**
      * 生成范围包含开始和结束
      *
