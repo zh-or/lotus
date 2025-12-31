@@ -2,6 +2,7 @@ package or.lotus.core.http;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
+import java.util.Random;
 
 import or.lotus.core.common.Utils;
 
@@ -88,20 +89,21 @@ public class WebSocketFrame {
         }
         return body;
     }
-
+    private static final Random maskRandom = new Random();
     /**
      * 使用mask
      * 某些服务器必须加mask才能通讯
      * @return
      */
     public WebSocketFrame mask() {
-        int rand = Utils.RandomNum(0, Integer.MAX_VALUE);
+        //int rand = Utils.RandomNum(0, Integer.MAX_VALUE);
         byte[] tMask = new byte[4];
-        tMask[0] = (byte) (rand & 0xff000000 >>> 24);
+        /*tMask[0] = (byte) (rand & 0xff000000 >>> 24);
         tMask[1] = (byte) (rand & 0x00ff0000 >>> 16);
         tMask[2] = (byte) (rand & 0x0000ff00 >>> 8);
-        tMask[3] = (byte) (rand & 0x000000ff );
+        tMask[3] = (byte) (rand & 0x000000ff );*/
 
+        maskRandom.nextBytes(tMask);
         return mask(tMask);
     }
 
@@ -112,6 +114,14 @@ public class WebSocketFrame {
     public WebSocketFrame mask(byte[] mask) {
         this.mask = mask;
         this.masked = true;
+        //放到业务代码加密
+        if(body == null) {
+            throw new RuntimeException("请先设置内容再使用mask");
+        }
+        int pLen = body.length;
+        for(int i = 0; i < pLen; i++) {
+            body[i] = (byte) (body[i] ^ mask[i % 4]);
+        }
         return this;
     }
 

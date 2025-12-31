@@ -45,7 +45,9 @@ public class WebSocketProtocolCodec  implements ProtocolCodec {
             }
             byte[] bytes = new byte[2];
             in.get(bytes);
-            packlen = new BigInteger(bytes).intValue();
+            //packlen = new BigInteger(bytes).intValue();
+
+            packlen = ((bytes[0] & 0xFF) << 8) | (bytes[1] & 0xFF);
         } else if(frame.payload == 127) {
             headLen += 8;
             if(remaining < headLen){//127读8个字节,后8个字节为payloadLength
@@ -54,7 +56,12 @@ public class WebSocketProtocolCodec  implements ProtocolCodec {
             }
             byte[] bytes = new byte[8];
             in.get(bytes);
-            packlen = new BigInteger(bytes).longValue();
+            //packlen = new BigInteger(bytes).longValue();
+            packlen = 0;
+            for (int i = 0; i < 8; i++) {
+                packlen = (packlen << 8) | (bytes[i] & 0xFF);
+            }
+
         } else {
             packlen = frame.payload;
         }
@@ -83,7 +90,7 @@ public class WebSocketProtocolCodec  implements ProtocolCodec {
 
         if(msg instanceof WebSocketFrame) {
             WebSocketFrame frame   = (WebSocketFrame) msg;
-            int            datalen = (frame.body != null ? frame.body.length : 0);
+            int            dataLen = (frame.body != null ? frame.body.length : 0);
 
             byte b1 =
                     (byte)( (frame.fin  ? 0x80 : 0x00) |
@@ -94,42 +101,36 @@ public class WebSocketProtocolCodec  implements ProtocolCodec {
             b1 = (byte) (b1 | (0x0f & frame.opcode));
             byte b2 = (byte) (frame.masked ? 0x80 : 0x00);
 
-            if(datalen < 126) {
-                b2 = (byte) (b2 | datalen);
+            if(dataLen < 126) {
+                b2 = (byte) (b2 | dataLen);
                 out.append(b1);
                 out.append(b2);
-            }else if(datalen < 65535) {
+            }else if(dataLen <= 65535) {
                 b2 = (byte) (b2 | 126);
                 //发送2b长度
                 out.append(b1);
                 out.append(b2);
-                out.append((byte) (datalen >>> 8));
-                out.append((byte) (datalen & 0xff));
+                out.append((byte) (dataLen >>> 8));
+                out.append((byte) (dataLen & 0xff));
             }else {
                 b2 = (byte) (b2 | 127);
                 //发送8b长度
                 out.append(b1);
                 out.append(b2);
-                out.append((byte) (datalen & 0xff));
-                out.append((byte) ((datalen >>> 8) & 0xff));
-                out.append((byte) ((datalen >>> 16) & 0xff));
-                out.append((byte) ((datalen >>> 24) & 0xff));
-                out.append((byte) ((datalen >>> 32) & 0xff));
-                out.append((byte) ((datalen >>> 40) & 0xff));
-                out.append((byte) ((datalen >>> 48) & 0xff));
-                out.append((byte) ((datalen >>> 56) & 0xff));
+                long len2 = dataLen;//如果不转换右移位数会变成 右移位数 % int位长(32) 导致结果与实际不符的情况
+                out.append((byte) ((len2 >>> 56) & 0xff));
+                out.append((byte) ((len2 >>> 48) & 0xff));
+                out.append((byte) ((len2 >>> 40) & 0xff));
+                out.append((byte) ((len2 >>> 32) & 0xff));
+                out.append((byte) ((len2 >>> 24) & 0xff));
+                out.append((byte) ((len2 >>> 16) & 0xff));
+                out.append((byte) ((len2 >>> 8) & 0xff));
+                out.append((byte) (len2 & 0xff));
             }
-            if(frame.mask != null) {
+            if(frame.mask != null && frame.masked) {
                 out.append(frame.mask);
             }
-
-            if(datalen > 0) {
-                if(frame.masked) {
-                    int pLen = frame.body.length;
-                    for(int i = 0; i < pLen; i++) {
-                        frame.body[i] = (byte) (frame.body[i] ^ frame.mask[i % 4]);
-                    }
-                }
+            if(dataLen > 0) {
                 out.append(frame.body);
             }
 

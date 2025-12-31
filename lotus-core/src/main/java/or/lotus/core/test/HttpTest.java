@@ -151,7 +151,14 @@ public class HttpTest {
                 session.write(WebSocketFrame.pong());
                 return;
             }
-            session.write(WebSocketFrame.text("echo:" + msg.getText()));
+            int len = Integer.valueOf(msg.getText());
+            log.info("收到数字: {}", len);
+            StringBuilder sb = new StringBuilder(len);
+            for(int i = 0; i < len; i++) {
+                sb.append("1");
+            }
+
+            session.write(WebSocketFrame.text(sb.toString()));
         }
 
         @Override
