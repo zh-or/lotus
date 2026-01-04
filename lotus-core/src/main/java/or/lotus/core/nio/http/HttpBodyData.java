@@ -1,15 +1,11 @@
 package or.lotus.core.nio.http;
 
-import or.lotus.core.common.Utils;
 import or.lotus.core.http.restful.RestfulFormData;
 import or.lotus.core.http.restful.RestfulFormDataItem;
-import or.lotus.core.nio.LotusByteBuf;
 import or.lotus.core.nio.LotusByteBuffer;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -69,7 +65,7 @@ Content-Type：MIME 类型（如 image/jpeg, application/pdf 等）
     }
 
     /** body写入文件缓存的超时时间, 有可能磁盘满了,  */
-    public static final int BUFFER_WRITE_TO_FILE_TIME_OUT = 1000 * 60;
+    public static int BUFFER_WRITE_TO_FILE_TIME_OUT = 1000 * 60 * 60;
 
     /** 从网络读取数据并写入, 如果已经达到contentLength 则返回true, 否则返回false */
     public boolean appendData(LotusByteBuffer buff) throws IOException {
@@ -191,7 +187,7 @@ Content-Type：MIME 类型（如 image/jpeg, application/pdf 等）
 
                             if(bodyBuffer.getDataLength() <= boundary.length + 2 + 2) {
                                 //结束了
-                                bodyBuffer.rewind();
+                                while(bodyBuffer.release() == false);
                                 state = 3;
                                 break;
                             }

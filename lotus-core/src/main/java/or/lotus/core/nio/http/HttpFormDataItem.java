@@ -26,11 +26,12 @@ public class HttpFormDataItem implements RestfulFormDataItem {
         this.request = request;
         this.name = Utils.getMid(metaRaw, "name=\"", "\"");
         this.fileName = Utils.getMid(metaRaw, "filename=\"", "\"");
-        this.metaContentType = Utils.getMid(metaRaw, "Content-Type: ", "\r\n");
+        /*有些是大写有些是小写=.=*/
+        this.metaContentType = Utils.getMid(metaRaw.toLowerCase(), "content-type: ", "\r\n");
         if(Utils.CheckNull(this.metaContentType)) {
             this.metaContentType = "text/plain";
         }
-        isStringContent = "text/plain".equals(metaContentType);
+        isStringContent = metaContentType != null && metaContentType.indexOf("text/plain") != -1;
     }
 
     @Override
