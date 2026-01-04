@@ -79,13 +79,14 @@ public class LotusByteBuffer implements LotusByteBuf {
 
     /** 写入length长度的数据到fileChannel中, 最大不超过当前buffer的长度, 会移动读写位置
      * 如果不是追加模式打开的FileChannel, 需要自己控制文件的position
+     * @return 返回实际写入长度
      * */
     public long writeToFile(FileChannel fileChannel, long length, long timeout) throws IOException {
         long loss = Math.min(length, getDataLength());
         long start = System.currentTimeMillis();
-        while(loss > 0) {
-            int remaining;
-            for(int i = 0; i <= writeIndex; i++) {
+        if(loss > 0) {
+            int remaining, i;
+            for(i = readIndex; i <= writeIndex; i++) {
                 ByteBuffer t = buffers[i];
                 readIndex = i;
                 while((remaining = t.remaining()) > 0 && loss > 0) {
@@ -100,6 +101,9 @@ public class LotusByteBuffer implements LotusByteBuf {
                     if(System.currentTimeMillis() - start > timeout) {
                         throw new IOException("请检查所设置的临时目录是否已满, 请求body写入磁盘缓存时超时 > " + timeout + "ms");
                     }
+                }
+                if(loss <= 0) {
+                    break;
                 }
             }
         }
