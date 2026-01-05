@@ -43,7 +43,7 @@ public abstract class Session {
         waitSendMessageList = new LinkedBlockingQueue<>(context.maxMessageSendListCapacity);
     }
 
-    /** 如果消息有需要释放的资源, 请实现 AutoCloseable 接口 */
+    /** 如果消息有需要释放的资源, 请实现 AutoCloseable 接口, 当消息编码完成并写出到socket后会调用 AutoCloseable.close() */
     public boolean write(Object data) {
         return waitSendMessageList.add(data);
     }

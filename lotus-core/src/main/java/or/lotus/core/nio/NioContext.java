@@ -132,7 +132,7 @@ public abstract class NioContext {
     public void putByteBufferToCache(ByteBuffer buffer) {
         if(buffer != null) {
             if(buffer instanceof MappedByteBuffer) {
-                unmap(buffer);
+                ByteBufferClear.cleanDirectBuffer(buffer);
             } else {
                 flyByteBuffer.add(-buffer.capacity());
                 if((buffer.capacity() == bufferCapacity) && (bufferList.size() < cacheBufferSize)) {
@@ -147,27 +147,6 @@ public abstract class NioContext {
         }
     }
 
-    /** 是否大于java8 */
-    static boolean isGtJava8 = false;
-
-    static {
-        isGtJava8 = !System.getProperty("java.specification.version").startsWith("1.");
-    }
-
-    /** 文件映射的map需要释放才能删除文件 */
-    protected void unmap(ByteBuffer buffer) {
-        if (buffer == null) return;
-        try {
-            if(isGtJava8) {
-
-            } else {
-                Cleaner cleaner = ((DirectBuffer) buffer).cleaner();
-                if (cleaner != null) {
-                    cleaner.clean();
-                }
-            }
-        } catch (Throwable e) { }
-    }
 
     public LotusByteBuf pulledByteBuffer() {
         return pulledByteBuffer(isUseDirectBuffer);

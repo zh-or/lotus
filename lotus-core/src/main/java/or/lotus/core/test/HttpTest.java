@@ -17,7 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -129,7 +128,7 @@ public class HttpTest {
 
     static HttpWebSocketMessageHandler wsHandler = new HttpWebSocketMessageHandler("/ws") {
         @Override
-        public void onConnection(Session session) throws Exception {
+        public void onConnection(HttpRequest request, Session session) throws Exception {
             log.info("ws onConnection: {}", session.getId());
         }
 

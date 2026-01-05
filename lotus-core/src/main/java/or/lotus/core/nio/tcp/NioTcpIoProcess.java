@@ -186,26 +186,27 @@ public class NioTcpIoProcess extends IoProcess {
                     if(session.isClosed()) {
                         return;
                     }
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     context.executeEvent(new IoEventRunnable(e, IoEventRunnable.IoEventType.SESSION_EXCEPTION, session, context));
                     return;
+                } finally {
+                    sessionReadCache.compact();
                 }
                 if(hasPack) {
                     session.pushEventRunnable(new IoEventRunnable(out.read(), IoEventRunnable.IoEventType.SESSION_RECEIVE_DATA, session, context));
                 }
-                sessionReadCache.compact();
             }
         } while(readLen > 0 && hasPack/*没有收到正确的包则不一直接收, 以免恶意数据导致一直申请内存导致爆炸*/);
     }
 
     protected void handleWriteData(SelectionKey key, NioTcpSession session) throws Exception {
         Object msg;
-        LotusByteBuffer out;
+        EncodeOutByteBuffer out;
         while((msg = session.pollMessage()) != null) {
             try {
                 boolean sent = true;
                 do {
-                    out = (LotusByteBuffer) context.pulledByteBuffer();
+                    out = new EncodeOutByteBuffer(context);
                     try {
                         try {
                             sent = session.getCodec().encode(session, msg, out);
@@ -217,15 +218,31 @@ public class NioTcpIoProcess extends IoProcess {
                             return;
                         }
 
-                        ByteBuffer[] buffers = out.getAllDataBuffer();
+                        EncodeOutByteBuffer.OutWrapper[] buffers = out.getAllDataBuffer();
                         if(buffers.length <= 0) {
                             return;
                         }
 
-                        for(ByteBuffer buff : buffers) {
-                            buff.flip();
-                            while(buff.hasRemaining()) {//保证写完
-                                session.channel.write(buff);
+                        for(EncodeOutByteBuffer.OutWrapper buff : buffers) {
+                            if(buff.isBuffer) {
+                                buff.buffer.flip();
+                                while(buff.buffer.hasRemaining()) {//保证写完
+                                    session.channel.write(buff.buffer);
+                                    if(buff.buffer.hasRemaining()) {
+                                        //防止cpu 100%
+                                        Utils.SLEEP(1);
+                                    }
+                                }
+                            } else {
+                                long loss = buff.size;
+                                long start = buff.pos;
+                                while(loss > 0) {//保证写完
+                                    loss -= buff.fileChannel.transferTo(start, loss, session.channel);
+                                    if(loss > 0) {
+                                        //防止cpu 100%
+                                        Utils.SLEEP(1);
+                                    }
+                                }
                             }
                         }
                     } finally {

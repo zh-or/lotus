@@ -22,6 +22,8 @@ public class HttpResponse extends RestfulResponse {
         String connection = request.getHeader(HttpHeaderNames.CONNECTION);
         if(connection != null) {
             setHeader(HttpHeaderNames.CONNECTION, connection);
+        } else {
+            setHeader(HttpHeaderNames.CONNECTION, "keep-live");
         }
         this.request = request;
 
@@ -92,10 +94,10 @@ public class HttpResponse extends RestfulResponse {
     }
 
     @Override
-    public void write(char[] cbuf, int off, int len) throws IOException {
+    public void write(char[] cBuf, int off, int len) throws IOException {
 
         checkBuffer();
-        writeBuffer.append(String.valueOf(cbuf, off, len).getBytes(charset));
+        writeBuffer.append(String.valueOf(cBuf, off, len).getBytes(charset));
     }
 
     @Override

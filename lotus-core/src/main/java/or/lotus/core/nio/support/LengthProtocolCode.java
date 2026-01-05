@@ -1,10 +1,7 @@
 package or.lotus.core.nio.support;
 
 import or.lotus.core.common.Utils;
-import or.lotus.core.nio.LotusByteBuf;
-import or.lotus.core.nio.ProtocolCodec;
-import or.lotus.core.nio.ProtocolDecoderOutput;
-import or.lotus.core.nio.Session;
+import or.lotus.core.nio.*;
 
 
 /**
@@ -46,7 +43,7 @@ public class LengthProtocolCode implements ProtocolCodec {
     }
 
     @Override
-    public boolean encode(Session session, Object msg, LotusByteBuf out) throws Exception {
+    public boolean encode(Session session, Object msg, EncodeOutByteBuffer out) throws Exception {
 
         byte[] content = (byte[]) msg;
         int len = content.length + 2 + 2;

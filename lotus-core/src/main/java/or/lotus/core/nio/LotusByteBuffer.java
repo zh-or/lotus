@@ -204,18 +204,6 @@ public class LotusByteBuffer implements LotusByteBuf {
         context.retainMap.put(this, retainName);
     }
 
-    /** 如果当前只有一个ByteBuffer 如果未写入数据则释放之 */
-    public void freeZeroReadBuffer() {
-        if(writeIndex == 0) {
-            ByteBuffer buff = buffers[0];
-            //写模式但是无数据
-            if(buff.position() <= 0 && buff.limit() == buff.capacity()) {
-                context.putByteBufferToCache(buff);
-                buffers[0] = null;
-                writeIndex = -1;
-            }
-        }
-    }
 
     /** 获取一个能写的 ByteBuffer */
     public ByteBuffer getCurrentWriteBuffer() {

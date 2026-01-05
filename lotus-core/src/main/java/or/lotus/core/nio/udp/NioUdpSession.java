@@ -1,5 +1,6 @@
 package or.lotus.core.nio.udp;
 
+import or.lotus.core.common.Utils;
 import or.lotus.core.nio.*;
 
 import java.io.IOException;
@@ -24,24 +25,40 @@ public class NioUdpSession extends Session {
         ioProcess.addPendingTask(() -> {
             //在io线程运行并发送数据
             Object msg;
-            LotusByteBuffer out;
+            EncodeOutByteBuffer out;
             while((msg = waitSendMessageList.poll()) != null) {
                 boolean sent = true;
                 do {
-                    out = (LotusByteBuffer) context.pulledByteBuffer();
+                    out = new EncodeOutByteBuffer(context);
                     try {
                         sent = getCodec().encode(this, msg, out);
                         if(isClosed()) {
                             return;
                         }
-                        ByteBuffer[] buffers = out.getAllDataBuffer();
+                        EncodeOutByteBuffer.OutWrapper[] buffers = out.getAllDataBuffer();
                         if(buffers.length <= 0) {
                             return;
                         }
-                        for(ByteBuffer buff : buffers) {
-                            buff.flip();
-                            while(buff.hasRemaining()) {//保证写完
-                                channel.write(buff);
+                        for(EncodeOutByteBuffer.OutWrapper buff : buffers) {
+                            if(buff.isBuffer) {
+                                buff.buffer.flip();
+                                while(buff.buffer.hasRemaining()) {//保证写完
+                                    channel.write(buff.buffer);
+                                    if(buff.buffer.hasRemaining()) {
+                                        //防止cpu 100%
+                                        Utils.SLEEP(1);
+                                    }
+                                }
+                            } else {
+                                long loss = buff.size;
+                                long start = buff.pos;
+                                while(loss > 0) {//保证写完
+                                    loss -= buff.fileChannel.transferTo(start, loss, channel);
+                                    if(loss > 0) {
+                                        //防止cpu 100%
+                                        Utils.SLEEP(1);
+                                    }
+                                }
                             }
                         }
                     } catch (Exception e) {

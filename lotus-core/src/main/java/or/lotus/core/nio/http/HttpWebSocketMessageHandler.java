@@ -10,7 +10,7 @@ public abstract class HttpWebSocketMessageHandler {
         this.path = path;
     }
 
-    public void onConnection(Session session) throws Exception {
+    public void onConnection(HttpRequest request, Session session) throws Exception {
 
     }
 

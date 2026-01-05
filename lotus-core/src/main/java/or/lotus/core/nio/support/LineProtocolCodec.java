@@ -2,8 +2,6 @@ package or.lotus.core.nio.support;
 
 import or.lotus.core.nio.*;
 
-import java.nio.ByteBuffer;
-
 /**
  * 示例解码器 一行一个包
  * @author OR
@@ -38,7 +36,7 @@ public class LineProtocolCodec implements ProtocolCodec {
 	}
 
 	@Override
-	public boolean encode(Session session, Object msg, LotusByteBuf out) throws Exception {
+	public boolean encode(Session session, Object msg, EncodeOutByteBuffer out) throws Exception {
 	    byte[] content = (byte[]) msg;
         out.append(content);
         out.append(line);

@@ -5,7 +5,6 @@ import or.lotus.core.nio.*;
 import or.lotus.core.nio.tcp.NioTcpSession;
 
 import java.io.File;
-import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.file.StandardOpenOption;
@@ -67,6 +66,10 @@ public class HttpProtocolCodec implements ProtocolCodec {
                 ) {
                     session.setAttr(STATE, HttpState.InitialLine);
                     out.write(request);
+                    if(request.contentLength > 0) {
+                        //get 不允许携带body
+                        request.headers.put(HttpHeaderNames.CONNECTION, "close");
+                    }
                     return true;
                 }
                 if(request.contentLength > context.getMaxContentLength()) {
@@ -108,7 +111,7 @@ public class HttpProtocolCodec implements ProtocolCodec {
     }
 
     @Override
-    public boolean encode(Session session, Object msg, LotusByteBuf out) throws Exception {
+    public boolean encode(Session session, Object msg, EncodeOutByteBuffer out) throws Exception {
         //是块对象
         if(msg instanceof HttpSyncResponse) {
             HttpSyncResponse syncResponse = (HttpSyncResponse) msg;
@@ -157,9 +160,11 @@ public class HttpProtocolCodec implements ProtocolCodec {
             out.append(response.writeBuffer.getAllDataBuffer(true));
         } else if(response.isFileResponse()) {
             File file = response.getFile();
+            out.append(FileChannel.open(file.toPath(), StandardOpenOption.READ), 0, file.length());
+             /*try (FileChannel channel = FileChannel.open(file.toPath(), StandardOpenOption.READ);) {
+                //channel.transferTo(0, file.length(), writableByteChannel);
 
-            try (FileChannel channel = FileChannel.open(file.toPath(), StandardOpenOption.READ);) {
-                long len = file.length();
+               long len = file.length();
                 //把文件映射到内存发送, 这里最大不能超过Integer.MAX_LENGTH个字节即2G, 需要分成多个map映射
                 do {
                     long step = Math.min(Integer.MAX_VALUE, len);
@@ -171,7 +176,7 @@ public class HttpProtocolCodec implements ProtocolCodec {
 
                 //channel.close();
                 return true;
-            }
+            }*/
         }
         return true;
 

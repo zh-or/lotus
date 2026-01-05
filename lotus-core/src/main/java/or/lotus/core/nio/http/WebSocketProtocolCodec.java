@@ -1,12 +1,7 @@
 package or.lotus.core.nio.http;
 
 import or.lotus.core.http.WebSocketFrame;
-import or.lotus.core.nio.LotusByteBuf;
-import or.lotus.core.nio.ProtocolCodec;
-import or.lotus.core.nio.ProtocolDecoderOutput;
-import or.lotus.core.nio.Session;
-
-import java.math.BigInteger;
+import or.lotus.core.nio.*;
 
 public class WebSocketProtocolCodec  implements ProtocolCodec {
 
@@ -86,11 +81,11 @@ public class WebSocketProtocolCodec  implements ProtocolCodec {
     }
 
     @Override
-    public boolean encode(Session session, Object msg, LotusByteBuf out) throws Exception {
+    public boolean encode(Session session, Object msg, EncodeOutByteBuffer out) throws Exception {
 
         if(msg instanceof WebSocketFrame) {
             WebSocketFrame frame   = (WebSocketFrame) msg;
-            int            dataLen = (frame.body != null ? frame.body.length : 0);
+            long           dataLen = (frame.body != null ? frame.body.length : 0);
 
             byte b1 =
                     (byte)( (frame.fin  ? 0x80 : 0x00) |
@@ -117,15 +112,14 @@ public class WebSocketProtocolCodec  implements ProtocolCodec {
                 //发送8b长度
                 out.append(b1);
                 out.append(b2);
-                long len2 = dataLen;//如果不转换右移位数会变成 右移位数 % int位长(32) 导致结果与实际不符的情况
-                out.append((byte) ((len2 >>> 56) & 0xff));
-                out.append((byte) ((len2 >>> 48) & 0xff));
-                out.append((byte) ((len2 >>> 40) & 0xff));
-                out.append((byte) ((len2 >>> 32) & 0xff));
-                out.append((byte) ((len2 >>> 24) & 0xff));
-                out.append((byte) ((len2 >>> 16) & 0xff));
-                out.append((byte) ((len2 >>> 8) & 0xff));
-                out.append((byte) (len2 & 0xff));
+                out.append((byte) ((dataLen >>> 56) & 0xff));
+                out.append((byte) ((dataLen >>> 48) & 0xff));
+                out.append((byte) ((dataLen >>> 40) & 0xff));
+                out.append((byte) ((dataLen >>> 32) & 0xff));
+                out.append((byte) ((dataLen >>> 24) & 0xff));
+                out.append((byte) ((dataLen >>> 16) & 0xff));
+                out.append((byte) ((dataLen >>> 8) & 0xff));
+                out.append((byte) (dataLen & 0xff));
             }
             if(frame.mask != null && frame.masked) {
                 out.append(frame.mask);

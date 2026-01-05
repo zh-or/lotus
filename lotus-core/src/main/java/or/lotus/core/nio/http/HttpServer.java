@@ -191,10 +191,10 @@ public class HttpServer extends RestfulContext {
                     if(handler != null) {
                         httpRequest.session.setCodec(webSocketProtocolCodec);
                         //虽然会释放request对象, 但是websocket请求没有数据在body里面
-                        WebSocketIoHandler wsHandler = new WebSocketIoHandler(httpRequest, handler);
+                        WebSocketIoHandler wsHandler = new WebSocketIoHandler(handler);
                         httpRequest.session.setHandler(wsHandler);
                         try {
-                            handler.onConnection(httpRequest.session);
+                            handler.onConnection(httpRequest, httpRequest.session);
                         } catch (Exception e) {
                             handler.onException(httpRequest.session, e);
                         }
@@ -210,8 +210,6 @@ public class HttpServer extends RestfulContext {
                 }
             }
 
-
-
             //未被restful处理则走静态文件处理
             try {
                 handleFileResponse(httpRequest, httpResponse);
@@ -225,6 +223,10 @@ public class HttpServer extends RestfulContext {
         //发送失败时直接释放内存
         if(!httpRequest.session.write(httpResponse)) {
             httpResponse.close();
+        }
+        String connection = response.getHeader(HttpHeaderNames.CONNECTION);
+        if("close".equals(connection) || Utils.CheckNull(connection)) {
+            httpRequest.session.closeOnFlush();
         }
     }
 
@@ -330,11 +332,9 @@ public class HttpServer extends RestfulContext {
     }
 
     private class WebSocketIoHandler extends IoHandler {
-        HttpRequest request;
         HttpWebSocketMessageHandler handler;
 
-        public WebSocketIoHandler(HttpRequest request, HttpWebSocketMessageHandler handler) {
-            this.request = request;
+        public WebSocketIoHandler(HttpWebSocketMessageHandler handler) {
             this.handler = handler;
         }
 
@@ -386,7 +386,9 @@ public class HttpServer extends RestfulContext {
                     response = new HttpResponse(request);
                     dispatch(request, response);
                 } catch (Throwable e) {
-                    response.close();
+                    if(response != null) {
+                        response.close();
+                    }
                     throw new HttpServerException(500, request, e);
                 } finally {
                     request.close();
