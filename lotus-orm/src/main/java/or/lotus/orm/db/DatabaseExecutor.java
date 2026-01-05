@@ -135,13 +135,19 @@ public class DatabaseExecutor<T> {
         return whereLike(left, right, addPs, false);
     }
 
-
-
     /**left like right
-     * @param  addPs right两边添加%
      * @param ifRightNotEmpty 如果为true则增加空判断, 如果为空则不加入条件
      * */
     public DatabaseExecutor<T> whereLike(Object left, Object right, boolean addPs, boolean ifRightNotEmpty) {
+        return whereLike(null, left, right, addPs, ifRightNotEmpty);
+    }
+
+    /**left like right
+     * @param before 如果 right 不为空, 并且 before不为空 则添加在 like前面, 用于多条件时使用
+     * @param  addPs right两边添加%
+     * @param ifRightNotEmpty 如果为true则增加空判断, 如果为空则不加入条件
+     * */
+    public DatabaseExecutor<T> whereLike(WhereItem before, Object left, Object right, boolean addPs, boolean ifRightNotEmpty) {
         if(ifRightNotEmpty) {
             if(right == null) {
                 return this;
@@ -151,7 +157,9 @@ public class DatabaseExecutor<T> {
                 return this;
             }
         }
-
+        if(before != null && builder.whereSize() > 0) {
+            builder.addWhere(before);
+        }
         builder.addWhere(WhereItem.like(left, "?"));
         if(addPs) {
             whereParams.add("%" + right + "%");
@@ -178,11 +186,18 @@ public class DatabaseExecutor<T> {
         return whereNot(left, right, false);
     }
 
-
     /**left != right
      * @param ifRightNotEmpty 如果为true则增加空判断, 如果为空则不加入条件
      * */
     public DatabaseExecutor<T> whereNot(Object left, Object right, boolean ifRightNotEmpty) {
+        return whereNot(left, right, ifRightNotEmpty);
+    }
+
+    /**left != right
+     * @param before 如果 right 不为空, 并且 before不为空 则添加在 like前面, 用于多条件时使用
+     * @param ifRightNotEmpty 如果为true则增加空判断, 如果为空则不加入条件
+     * */
+    public DatabaseExecutor<T> whereNot(WhereItem before, Object left, Object right, boolean ifRightNotEmpty) {
         if(ifRightNotEmpty) {
             if(right == null) {
                 return this;
@@ -191,6 +206,9 @@ public class DatabaseExecutor<T> {
             if(right instanceof String && Utils.CheckNull((String) right)) {
                 return this;
             }
+        }
+        if(before != null && builder.whereSize() > 0) {
+            builder.addWhere(before);
         }
         builder.addWhere(WhereItem.not(left, "?"));
         whereParams.add(right);
@@ -204,6 +222,14 @@ public class DatabaseExecutor<T> {
      * @param ifRightNotEmpty 如果为true则增加空判断, 如果为空则不加入条件
      * */
     public DatabaseExecutor<T> whereEq(Object left, Object right, boolean ifRightNotEmpty) {
+        return whereEq(null, left, right, ifRightNotEmpty);
+    }
+
+    /**left = right
+     * @param before 如果 right 不为空, 并且 before不为空 则添加在 like前面, 用于多条件时使用
+     * @param ifRightNotEmpty 如果为true则增加空判断, 如果为空则不加入条件
+     * */
+    public DatabaseExecutor<T> whereEq(WhereItem before, Object left, Object right, boolean ifRightNotEmpty) {
         if(ifRightNotEmpty) {
             if(right == null) {
                 return this;
@@ -212,6 +238,9 @@ public class DatabaseExecutor<T> {
             if(right instanceof String && Utils.CheckNull((String) right)) {
                 return this;
             }
+        }
+        if(before != null && builder.whereSize() > 0) {
+            builder.addWhere(before);
         }
         builder.addWhere(WhereItem.eq(left, "?"));
         whereParams.add(right);
@@ -227,6 +256,14 @@ public class DatabaseExecutor<T> {
      * @param ifRightNotEmpty 如果为true则增加空判断, 如果为空则不加入条件
      * */
     public DatabaseExecutor<T> whereLt(Object left, Object right, boolean ifRightNotEmpty) {
+        return whereLt(null, left, right, ifRightNotEmpty);
+    }
+
+    /**left < right
+     * @param before 如果 right 不为空, 并且 before不为空 则添加在 like前面, 用于多条件时使用
+     * @param ifRightNotEmpty 如果为true则增加空判断, 如果为空则不加入条件
+     * */
+    public DatabaseExecutor<T> whereLt(WhereItem before, Object left, Object right, boolean ifRightNotEmpty) {
         if(ifRightNotEmpty) {
             if(right == null) {
                 return this;
@@ -235,6 +272,9 @@ public class DatabaseExecutor<T> {
             if(right instanceof String && Utils.CheckNull((String) right)) {
                 return this;
             }
+        }
+        if(before != null && builder.whereSize() > 0) {
+            builder.addWhere(before);
         }
         builder.addWhere(WhereItem.lt(left, "?"));
         whereParams.add(right);
@@ -246,11 +286,18 @@ public class DatabaseExecutor<T> {
         return whereGt(left, right, false);
     }
 
-
     /**left > right
      * @param ifRightNotEmpty 如果为true则增加空判断, 如果为空则不加入条件
      * */
     public DatabaseExecutor<T> whereGt(Object left, Object right, boolean ifRightNotEmpty) {
+        return whereGt(null, left, right, ifRightNotEmpty);
+    }
+
+    /**left > right
+     * @param before 如果 right 不为空, 并且 before不为空 则添加在 like前面, 用于多条件时使用
+     * @param ifRightNotEmpty 如果为true则增加空判断, 如果为空则不加入条件
+     * */
+    public DatabaseExecutor<T> whereGt(WhereItem before, Object left, Object right, boolean ifRightNotEmpty) {
         if(ifRightNotEmpty) {
             if(right == null) {
                 return this;
@@ -260,15 +307,16 @@ public class DatabaseExecutor<T> {
                 return this;
             }
         }
+        if(before != null && builder.whereSize() > 0) {
+            builder.addWhere(before);
+        }
         builder.addWhere(WhereItem.gt(left, "?"));
         whereParams.add(right);
         return this;
     }
 
     public DatabaseExecutor<T> whereOr() {
-        if(builder.whereSize() > 0) {
-            builder.addWhere(WhereItem.or());
-        }
+        builder.addWhere(WhereItem.or());
         return this;
     }
 
@@ -287,12 +335,8 @@ public class DatabaseExecutor<T> {
         return this;
     }
 
-    /** 调用时会判断一次前面是否存在参数 */
     public DatabaseExecutor<T> whereAnd() {
-        if(builder.whereSize() > 0) {
-            builder.addWhere(WhereItem.and());
-        }
-
+        builder.addWhere(WhereItem.and());
         return this;
     }
 
@@ -308,7 +352,11 @@ public class DatabaseExecutor<T> {
         return this;
     }
 
-    public DatabaseExecutor<T> where(WhereItem where, boolean ifRightNotEmpty) {
+    public DatabaseExecutor<T> where(WhereItem before, WhereItem where) {
+        return where(before, where, false);
+    }
+
+    public DatabaseExecutor<T> where(WhereItem before, WhereItem where, boolean ifRightNotEmpty) {
         if(ifRightNotEmpty) {
             if(where.v == null) {
                 return this;
@@ -317,6 +365,9 @@ public class DatabaseExecutor<T> {
             if(where.v instanceof String && Utils.CheckNull((String) where.v)) {
                 return this;
             }
+        }
+        if(before != null && builder.whereSize() > 0) {
+            builder.addWhere(before);
         }
 
         whereParams.add(where.v);
