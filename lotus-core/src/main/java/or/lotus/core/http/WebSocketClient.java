@@ -1,33 +1,21 @@
 package or.lotus.core.http;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.math.BigInteger;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.net.Socket;
-import java.net.SocketTimeoutException;
-import java.net.URI;
+import or.lotus.core.common.Base64;
+import or.lotus.core.common.Utils;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
+import java.io.*;
+import java.net.*;
 import java.security.KeyManagementException;
+import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-
-import or.lotus.core.common.Base64;
-import or.lotus.core.common.Utils;
 
 /**
  * 默认 5 秒没有通讯则发送一次ping包
@@ -39,7 +27,7 @@ public class WebSocketClient {
 
         public void onConn(WebSocketClient ws);
 
-        public void onRecv(WebSocketClient ws, WebSocketFrame frame);
+        public void onReceive(WebSocketClient ws, WebSocketFrame frame);
 
         /**
          * 自己调用close方法时, 不会调用此回调
@@ -80,7 +68,9 @@ public class WebSocketClient {
     private Timer                               ideaCheckTimer      = null;
     private ConcurrentHashMap<String, Object>   attr                = null;
 
-
+    /**
+     * 支持协议 http://,ws://,https://,wss://
+     * */
     private WebSocketClient(URI uri, Handler handler, Proxy proxy) throws Exception {
         this.handler = handler;
         int port = uri.getPort();
@@ -101,9 +91,13 @@ public class WebSocketClient {
             case "https":
             case "wss":
                 port = port == -1 ? 443 : port;
-                sslCtx = SSLContext.getInstance("TLSv1.2");
                 try {
-                    sslCtx.init(null, new TrustManager[] { new TrustAnyTrustManager() },  new java.security.SecureRandom());
+                    TrustManagerFactory tmf = TrustManagerFactory.getInstance(
+                            TrustManagerFactory.getDefaultAlgorithm()
+                    );
+                    tmf.init((KeyStore) null);
+                    sslCtx = SSLContext.getInstance("TLS");
+                    sslCtx.init(null, tmf.getTrustManagers(), null);
                     if(proxy != null) {
                         Socket tSock = new Socket(proxy);
                         //tSock.setTcpNoDelay(true);
@@ -111,7 +105,7 @@ public class WebSocketClient {
                         tSock.connect(new InetSocketAddress(uri.getHost(), port), connectionTimeOut);
                         //tSock.setSoTimeout(connectionTimeOut * 2);
                         this.socket = sslCtx.getSocketFactory().createSocket(tSock, uri.getHost(), port, true);
-                    }else {
+                    } else {
                         this.socket = sslCtx.getSocketFactory().createSocket();
                         this.socket.connect(new InetSocketAddress(uri.getHost(), port), connectionTimeOut);
                     }
@@ -153,9 +147,9 @@ public class WebSocketClient {
         try {
             String selfAccept = Base64.byteArrayToBase64(Utils.SHA1(key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11")).toLowerCase();
             if (selfAccept == null || !selfAccept.equals(accept)) {
-                System.out.println(accept);
+                /*System.out.println(accept);
                 System.out.println(selfAccept);
-                System.out.println(upgrade);
+                System.out.println(upgrade);*/
                 throw new IOException("握手失败");
             }
         } catch (NoSuchAlgorithmException e) {
@@ -164,7 +158,7 @@ public class WebSocketClient {
         qSend = new LinkedBlockingQueue<>();
         run = true;
         isConnection = true;
-        Thread recv = new Thread(rRecv);
+        Thread recv = new Thread(rReceive);
         recv.setName("websocket - recv thread " + this.hashCode());
         Thread send = new Thread(rSend);
         send.setName("websocket - send thread " + this.hashCode());
@@ -297,7 +291,7 @@ public class WebSocketClient {
                     frame = qSend.poll(100, TimeUnit.MICROSECONDS);
                     if (frame != null && run) {
                         lastActiveTime = System.currentTimeMillis();
-                        long datalen = (frame.body != null ? frame.body.length : 0);
+                        long dataLen = (frame.body != null ? frame.body.length : 0);
 
                         byte b1 =
                                 (byte)( (frame.fin  ? 0x80 : 0x00) |
@@ -310,33 +304,33 @@ public class WebSocketClient {
                         bOut.write(b1);
 
                         byte b2 = (byte) (frame.masked ? 0x80 : 0x00);
-                        if(datalen < 126) {
-                            b2 = (byte) (b2 | datalen);
+                        if(dataLen < 126) {
+                            b2 = (byte) (b2 | dataLen);
                             bOut.write(b2);
-                        }else if(datalen < 65535) {
+                        }else if(dataLen < 65535) {
                             b2 = (byte) (b2 | 126);
                             bOut.write(b2);
                             //发送2b长度
-                            bOut.write((int) (datalen >>> 8));
-                            bOut.write((int) (datalen & 0xff));
+                            bOut.write((int) ((dataLen >>> 8) & 0xff));
+                            bOut.write((int) (dataLen & 0xff));
                         }else {
                             b2 = (byte) (b2 | 127);
                             bOut.write(b2);
                             //发送8b长度
-                            bOut.write((int) (datalen & 0xff));
-                            bOut.write((int) ((datalen >>> 8) & 0xff));
-                            bOut.write((int) ((datalen >>> 16) & 0xff));
-                            bOut.write((int) ((datalen >>> 24) & 0xff));
-                            bOut.write((int) ((datalen >>> 32) & 0xff));
-                            bOut.write((int) ((datalen >>> 40) & 0xff));
-                            bOut.write((int) ((datalen >>> 48) & 0xff));
-                            bOut.write((int) ((datalen >>> 56) & 0xff));
+                            bOut.write((int) ((dataLen >>> 56) & 0xff));
+                            bOut.write((int) ((dataLen >>> 48) & 0xff));
+                            bOut.write((int) ((dataLen >>> 40) & 0xff));
+                            bOut.write((int) ((dataLen >>> 32) & 0xff));
+                            bOut.write((int) ((dataLen >>> 24) & 0xff));
+                            bOut.write((int) ((dataLen >>> 16) & 0xff));
+                            bOut.write((int) ((dataLen >>> 8) & 0xff));
+                            bOut.write((int) (dataLen & 0xff));
                         }
                         if(frame.mask != null) {
                             bOut.write(frame.mask);
                         }
 
-                        if(datalen > 0) {
+                        if(dataLen > 0) {
                             if(frame.masked) {
                                 int pLen = frame.body.length;
                                 for(int i = 0; i < pLen; i++){
@@ -362,7 +356,7 @@ public class WebSocketClient {
         }
     };
 
-    private Runnable rRecv = new Runnable() {
+    private Runnable rReceive = new Runnable() {
 
         @Override
         public void run() {
@@ -388,16 +382,19 @@ public class WebSocketClient {
                     frame.payload = b & 0x7f;
 
                     if(frame.payload == 126) {
-                        byte[] sizebytes = new byte[2];
-                        sizebytes[0] = (byte) bIn.read();
-                        sizebytes[1] = (byte) bIn.read();
-                        len = new BigInteger(sizebytes).intValue();
+                        byte[] sizeBytes = new byte[2];
+                        sizeBytes[0] = (byte) bIn.read();
+                        sizeBytes[1] = (byte) bIn.read();
+                        len = ((sizeBytes[0] & 0xFF) << 8) | (sizeBytes[1] & 0xFF);
                     } else if(frame.payload == 127) {
                         byte[] bytes = new byte[8];
                         for(int i = 0; i < 8; i++) {
                             bytes[i] = (byte) bIn.read();
                         }
-                        len = new BigInteger(bytes).longValue();
+                        len = 0;
+                        for (int i = 0; i < 8; i++) {
+                            len = (len << 8) | (bytes[i] & 0xFF);
+                        }
                     } else {
                         len = frame.payload;
                     }
@@ -421,7 +418,7 @@ public class WebSocketClient {
 
                     if(frame != null) {
                         try {
-                            handler.onRecv(WebSocketClient.this, frame);
+                            handler.onReceive(WebSocketClient.this, frame);
                         } catch (Exception e) {
                             handler.onError(e);
                         }
@@ -441,20 +438,5 @@ public class WebSocketClient {
             callClose();
         }
     };
-
-    private static class TrustAnyTrustManager implements X509TrustManager {
-
-        public void checkClientTrusted(X509Certificate[] chain, String authType)
-                throws CertificateException {
-        }
-
-        public void checkServerTrusted(X509Certificate[] chain, String authType)
-                throws CertificateException {
-        }
-
-        public X509Certificate[] getAcceptedIssuers() {
-            return new X509Certificate[] {};
-        }
-    }
 
 }

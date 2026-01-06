@@ -13,8 +13,11 @@ import or.lotus.core.nio.Session;
 import or.lotus.core.nio.tcp.NioTcpServer;
 import or.lotus.core.nio.tcp.NioTcpSession;
 
+import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URLDecoder;
@@ -22,6 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.KeyStore;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Date;
@@ -29,6 +33,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Executors;
 
+/**
+ * 默认配置:
+ * 1. 当post的内容超过4M时使用文件缓存
+ * 2. ByteBuffer单个缓存大小为 16kb
+ * 3. UploadTmpDir 默认为系统临时文件目录
+ * 4. 默认没有静态文件目录, 如果需要支持静态文件访问请调用 addStaticPath 添加目录
+ * 5. 当使用 / 根路径访问时, 如果RESTFul为处理则默认为访问index.html文件
+ *
+ * */
 public class HttpServer extends RestfulContext {
     protected NioTcpServer server;
     protected String uploadTmpDir = null;
@@ -95,6 +108,45 @@ public class HttpServer extends RestfulContext {
         server.stop();
     }
 
+    /***
+     * @param keystore 路径
+     * @param password 密码
+     * @param keyStoreType 私钥类型 JKS 或 PKCS12）, 推荐 PKCS12
+     * @param protocol  jdk8(SSL,SSLv2,SSLv3,TLS,TLSv1,TLSv1.1,TLSv1.2) the standard name of the requested protocol.
+     *          See the SSLContext section in the <a href=
+     * "{@docRoot}/../technotes/guides/security/StandardNames.html#SSLContext">
+     *          Java Cryptography Architecture Standard Algorithm Name
+     *          Documentation</a>
+     *          for information about standard protocol names.
+     */
+    public void setKeyStoreAndEnableSSL(String keystore, String password, String keyStoreType, String protocol) throws Exception {
+        char[] pwdCharArr = password.toCharArray();
+        KeyStore ks = KeyStore.getInstance(keyStoreType); // 加载服务端证书密钥库（JKS 或 PKCS12）, 推荐 PKCS12
+        try (FileInputStream fis = new FileInputStream(keystore)) {
+            ks.load(fis, pwdCharArr);
+        }
+
+        KeyManagerFactory kmf = KeyManagerFactory.getInstance(
+                KeyManagerFactory.getDefaultAlgorithm()
+        );
+        kmf.init(ks, pwdCharArr);
+
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance(
+                TrustManagerFactory.getDefaultAlgorithm()
+        );
+        tmf.init((KeyStore) null);
+
+        sslContext = SSLContext.getInstance(protocol);
+        sslContext.init(
+                kmf.getKeyManagers(),
+                tmf.getTrustManagers(),
+                null
+        );
+
+        enableSSL = true;
+        throw new RuntimeException("暂时没有实现, 因为目前都是在用nginx代理");
+    }
+
     public int getBufferCapacity() {
         return bufferCapacity;
     }
@@ -154,11 +206,10 @@ public class HttpServer extends RestfulContext {
         return server;
     }
 
-    public void setStaticPath(String staticPath) {
-        addStaticPath(staticPath);
-    }
-
     public void addStaticPath(String path) {
+        if(Utils.CheckNull(path)) {
+            throw new RuntimeException("path is empty");
+        }
         staticPath.add(path);
     }
 
