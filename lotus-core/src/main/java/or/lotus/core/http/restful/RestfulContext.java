@@ -197,6 +197,7 @@ public abstract class RestfulContext {
     }
 
     public synchronized void stop() {
+        isRunning = false;
         onStop();
         if(executorService != null) {
             executorService.shutdown();
@@ -221,7 +222,6 @@ public abstract class RestfulContext {
         }
         beansCache.clear();
 
-        isRunning = false;
     }
 
     public void loadProperties(String path) throws IOException {
@@ -265,7 +265,11 @@ public abstract class RestfulContext {
              * 4. filter->afterRequest 过滤器
              * */
             try {
-
+                if(!isRunning) {
+                    response.setStatus(RestfulResponseStatus.SERVER_ERROR_INTERNAL_SERVER_ERROR);
+                    sendResponseBefore(true, request, response);
+                    return;
+                }
                 // 普通请求
                 RestfulDispatchMapper mapper = urlMatcher.match(request.getPath());
                 if(mapper != null) {

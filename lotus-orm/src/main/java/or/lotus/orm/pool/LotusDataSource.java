@@ -26,6 +26,7 @@ public class LotusDataSource implements DataSource {
     protected AtomicInteger poolSize = new AtomicInteger(0);
     protected DataSourceConfig config;
     protected Timer timer;
+    protected volatile boolean isClosed = false;
 
     public LotusDataSource() {
         Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -37,6 +38,7 @@ public class LotusDataSource implements DataSource {
     }
 
     public void close() {
+        isClosed = true;
         for(int i = 0; i < poolSize.intValue(); i++) {
             try {
                 LotusConnection conn = pool.poll(1, TimeUnit.SECONDS);
@@ -145,7 +147,10 @@ public class LotusDataSource implements DataSource {
                 try {
                     connection = pool.poll(config.getLoginTimeout(), TimeUnit.SECONDS);
                 } catch (InterruptedException e) {
-                    log.error("数据库连接池连接耗尽, 等待返回连接失败 loginTimeout:{}s", config.getLoginTimeout());
+                    //如果在关闭后再获取连接会报这个错误
+                    if(!isClosed) {
+                        log.error("数据库连接池连接耗尽, 等待返回连接失败 loginTimeout:{}s", config.getLoginTimeout());
+                    }
                     return null;
                 }
                 needCheck = true;
