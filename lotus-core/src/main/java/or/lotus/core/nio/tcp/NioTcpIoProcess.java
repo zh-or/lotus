@@ -226,9 +226,10 @@ public class NioTcpIoProcess extends IoProcess {
                         for(EncodeOutByteBuffer.OutWrapper buff : buffers) {
                             if(buff.isBuffer) {
                                 buff.buffer.flip();
+                                long send;
                                 while(buff.buffer.hasRemaining()) {//保证写完
-                                    session.channel.write(buff.buffer);
-                                    if(buff.buffer.hasRemaining()) {
+                                    send = session.channel.write(buff.buffer);
+                                    if(send == 0 && buff.buffer.hasRemaining()) {
                                         //防止cpu 100%
                                         Utils.SLEEP(1);
                                     }
@@ -236,9 +237,12 @@ public class NioTcpIoProcess extends IoProcess {
                             } else {
                                 long loss = buff.size;
                                 long start = buff.pos;
+                                long send;
                                 while(loss > 0) {//保证写完
-                                    loss -= buff.fileChannel.transferTo(start, loss, session.channel);
-                                    if(loss > 0) {
+                                    send = buff.fileChannel.transferTo(start, loss, session.channel);
+                                    start += send;
+                                    loss -= send;
+                                    if(send == 0 && loss > 0) {
                                         //防止cpu 100%
                                         Utils.SLEEP(1);
                                     }
