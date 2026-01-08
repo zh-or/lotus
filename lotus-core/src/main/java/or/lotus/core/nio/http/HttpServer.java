@@ -330,32 +330,27 @@ public class HttpServer extends RestfulContext {
             return null;
         }
         try {
-            URI uri2 = new URI(uri);
-            uri = URLDecoder.decode(uri2.getPath(), charset.displayName());
-            uri = uri.replace('\\', '/');
-            if("/".equals(uri)) {
-                uri = defaultIndexFile;
-            }
 
             for(String localPath : staticPath) {
-
-                String path = localPath + File.separator +  Utils.buildPath(uri);;
-
+                Path parent = Paths.get(localPath).normalize();
+                Path reqPath = Paths.get(localPath, uri).normalize();
+                if(!reqPath.startsWith(parent)) {
+                    continue;
+                }
                 //支持符号链接
-                Path p2 = Paths.get(path);
 
                 File file = null;
-                if(Files.isSymbolicLink(p2)) {
+                if(Files.isSymbolicLink(reqPath)) {
                     /**检查配置是否启用支持软链接*/
                     if(!isSupportSymbolicLink) {
                         //sendError(ctx, request, HttpResponseStatus.FORBIDDEN, this.server.getCharset());
                         continue;
                     }
 
-                    p2 = Files.readSymbolicLink(p2);
-                    file = p2.toFile();
+                    reqPath = Files.readSymbolicLink(reqPath);
+                    file = reqPath.toFile();
                 } else {
-                    file = new File(path);
+                    file = reqPath.toFile();
                 }
 
                 if(file.isHidden() || !file.exists()) {
