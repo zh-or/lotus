@@ -190,7 +190,7 @@ public class DatabaseExecutor<T> {
      * @param ifRightNotEmpty 如果为true则增加空判断, 如果为空则不加入条件
      * */
     public DatabaseExecutor<T> whereNot(Object left, Object right, boolean ifRightNotEmpty) {
-        return whereNot(left, right, ifRightNotEmpty);
+        return whereNot(null, left, right, ifRightNotEmpty);
     }
 
     /**left != right
