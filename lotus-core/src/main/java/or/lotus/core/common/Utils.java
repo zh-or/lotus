@@ -1,6 +1,7 @@
 package or.lotus.core.common;
 
 import or.lotus.core.files.FileSize;
+import org.thymeleaf.util.StringUtils;
 
 import java.io.Closeable;
 import java.io.File;
@@ -779,6 +780,56 @@ public class Utils {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    /** 如果分隔符在起始则会忽略第一个, 如果分隔符在结尾那么结尾也将忽略
+     * 在开头的 =a=b=c  ["a", "b", "c"]
+     * 在结尾的 a=b=c= ["a", "b", "c"]
+     * */
+    public static String[] splitManual(String target, String separator) {
+        if (target == null) {
+            return null;
+        } else {
+            StringTokenizer strTok = new StringTokenizer(target.toString(), separator);
+            int size = strTok.countTokens();
+            String[] array = new String[size];
+
+            for(int i = 0; i < size; ++i) {
+                array[i] = strTok.nextToken();
+            }
+            return array;
+        }
+    }
+    /** 如果分隔符开始和结束那么将追加一个空字符串
+     * 在开头的 =a=b=c  ["", "a", "b", "c"]
+     * 在结尾的 a=b=c= ["a", "b", "c", ""]
+     * */
+    public static String[] splitManualEx(String target, char separator) {
+        if (target == null) {
+            return null;
+        } else {
+            List<String> res = new ArrayList<>(4);
+            char[] arr = target.toCharArray();
+            int start = 0, len = arr.length - 1;
+            for(int i = 0; i <= len; i++) {
+                if(arr[i] == separator) {
+                    if(i == 0) {
+                        res.add("");//起始位置
+                    } else {
+                        res.add(target.substring(start, i));
+                        start = i + 1;
+                        if(i == len) {
+                            res.add("");//结束位置
+                        }
+                    }
+                }
+            }
+            if(start < arr.length) {
+                res.add(target.substring(start, arr.length));
+            }
+
+            return res.toArray(new String[0]);
         }
     }
 }

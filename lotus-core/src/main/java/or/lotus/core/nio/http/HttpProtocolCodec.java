@@ -1,5 +1,6 @@
 package or.lotus.core.nio.http;
 
+import or.lotus.core.common.Utils;
 import or.lotus.core.http.restful.support.RestfulHttpMethod;
 import or.lotus.core.nio.*;
 import or.lotus.core.nio.tcp.NioTcpSession;
@@ -131,19 +132,26 @@ public class HttpProtocolCodec implements ProtocolCodec {
             out.append(lineChars);
             return true;
         }
-
+        //除了块对象就是HttpResponse
+        String oldContentType = null;
         HttpResponse response = (HttpResponse) msg;
         if(!response.isSendHeader) {
             if(response.isOpenSync) {
                 response.removeHeader(HttpHeaderNames.CONTENT_LENGTH);
-            } else {
-                response.setHeader(
-                        HttpHeaderNames.CONTENT_LENGTH,
-                        response.isFileResponse() ?
-                                String.valueOf(response.getFile().length()) :
-                                String.valueOf(response.writeBuffer == null ? 0 : response.writeBuffer.getCountPosition())
-                );
             }
+            //处理多个range的头
+            if(response.range != null && response.range.length > 1) {
+                oldContentType = response.getContentType();
+                if(Utils.CheckNull(oldContentType)) {
+                    oldContentType = "multipart/byteranges";
+                    response.setHeader(HttpHeaderNames.CONTENT_TYPE, "multipart/byteranges; boundary=" + response.boundary);
+                } else {
+                    //oldContentType = oldContentType + "; boundary=" + response.boundary;
+                    response.setHeader(HttpHeaderNames.CONTENT_TYPE, "multipart/byteranges; boundary=" + response.boundary);
+                }
+                //response.setHeader(HttpHeaderNames.CONTENT_TYPE, oldContentType);
+            }
+
             out.append(response.getHeaders().getBytes(context.getCharset()));
             response.isSendHeader = true;
         }
@@ -160,7 +168,58 @@ public class HttpProtocolCodec implements ProtocolCodec {
             out.append(response.writeBuffer.getAllDataBuffer(true));
         } else if(response.isFileResponse()) {
             File file = response.getFile();
-            out.append(FileChannel.open(file.toPath(), StandardOpenOption.READ), 0, file.length());
+            long fileLength = response.getFileLength();
+            if(response.range == null) {
+                out.append(FileChannel.open(file.toPath(), StandardOpenOption.READ), 0, fileLength);
+            } else {
+                if(response.range.length == 1) {
+                    if(response.range[0][0] == -1) {
+                        out.append(
+                                FileChannel.open(file.toPath(), StandardOpenOption.READ),
+                                fileLength - response.range[0][1],
+                                response.range[0][1]
+                        );
+                    } else if(response.range[0][1] == -1) {
+                        out.append(
+                                FileChannel.open(file.toPath(), StandardOpenOption.READ),
+                                response.range[0][0],
+                                fileLength - response.range[0][0]
+                        );
+                    } else {
+                        out.append(
+                                FileChannel.open(file.toPath(), StandardOpenOption.READ),
+                                response.range[0][0],
+                                response.range[0][1] - response.range[0][0]
+                        );
+                    }
+                } else {
+                    //参数问题在 HttpResponse.getHeaders 中验证过了
+                    StringBuilder sb = new StringBuilder(100 + response.boundary.length());
+                    for(long[] range : response.range) {
+                        sb.append("--").append(response.boundary).append("\r\n");
+                        sb.append(HttpHeaderNames.CONTENT_TYPE).append(": ")
+                                .append(Utils.CheckNull(oldContentType) ? "multipart/byteranges" : oldContentType)
+                                .append("\r\n");
+                        sb.append(HttpHeaderNames.CONTENT_RANGE).append(": bytes ")
+                                .append(range[0]).append('-')
+                                .append(range[1])
+                                .append('/')
+                                .append(fileLength)
+                                .append("\r\n").append("\r\n");
+                        out.append(sb.toString().getBytes(response.charset));
+                        sb.setLength(0);
+                        out.append(
+                                FileChannel.open(file.toPath(), StandardOpenOption.READ),
+                                range[0],
+                                range[1] - range[0]
+                        );
+                        out.append("\r\n".getBytes());
+                    }
+                    sb.append("--").append(response.boundary).append("--").append("\r\n");
+                    out.append(sb.toString().getBytes(response.charset));
+                }
+            }
+
              /*try (FileChannel channel = FileChannel.open(file.toPath(), StandardOpenOption.READ);) {
                 //channel.transferTo(0, file.length(), writableByteChannel);
 
@@ -181,4 +240,7 @@ public class HttpProtocolCodec implements ProtocolCodec {
         return true;
 
     }
+
+
+
 }

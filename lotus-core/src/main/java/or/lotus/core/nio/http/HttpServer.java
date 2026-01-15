@@ -9,6 +9,7 @@ import or.lotus.core.http.restful.RestfulResponse;
 import or.lotus.core.http.restful.support.RestfulResponseStatus;
 import or.lotus.core.http.restful.support.RestfulUtils;
 import or.lotus.core.nio.IoHandler;
+import or.lotus.core.nio.ProtocolCodec;
 import or.lotus.core.nio.Session;
 import or.lotus.core.nio.tcp.NioTcpServer;
 import or.lotus.core.nio.tcp.NioTcpSession;
@@ -63,9 +64,16 @@ public class HttpServer extends RestfulContext {
     protected WebSocketProtocolCodec webSocketProtocolCodec = null;
 
     public HttpServer() {
+        this(null);
+    }
+
+    public HttpServer(ProtocolCodec protocolCodec) {
+        if(protocolCodec == null) {
+            protocolCodec = new HttpProtocolCodec(this);
+        }
         server = new NioTcpServer();
         server.setHandler(new HttpIoHandler());
-        server.setProtocolCodec(new HttpProtocolCodec(this));
+        server.setProtocolCodec(protocolCodec);
         //调整为使用NioTcpServer的线程池, 方便事件内部同步处理资源释放
         eventThreadPoolSize = 0;
     }
@@ -269,7 +277,15 @@ public class HttpServer extends RestfulContext {
             }
         }
         if(response.getHeader(HttpHeaderNames.CONTENT_TYPE) == null) {
-           response.setHeader(HttpHeaderNames.CONTENT_TYPE, "text/html; charset=" + charset.displayName());
+            if(response.isFileResponse()) {
+                response.setHeader(HttpHeaderNames.CONTENT_TYPE, RestfulUtils.getMimeType(charset.displayName(), response.getFile()));
+            } else {
+                response.setHeader(HttpHeaderNames.CONTENT_TYPE, "text/html; charset=" + charset.displayName());
+            }
+        }
+        if(response.isFileResponse()) {
+            //增加range支持, 浏览器audio, video中的拖动功能需要此支持
+            response.setHeader(HttpHeaderNames.ACCEPT_RANGES, "bytes");
         }
         //发送失败时直接释放内存
         if(!httpRequest.session.write(httpResponse)) {
@@ -309,7 +325,6 @@ public class HttpServer extends RestfulContext {
             String self = new Date(Files.getLastModifiedTime(file.toPath(), LinkOption.NOFOLLOW_LINKS).toMillis()).toString();
             response.setHeader(HttpHeaderNames.CACHE_CONTROL, "max-age=315360000");
             response.setHeader(HttpHeaderNames.LAST_MODIFIED, self);
-
             if(!Utils.CheckNull(web) && web.equals(self)) {
                 //缓存没有变
                 response.setStatus(RestfulResponseStatus.REDIRECTION_NOT_MODIFIED);
@@ -333,7 +348,7 @@ public class HttpServer extends RestfulContext {
 
             for(String localPath : staticPath) {
                 Path parent = Paths.get(localPath).normalize();
-                Path reqPath = Paths.get(localPath, uri).normalize();
+                Path reqPath = Paths.get(localPath, URLDecoder.decode(uri, charset.displayName())).normalize();
                 if(!reqPath.startsWith(parent)) {
                     continue;
                 }
@@ -468,6 +483,7 @@ public class HttpServer extends RestfulContext {
             //处理请求时发生的异常
             if(!session.isClosed() && response != null) {
                 response.setStatus(RestfulResponseStatus.SERVER_ERROR_INTERNAL_SERVER_ERROR);
+                response.removeHeader(HttpHeaderNames.ACCEPT_RANGES);
                 session.write(response);
                 ((NioTcpSession) session).closeOnFlush();
                 return;

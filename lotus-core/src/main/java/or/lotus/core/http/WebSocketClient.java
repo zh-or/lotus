@@ -131,7 +131,7 @@ public class WebSocketClient {
         bOut.flush();
 
         BufferedReader br = new BufferedReader(new InputStreamReader(bIn));
-        StringBuffer sb1 = new StringBuffer();
+        StringBuilder sb1 = new StringBuilder();
         while(true) {
             String line = br.readLine();
             if("".equals(line) || line == null) {

@@ -3,8 +3,6 @@ package or.lotus.core.nio;
 import or.lotus.core.intmap.SparseArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.misc.Cleaner;
-import sun.nio.ch.DirectBuffer;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;

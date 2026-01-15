@@ -47,7 +47,7 @@ public class UrlMatcher<T> {
     public void add(String url, T obj) {
         try {
             lock.writeLock().lock();
-            String[] paths = url.split("/");
+            String[] paths = Utils.splitManual(url, "/");
             int len = paths.length;
             if(len == 0) {// `/`
                 Node old = root.childs.get("");
@@ -95,7 +95,7 @@ public class UrlMatcher<T> {
     }
 
     public Node findNode(String url, boolean isCheck) {
-        String[] paths = url.split("/");
+        String[] paths = Utils.splitManual(url, "/");
         if(paths.length == 0) {
             paths = new String[]{""};
         }

@@ -1,7 +1,7 @@
 package or.lotus.core.nio.http;
 
 /** http协议异常或者超过限制 */
-public class HttpServerException extends Exception {
+public class HttpServerException extends RuntimeException {
     int httpCode;
     HttpRequest request;
 

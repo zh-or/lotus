@@ -158,13 +158,13 @@ public class RestfulDispatcher {
                             if(type.isArray()) {
                                 return  RestfulUtils.valueToArray(
                                         type.getComponentType(),
-                                        val.split(","));
+                                        Utils.splitManual(val,","));
                             }
                             if(type.isAssignableFrom(List.class)) {
 
                                 Object[] res = RestfulUtils.valueToArray(
                                         childType,
-                                        val.split(","));
+                                        Utils.splitManual(val,","));
                                 return Arrays.asList(res);
                             }
                             return RestfulUtils.valueToType(type, val);
@@ -221,7 +221,7 @@ public class RestfulDispatcher {
             } else if(annotationType == PathVar.class) {
                 PathVar pathVar = (PathVar) annotation;
                 String name = "{" + pathVar.value() + "}";
-                String[] paths = url.split("/");
+                String[] paths = Utils.splitManualEx(url, '/');
                 for(int i = paths.length - 1; i >= 0; i--) {
                     if(name.equals(paths[i])) {
                         //虽然方法备注为从1开始, 但是这里还是从0开始算

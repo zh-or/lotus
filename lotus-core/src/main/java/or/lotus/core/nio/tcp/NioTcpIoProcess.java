@@ -239,7 +239,7 @@ public class NioTcpIoProcess extends IoProcess {
                                 long start = buff.pos;
                                 long send;
                                 while(loss > 0) {//保证写完
-                                    send = buff.fileChannel.transferTo(start, loss, session.channel);
+                                    send = buff.fileChannel.transferTo(start, loss > Integer.MAX_VALUE ? Integer.MAX_VALUE : loss, session.channel);
                                     start += send;
                                     loss -= send;
                                     if(send == 0 && loss > 0) {

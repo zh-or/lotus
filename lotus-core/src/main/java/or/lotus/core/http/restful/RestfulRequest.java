@@ -71,19 +71,25 @@ public abstract class RestfulRequest implements AutoCloseable {
         } catch (UnsupportedEncodingException e) {}
         return null;
     }
-
+    private String[] pathPars;
     /** 获取url参数 index 从1开始, 顺序为从左到右 */
     public String getPathParamByIndexL(int index) {
-        String path = getPath();
-        if(index < 1 || Utils.CheckNull(path)) {
+        if(pathPars == null) {
+            String path = getPath();
+            if(index < 1 || Utils.CheckNull(path)) {
+                return null;
+            }
+
+            pathPars = Utils.splitManualEx(path, '/');
+        }
+        if(pathPars == null || pathPars.length == 0) {
             return null;
         }
 
-        String[] pars = path.split("/");
-        int len = pars.length;
+        int len = pathPars.length;
         if(index >= 0 && len > index) {
             try {
-                return URLDecoder.decode(pars[index/* - 1*/], context.charset.displayName());//分割字符串后前面会有个空的字符串
+                return URLDecoder.decode(pathPars[index/* - 1*/], context.charset.displayName());//分割字符串后前面会有个空的字符串
             } catch (UnsupportedEncodingException e) {
             }
         }

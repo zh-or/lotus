@@ -54,7 +54,7 @@ public class MMDBInfo {
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer("MMDBInfo{");
+        final StringBuilder sb = new StringBuilder("MMDBInfo{");
         sb.append("continentNameId=").append(continentNameId);
         sb.append(", continentName='").append(continentName).append('\'');
         sb.append(", countryIsoCode='").append(countryIsoCode).append('\'');

@@ -1,7 +1,9 @@
 package or.lotus.core.http.restful;
 
+import or.lotus.core.common.Utils;
 import or.lotus.core.http.restful.support.ModelAndView;
 import or.lotus.core.http.restful.support.RestfulResponseStatus;
+import or.lotus.core.nio.http.HttpHeaderNames;
 
 import java.io.File;
 import java.io.IOException;
@@ -73,6 +75,18 @@ public abstract class RestfulResponse extends Writer {
         return file;
     }
 
+    protected long fileLength = -1;
+
+    public long getFileLength() {
+        if(file == null) {
+            return 0;
+        }
+        if(fileLength == -1) {
+            fileLength = file.length();
+        }
+        return fileLength;
+    }
+
     public RestfulResponse redirect(String path) {
         status = RestfulResponseStatus.REDIRECTION_FOUND;
         setHeader("Location", path);
@@ -86,6 +100,18 @@ public abstract class RestfulResponse extends Writer {
 
     public String getHeader(String key) {
         return headers.get(key);
+    }
+
+    public String getContentType() {
+        String tmp = headers.get(HttpHeaderNames.CONTENT_TYPE);
+        if(!Utils.CheckNull(tmp)) {
+            int p = tmp.indexOf(";");
+            if(p != -1) {
+                tmp = tmp.substring(0, p);
+            }
+            return tmp;
+        }
+        return null;
     }
 
     public RestfulResponse setHeader(String key, String value) {
