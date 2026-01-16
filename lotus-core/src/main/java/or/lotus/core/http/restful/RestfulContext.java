@@ -203,6 +203,7 @@ public abstract class RestfulContext {
             executorService.shutdown();
             try {
                 executorService.awaitTermination(10, TimeUnit.SECONDS);
+                executorService = null;
             } catch (InterruptedException e) {
                 log.error("等待业务线程池退出失败:", e);
             }
