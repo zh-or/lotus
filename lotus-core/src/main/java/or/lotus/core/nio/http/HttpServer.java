@@ -74,6 +74,19 @@ public class HttpServer extends RestfulContext {
         server = new NioTcpServer();
         server.setHandler(new HttpIoHandler());
         server.setProtocolCodec(protocolCodec);
+        //调整为使用NioTcpServer的线程池, 方便事件内部同步处理资源释放
+        eventThreadPoolSize = 0;
+    }
+
+    @Override
+    public void setEventThreadPoolSize(int eventThreadPoolSize) {
+        //调整为使用NioTcpServer的线程池, 方便事件内部同步处理资源释放
+        if(eventThreadPoolSize > 0) {
+            server.setExecutor(Executors.newFixedThreadPool(
+                    eventThreadPoolSize,
+                    (run) -> new Thread(run, "lotus-http-service-pool")
+            ));
+        }
     }
 
 
@@ -92,7 +105,7 @@ public class HttpServer extends RestfulContext {
 
         server.setBufferCapacity(bufferCapacity);
         server.setTcpNoDelay(true);
-        server.setExecutor(executorService);
+        //server.setExecutor(executorService);
         //server.setMaxMessageSendListCapacity(1024);
         server.setSessionIdleTime(60 * 1000);//空闲时关闭该链接
         server.bind(bindAddress);

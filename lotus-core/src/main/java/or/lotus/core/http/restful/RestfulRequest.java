@@ -172,10 +172,14 @@ public abstract class RestfulRequest implements AutoCloseable {
 
     /** 如果以"/"开头则调用at方法支持层级 /person/name, 否则调用path方法 */
     public JsonNode getJsonNodeForPath(String path) throws JsonProcessingException {
-        if(path.startsWith("/")) {
-            return getJSON().at(path);
+        JsonNode json = getJSON();
+        if(json == null) {
+            return null;
         }
-        return getJSON().path(path);
+        if(path.startsWith("/")) {
+            return json.at(path);
+        }
+        return json.path(path);
     }
 
     public abstract String getBodyString();

@@ -9,7 +9,6 @@ import or.lotus.core.nio.LotusByteBuffer;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.StringTokenizer;
 
 public class HttpResponse extends RestfulResponse {
     protected HttpRequest request;

@@ -186,12 +186,12 @@ public abstract class RestfulContext {
         }
 
         this.bindAddress = bindAddress;
-        if(executorService == null && eventThreadPoolSize > 0) {
+        /*if(executorService == null && eventThreadPoolSize > 0) {
             executorService = Executors.newFixedThreadPool(
                     eventThreadPoolSize,
                     (run) -> new Thread(run, "lotus-restful-service-pool")
             );
-        }
+        }*/
         isRunning = true;
         onStart();
     }
