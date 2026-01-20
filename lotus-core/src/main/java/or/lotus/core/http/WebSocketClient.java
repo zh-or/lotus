@@ -81,7 +81,7 @@ public class WebSocketClient {
                 if(proxy != null) {
                     this.socket = new Socket(proxy);
                     this.socket.setSoTimeout(connectionTimeOut * 2);
-                }else {
+                } else {
                     this.socket = new Socket();
                 }
                 //socket.setTcpNoDelay(true);
@@ -233,7 +233,7 @@ public class WebSocketClient {
      */
     public void close() {
         isConnection = false;
-        if(ideaCheckTimer != null){
+        if(ideaCheckTimer != null) {
             ideaCheckTimer.cancel();
             ideaCheckTimer = null;
         }

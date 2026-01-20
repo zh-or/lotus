@@ -17,10 +17,13 @@
             <artifactId>lotus-core</artifactId>
             <version>${revision}</version>
         </dependency>
+        <!--wechatpay里面也引用了okhttp3-->
+        <!-- https://mvnrepository.com/artifact/com.squareup.okhttp3/okhttp -->
         <dependency>
-            <groupId>io.github.zh-or</groupId>
-            <artifactId>lotus-netty-http</artifactId>
-            <version>${revision}</version>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <!--<version>4.12.0</version>-->
+            <version>4.10.0</version>
         </dependency>
         <dependency>
             <groupId>com.github.wechatpay-apiv3</groupId>

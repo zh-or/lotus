@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import or.lotus.core.common.BeanUtils;
 import or.lotus.core.common.Utils;
-import or.lotus.http.HttpClient5;
+import or.lotus.wx.support.HttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,7 +61,7 @@ public class Wx implements AutoCloseable {
         params.put("appid", appid);
         params.put("secret", secret);
 
-        String res = HttpClient5.getWithParams("https://api.weixin.qq.com/sns/jscode2session", params, REQ_TIMEOUT);
+        String res = HttpClient.getWithParams("https://api.weixin.qq.com/sns/jscode2session", params, REQ_TIMEOUT);
         JsonNode json = BeanUtils.parseNode(res);
         throwWxException("code2Session", params.toString() , json);
         //token = json.path("access_token").asText();
@@ -79,7 +79,7 @@ public class Wx implements AutoCloseable {
                 + "&secret=" + secret
                 + "&code=" + code
                 + "&grant_type=authorization_code";
-        String res = HttpClient5.get(url, REQ_TIMEOUT);
+        String res = HttpClient.get(url, REQ_TIMEOUT);
         JsonNode json = BeanUtils.parseNode(res);
         throwWxException("oauth2", url, json);
 
@@ -120,7 +120,7 @@ public class Wx implements AutoCloseable {
         }
 
         json.put("is_hyaline", is_hyaline);
-        byte[] res = HttpClient5.postJsonWithBytes("https://api.weixin.qq.com/wxa/getwxacodeunlimit?access_token=" + waitInit(), json.toString(), REQ_TIMEOUT);
+        byte[] res = HttpClient.postJsonWithBytes("https://api.weixin.qq.com/wxa/getwxacodeunlimit?access_token=" + waitInit(), json.toString(), REQ_TIMEOUT);
         if(res != null && res.length > 0) {
             if(res[0] == 123) {//返回的是json出错了
                 throwWxException("getUnlimitedQRCode", json.toString(), new String(res, "utf-8"));
@@ -137,7 +137,7 @@ public class Wx implements AutoCloseable {
         HashMap<String, String> params = new HashMap<>();
         params.put("access_token", waitInit());
         params.put("type", "jsapi");
-        String res = HttpClient5.getWithParams("https://api.weixin.qq.com/cgi-bin/ticket/getticket", params, REQ_TIMEOUT);
+        String res = HttpClient.getWithParams("https://api.weixin.qq.com/cgi-bin/ticket/getticket", params, REQ_TIMEOUT);
         JsonNode json = BeanUtils.parseNode(res);
         throwWxException("getJSApiTicket", params.toString() , json);
 
@@ -177,7 +177,7 @@ public class Wx implements AutoCloseable {
                 params.put("appid", appid);
                 params.put("secret", secret);
 
-                String res = HttpClient5.postJson("https://api.weixin.qq.com/cgi-bin/stable_token", params.toString(), REQ_TIMEOUT);
+                String res = HttpClient.postJson("https://api.weixin.qq.com/cgi-bin/stable_token", params.toString(), REQ_TIMEOUT);
                 JsonNode json = BeanUtils.parseNode(res);
                 throwWxException("init", params.toString() , json);
                 token = json.path("access_token").asText();
