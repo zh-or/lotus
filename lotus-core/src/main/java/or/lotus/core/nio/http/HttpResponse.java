@@ -21,7 +21,7 @@ public class HttpResponse extends RestfulResponse {
     protected String boundary = null;
 
     public HttpResponse(HttpRequest request) {
-        super(request);
+        super(request.getContext());
         String connection = request.getHeader(HttpHeaderNames.CONNECTION);
         if(connection != null) {
             setHeader(HttpHeaderNames.CONNECTION, connection);
@@ -188,7 +188,7 @@ public class HttpResponse extends RestfulResponse {
         ) {
 
             if(range.length == 1) {
-                StringBuilder sb = new StringBuilder();
+                StringBuilder sb = new StringBuilder(1024);
                 //                     起始-结束/文件总大小
                 //Content-Range: bytes 900-999/1000
                 if(range[0][0] == -1) {
@@ -203,8 +203,7 @@ public class HttpResponse extends RestfulResponse {
                             .append('/')
                             .append(fileLength);
 
-                    headers.put(HttpHeaderNames.CONTENT_LENGTH, String.valueOf(range[0][1])
-                    );
+                    headers.put(HttpHeaderNames.CONTENT_LENGTH, String.valueOf(range[0][1]));
                 } else if(range[0][1] == -1) {
 
                     if(range[0][0] < 0 || range[0][0] >= fileLength - 1) {
@@ -216,8 +215,7 @@ public class HttpResponse extends RestfulResponse {
                             .append(fileLength - 1)
                             .append('/')
                             .append(fileLength);
-                    headers.put(HttpHeaderNames.CONTENT_LENGTH, String.valueOf(fileLength - range[0][0])
-                    );
+                    headers.put(HttpHeaderNames.CONTENT_LENGTH, String.valueOf(fileLength - range[0][0]));
                 } else {
                     if(range[0][0] >= range[0][1] || (range[0][1] - range[0][0]) > fileLength  || range[0][1] > fileLength - 1) {
                         throw new HttpServerException(416, request, "Range Not Satisfiable");
@@ -228,8 +226,7 @@ public class HttpResponse extends RestfulResponse {
                             .append(range[0][1])
                             .append('/')
                             .append(fileLength);
-                    headers.put(HttpHeaderNames.CONTENT_LENGTH, String.valueOf(range[0][1] - range[0][0])
-                    );
+                    headers.put(HttpHeaderNames.CONTENT_LENGTH, String.valueOf(range[0][1] - range[0][0]));
                 }
 
 

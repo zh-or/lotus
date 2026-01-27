@@ -14,17 +14,15 @@ import java.util.HashMap;
 
 
 public abstract class RestfulResponse extends Writer {
-    protected RestfulRequest request;
     protected HashMap<String, String> headers;
 
     public Charset charset;
     public RestfulResponseStatus status;
 
 
-    public RestfulResponse(RestfulRequest request) {
-        this.request = request;
+    public RestfulResponse(RestfulContext context) {
         this.headers = new HashMap<>();
-        this.charset = request.context.getCharset();
+        this.charset = context.getCharset();
         setHeader("server", RestfulContext.TAG);
 
         Date time = new Date();
@@ -33,7 +31,7 @@ public abstract class RestfulResponse extends Writer {
         status = RestfulResponseStatus.SUCCESS_OK;
     }
 
-    /** 支持 File, String, Object -> toString, ModelAndView */
+    /** 支持 File, String, Object -> toString */
     public RestfulResponse writeObject(Object object) {
         try {
             if(object instanceof File) {
@@ -41,10 +39,6 @@ public abstract class RestfulResponse extends Writer {
                 return this;
             }
 
-            if(object instanceof ModelAndView) {
-                request.context.handleModelAndView(request, this, (ModelAndView) object);
-                return this;
-            }
 
             write(object.toString());
         } catch(Exception e) {

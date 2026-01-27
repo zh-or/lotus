@@ -391,6 +391,7 @@ public class Utils {
         try {
             Thread.sleep(time);
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 

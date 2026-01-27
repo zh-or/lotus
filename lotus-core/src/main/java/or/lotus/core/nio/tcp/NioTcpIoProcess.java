@@ -164,6 +164,7 @@ public class NioTcpIoProcess extends IoProcess {
         do {
             //使用一个缓存在IoProcess的ByteBuffer, 避免缓存在session内 高并发时占用过多内存
             //这里最多缓存当前开启的IoProcess线程相同数量的ByteBuffer
+            //当读取到数据后会则会把这个缓存对象给session, 自己再重新获取一个ByteBuffer
             if(ioProcessByteBuffer == null) {
                 ioProcessByteBuffer = context.getByteBufferFormCache();
             }

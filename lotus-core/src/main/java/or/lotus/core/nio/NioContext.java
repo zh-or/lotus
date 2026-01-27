@@ -11,6 +11,7 @@ import java.nio.MappedByteBuffer;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
@@ -102,6 +103,7 @@ public abstract class NioContext {
     public ByteBuffer getByteBufferFormCache() {
         return getByteBufferFormCache(bufferCapacity, isUseDirectBuffer);
     }
+
     protected LongAdder flyByteBuffer = new LongAdder();
 
     public ByteBuffer getByteBufferFormCache(int size, boolean useDirectBuffer) {
@@ -207,6 +209,9 @@ public abstract class NioContext {
 
     /** 解码后handler事件执行的线程池, 可设置为null, 当此线程池为null时事件将直接在io线程运行 */
     public void setExecutor(Executor executor) {
+        if(this.executor != null && this.executor instanceof ExecutorService) {
+            ((ExecutorService) this.executor).shutdown();
+        }
         this.executor = executor;
     }
 

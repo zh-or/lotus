@@ -14,7 +14,7 @@ public class NettyResponse extends RestfulResponse {
     NettyRequest request;
     private HttpResponse response = null;
     public NettyResponse(NettyRequest request) {
-        super(request);
+        super(request.getContext());
         this.request = request;
     }
 

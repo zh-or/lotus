@@ -60,6 +60,7 @@ public class HttpTest {
                 }
         );
         server.addWebSocketMessageHandler(wsHandler);
+        server.setEventThreadPoolSize(5);
         server.start(9999);
         log.info("启动完成: 9999");
 
