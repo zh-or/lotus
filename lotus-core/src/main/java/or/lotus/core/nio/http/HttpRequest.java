@@ -1,8 +1,10 @@
 package or.lotus.core.nio.http;
 
+import or.lotus.core.common.Base64;
 import or.lotus.core.common.Utils;
 import or.lotus.core.http.restful.RestfulRequest;
 import or.lotus.core.http.restful.support.RestfulHttpMethod;
+import or.lotus.core.http.restful.support.RestfulResponseStatus;
 import or.lotus.core.nio.tcp.NioTcpSession;
 
 import java.net.InetSocketAddress;
@@ -68,7 +70,6 @@ public class HttpRequest extends RestfulRequest {
             }
         }
         contentLength = Utils.tryLong(getHeader(HttpHeaderNames.CONTENT_LENGTH), 0);
-
     }
 
     public long getContentLength() {
@@ -187,4 +188,83 @@ public class HttpRequest extends RestfulRequest {
             bodyData = null;
         }
     }
+
+    /** 从请求创建返回对象, 会自动处理 websocket 头部, range请求头部 */
+    public HttpResponse createResponse() {
+        HttpServer context = (HttpServer) this.context;
+        HttpResponse response = new HttpResponse(context, session);
+        String connection = getHeader(HttpHeaderNames.CONNECTION);
+        if(connection != null) {
+            response.setHeader(HttpHeaderNames.CONNECTION, connection);
+        } else {
+            response.setHeader(HttpHeaderNames.CONNECTION, "keep-alive");
+        }
+
+        if(isWebSocket() && context.isEnableWebSocket()) {
+            response.setStatus(RestfulResponseStatus.INFORMATIONAL_SWITCHING_PROTOCOLS);
+            response.setHeader(HttpHeaderNames.UPGRADE, getHeader(HttpHeaderNames.UPGRADE));
+            response.setHeader(HttpHeaderNames.CONNECTION, "Upgrade");
+            String sec = getHeader(HttpHeaderNames.SEC_WEBSOCKET_KEY) + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+            try {
+                sec = Base64.byteArrayToBase64(Utils.SHA1(sec));
+            }catch(Exception e) {
+                sec = "";
+            }
+
+            response.setHeader(HttpHeaderNames.SEC_WEBSOCKET_ACCEPT, sec);
+            //response.setHeader("Sec-WebSocket-Protocol", "");
+
+        }
+        String rangeHeader = getHeader(HttpHeaderNames.RANGE);
+        if(rangeHeader != null) {
+            response.status = RestfulResponseStatus.SUCCESS_PARTIAL_CONTENT;
+            /*
+             * test
+             * 直接输出到控制台 curl -H "Range: bytes=1-" -v http://localhost:9999/朝闻道01.m4a -o -
+             *
+             * curl -H "Range: bytes=1-" -v http://localhost:9999/朝闻道01.m4a -o part.mp4
+             * curl -H "Range: bytes=0-99" -v http://localhost:9999/朝闻道01.m4a -o part.mp4
+             * curl -H "Range: bytes=-100" -v http://localhost:9999/朝闻道01.m4a -o part.mp4
+             * curl -H "Range: bytes=0-9,20-29" -v http://localhost:9999/朝闻道01.m4a -o part.mp4
+             * */
+
+            //解析range
+            int unitEnd = rangeHeader.indexOf("=");
+            if(unitEnd == -1) {
+                response.status = RestfulResponseStatus.CLIENT_ERROR_REQUESTED_RANGE_NOT_SATISFIABLE;
+                return response;
+            }
+            rangeHeader = rangeHeader.substring(unitEnd + 1, rangeHeader.length());
+            String[] rArr = Utils.splitManual(rangeHeader, ",");
+            int len = rArr.length;
+            response.range = new long[len][2];
+            for(int i = 0; i < len; i++) {
+                response.range[i] = new long[2];
+                String[] rStr = Utils.splitManualEx(rArr[i], '-');
+                if(rStr.length == 2) {
+                    //如果第一部分没有表示发送最后一部分
+                    response.range[i][0] = Utils.tryLong(rStr[0], -1);
+                    //如果第二部分没有表示从第一部分到结尾
+                    response.range[i][1] = Utils.tryLong(rStr[1], -1);
+
+                    if(response.range[i][0] == -1 && response.range[i][1] == -1) {
+                        response.status = RestfulResponseStatus.CLIENT_ERROR_REQUESTED_RANGE_NOT_SATISFIABLE;
+                        return response;
+                    }
+                    if(len > 1 && (response.range[i][0] == -1 || response.range[i][1] == -1)) {
+                        //大于1个范围时 不允许有空
+                        response.status = RestfulResponseStatus.CLIENT_ERROR_REQUESTED_RANGE_NOT_SATISFIABLE;
+                        return response;
+                    }
+                }
+            }
+            if(response.range.length > 1) {
+                //浪费资源, 关闭之
+                response.setHeader(HttpHeaderNames.CONNECTION, "close");
+            }
+            response.boundary = Utils.RandomString(10);
+        }
+        return response;
+    }
+
 }

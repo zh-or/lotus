@@ -20,7 +20,7 @@ public abstract class RestfulFilter {
         return false;
     }
 
-    /** controller 或其他异常, 返回 false 表示未处理, 返回 true 表示已处理*/
+    /** controller 或其他异常, 返回 false 表示未处理, 返回 true 表示已处理 */
     public boolean exception(Throwable e, RestfulRequest request, RestfulResponse response) {
         if(e instanceof RestfulApiException) {
             try {

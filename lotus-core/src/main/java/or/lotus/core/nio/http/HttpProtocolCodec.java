@@ -33,7 +33,7 @@ public class HttpProtocolCodec implements ProtocolCodec {
             case InitialLine://http协议第一行, 并验证第一行长度
                 if(in.search(lineChars) == -1) {
                     if(dataLength >= context.getMaxInitialLineLength()) {
-                        throw new HttpServerException(431, null, "Request Header Fields Too Large");
+                        throw new HttpServerException(431, null, null, "Request Header Fields Too Large: " + dataLength);
                     }
                     break;
                 }
@@ -43,7 +43,7 @@ public class HttpProtocolCodec implements ProtocolCodec {
                 if(headerEndPost == -1) {
                     if(dataLength >= context.getMaxHeaderSize()) {
                         session.setAttr(STATE, HttpState.InitialLine);
-                        throw new HttpServerException(431, null, "Request Header Fields Too Large");
+                        throw new HttpServerException(431, null, null, "Request Header Fields Too Large: " + dataLength);
                     }
                     //未接收到完整的http头
                    break;
@@ -58,7 +58,7 @@ public class HttpProtocolCodec implements ProtocolCodec {
                 );
                 if(request.method == null) {
                     session.setAttr(STATE, HttpState.InitialLine);
-                    throw new HttpServerException(431, request, "Method error");
+                    throw new HttpServerException(431, request, null, "Method error");
                 }
                 if( request.method == RestfulHttpMethod.GET ||
                     request.method == RestfulHttpMethod.OPTIONS ||
@@ -75,11 +75,11 @@ public class HttpProtocolCodec implements ProtocolCodec {
                 }
                 if(request.contentLength > context.getMaxContentLength()) {
                     session.setAttr(STATE, HttpState.InitialLine);
-                    throw new HttpServerException(413, request, "Request Content Too Large");
+                    throw new HttpServerException(413, request, null, "Request Content Too Large:" + request.contentLength);
                 }
                 session.setAttr(REQUEST, request);
 
-                //如果在接收body时断开了连接, 需要处理HttpBodyData的释放
+                //如果在接收body时断开了连接, 需要处理HttpBodyData的释放: 在handler的close事件中关闭该request
                 HttpBodyData bodyData = new HttpBodyData(request, request.contentLength > context.getCacheContentToFileLimit());
                 request.setBodyData(bodyData);
                 session.setAttr(STATE, HttpState.Body);
@@ -152,7 +152,7 @@ public class HttpProtocolCodec implements ProtocolCodec {
                 //response.setHeader(HttpHeaderNames.CONTENT_TYPE, oldContentType);
             }
 
-            out.append(response.getHeaders().getBytes(context.getCharset()));
+            out.append(response.getHeaderBytes());
             response.isSendHeader = true;
         }
         if(response.writeBuffer != null) {

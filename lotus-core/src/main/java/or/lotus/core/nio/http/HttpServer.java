@@ -20,14 +20,12 @@ import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyStore;
-import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -288,6 +286,7 @@ public class HttpServer extends RestfulContext {
             //增加range支持, 浏览器audio, video中的拖动功能需要此支持
             response.setHeader(HttpHeaderNames.ACCEPT_RANGES, "bytes");
         }
+        httpResponse.buildHeader(httpRequest);
         //发送失败时直接释放内存
         if(!httpRequest.session.write(httpResponse)) {
             httpResponse.close();
@@ -427,9 +426,8 @@ public class HttpServer extends RestfulContext {
         protected void freeSession(Session session) {
             //解码时有可能body收一半但是关闭了, 需要手动释放解码时的body
             HttpRequest request = (HttpRequest) session.removeAttr(HttpProtocolCodec.REQUEST);
-            if(request != null) {
-                request.close();
-            }
+
+            Utils.closeable(request);
         }
 
         @Override
@@ -445,13 +443,11 @@ public class HttpServer extends RestfulContext {
             if(request != null) {
                 HttpResponse response = null;
                 try {
-                    response = new HttpResponse(request);
+                    response = request.createResponse();
                     dispatch(request, response);
                 } catch (Throwable e) {
-                    if(response != null) {
-                        response.close();
-                    }
-                    throw new HttpServerException(500, request, e);
+                    Utils.closeable(response);
+                    throw new HttpServerException(500, request, null, e);
                 } finally {
                     request.close();
                 }
@@ -471,14 +467,22 @@ public class HttpServer extends RestfulContext {
             HttpResponse response = null;
             if(e instanceof HttpServerException) {
                 request = ((HttpServerException) e).request;
-                if(request != null) {
-                    response = new HttpResponse(request);
+                response = ((HttpServerException) e).response;
+                if(response == null) {
+                    response = new HttpResponse(
+                            HttpServer.this,
+                            session,
+                            RestfulResponseStatus.SERVER_ERROR_INTERNAL_SERVER_ERROR);
                 }
             }
 
             if(filter != null) {
-                if(filter.exception(e, request, response)) {
-                    return;
+                try {
+                    if(filter.exception(e, request, response)) {
+                        return;
+                    }
+                } catch (Exception e2) {
+                    log.error("filter.exception :", e2);
                 }
             }
             //处理请求时发生的异常
@@ -489,7 +493,7 @@ public class HttpServer extends RestfulContext {
                 ((NioTcpSession) session).closeOnFlush();
                 return;
             }
-
+            Utils.closeable(response);
             session.closeNow();
         }
     }

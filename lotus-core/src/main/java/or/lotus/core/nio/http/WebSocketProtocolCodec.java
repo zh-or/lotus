@@ -131,7 +131,7 @@ public class WebSocketProtocolCodec  implements ProtocolCodec {
         } else if(msg instanceof HttpResponse) {
             //升级协议时需要返回该头
             HttpResponse response = (HttpResponse) msg;
-            out.append(response.getHeaders().getBytes(context.getCharset()));
+            out.append(response.getHeaderBytes());
         }
 
         return true;

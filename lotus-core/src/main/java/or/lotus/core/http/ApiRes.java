@@ -5,12 +5,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import or.lotus.core.common.BeanUtils;
 
 public class ApiRes {
-    public static final int C_SUCCESS         =   200;//成功
-    public static final int C_FAIL            =   300;//操作失败
-    public static final int C_ERROR           =   500;//未知错误
-    public static final int C_AUTH_NOT_FOUND  =   401;//无token
-    public static final int C_AUTH_FAIL       =   402;//token所属ip错误
-    public static final int C_AUTH_PERMISSION_FAIL =   403;//权限不足
+    public static int SUCCESS         =   200;//成功
+    public static int FAIL            =   300;//操作失败
+    public static int ERROR           =   500;//未知错误
+    public static int AUTH_NOT_FOUND  =   401;//无token
+    public static int AUTH_FAIL       =   402;//token所属ip错误
+    public static int AUTH_PERMISSION_FAIL =   403;//权限不足
 
 
     public int code;
@@ -33,7 +33,7 @@ public class ApiRes {
     }
 
     public static ApiRes error(Object data) {
-        return create(C_ERROR, data);
+        return create(ERROR, data);
     }
 
     public static ApiRes fail() {
@@ -41,7 +41,7 @@ public class ApiRes {
     }
 
     public static ApiRes fail(Object data) {
-        return create(C_FAIL, data);
+        return create(FAIL, data);
     }
 
     public static ApiRes success() {
@@ -49,7 +49,7 @@ public class ApiRes {
     }
 
     public static ApiRes success(Object data) {
-        return create(C_SUCCESS, data);
+        return create(SUCCESS, data);
     }
 
     /**

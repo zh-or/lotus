@@ -774,6 +774,17 @@ public class Utils {
         return sb.toString();
     }
 
+    public static void closeable(AutoCloseable close) {
+        if (close != null) {
+            try {
+                close.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
     public static void closeable(Closeable close) {
         if (close != null) {
             try {
