@@ -1,5 +1,6 @@
-## netty实现
->lotus-netty-http
+## 实现
+>lotus-core -> HttpServer 基于nio的实现
+>lotus-netty-http -> NettyHttpServer 基于netty的实现
 
 ## 注意事项
 >1. `controller` 中的方法的参数不能为基本数据类型, 必须为包装类型, 否则会报错 ~~int~~, ~~long~~... Integer &#10004; Long&#10004;
@@ -68,9 +69,9 @@ public class ControllerA {
 
 ## 处理文件上传说明
 1. `POST (multipart/form-data)`
-2. `controller` 方法中使用 `NettyRequest` 获取 `NettyFormData formData = request.getBodyFormData();`
-3. `NettyFormData` 可获取 `formData` 的相关数据
-4. `NettyRequest.isMultipart()` 可判断当前请求是否 `multipart` 请求
+2. `controller` 方法中使用 `RestfulFormData formData = request.getBodyFormData();`
+3. `RestfulFormData` 可获取 `formData` 的相关数据
+4. `request.isMultipart()` 可判断当前请求是否 `multipart` 请求
 
 
 
@@ -78,3 +79,4 @@ public class ControllerA {
 1. 继承 `RestfulContext` 类, 用于接收请求并处理返回值
 2. 继承 `RestfulRequest` 类, 用于包装`Request`可在这里面保存相关上下文
 3. 继承 `RestfulResponse` 类, 用于处理 `controller` 结果返回
+4. 如需处理`POST (multipart/form-data)`请求还需要实现`RestfulFormData`相关类
