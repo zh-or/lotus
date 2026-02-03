@@ -160,7 +160,7 @@ public class HttpResponse extends RestfulResponse {
                             .append(fileLength);
                     headers.put(HttpHeaderNames.CONTENT_LENGTH, String.valueOf(fileLength - range[0][0]));
                 } else {
-                    if(range[0][0] >= range[0][1] || (range[0][1] - range[0][0]) > fileLength  || range[0][1] > fileLength - 1) {
+                    if(range[0][0] > range[0][1] || (range[0][1] - range[0][0]) > fileLength  || range[0][1] > fileLength - 1) {
                         throw new HttpServerException(416, request, this, "Range Not Satisfiable:" + Arrays.toString(range));
                     }
                     sb.append("bytes ")
@@ -169,7 +169,7 @@ public class HttpResponse extends RestfulResponse {
                             .append(range[0][1])
                             .append('/')
                             .append(fileLength);
-                    headers.put(HttpHeaderNames.CONTENT_LENGTH, String.valueOf(range[0][1] - range[0][0]));
+                    headers.put(HttpHeaderNames.CONTENT_LENGTH, String.valueOf(range[0][1] - range[0][0] + 1));
                 }
 
 

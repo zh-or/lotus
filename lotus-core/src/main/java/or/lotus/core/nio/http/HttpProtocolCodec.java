@@ -189,7 +189,7 @@ public class HttpProtocolCodec implements ProtocolCodec {
                         out.append(
                                 FileChannel.open(file.toPath(), StandardOpenOption.READ),
                                 response.range[0][0],
-                                response.range[0][1] - response.range[0][0]
+                                response.range[0][1] - response.range[0][0] + 1
                         );
                     }
                 } else {
@@ -211,7 +211,7 @@ public class HttpProtocolCodec implements ProtocolCodec {
                         out.append(
                                 FileChannel.open(file.toPath(), StandardOpenOption.READ),
                                 range[0],
-                                range[1] - range[0]
+                                range[1] - range[0] + 1
                         );
                         out.append("\r\n".getBytes());
                     }
