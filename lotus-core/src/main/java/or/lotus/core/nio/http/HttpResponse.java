@@ -134,6 +134,13 @@ public class HttpResponse extends RestfulResponse {
                 StringBuilder sb = new StringBuilder(1024);
                 //                     起始-结束/文件总大小
                 //Content-Range: bytes 900-999/1000
+                //根据规范 如果范围超出文件大小则应返回文件实际内容
+                /*
+Range: <unit>=<range-start>-
+Range: <unit>=<range-start>-<range-end>
+Range: <unit>=<range-start>-<range-end>, …, <range-startN>-<range-endN>
+Range: <unit>=-<suffix-length>
+*/
                 if(range[0][0] == -1) {
                     if(range[0][1] <= 0 || range[0][1] >= fileLength) {
                         throw new HttpServerException(416, request, this, "Range Not Satisfiable:" + Arrays.deepToString(range));
@@ -160,9 +167,14 @@ public class HttpResponse extends RestfulResponse {
                             .append(fileLength);
                     headers.put(HttpHeaderNames.CONTENT_LENGTH, String.valueOf(fileLength - range[0][0]));
                 } else {
-                    if(range[0][0] > range[0][1] || (range[0][1] - range[0][0]) > fileLength  || range[0][1] > fileLength - 1) {
+                    long len = (range[0][1] - range[0][0]) + 1;
+                    if(range[0][0] > range[0][1] || len <= 0 || range[0][0] >= fileLength - 1) {
                         throw new HttpServerException(416, request, this, "Range Not Satisfiable:" + Arrays.deepToString(range));
                     }
+                    if(range[0][1] > fileLength - 1) {
+                        range[0][1] = fileLength - 1;
+                    }
+
                     sb.append("bytes ")
                             .append(range[0][0])
                             .append('-')

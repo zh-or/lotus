@@ -325,12 +325,12 @@ public abstract class RestfulContext {
                 } else {
 
                     try {
-                        response.write(e.toString());
+                        response.write(e.getMessage());
                     } catch (IOException ex) {
                         throw new RuntimeException(ex);
                     }
                     sendResponseBefore(true, request, response);
-                    log.error("处理请求出错:", e);
+                    log.error("处理请求出错: {}, {}", request != null ? request.toString() : "null", e);
                 }
             }
         };

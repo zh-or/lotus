@@ -140,7 +140,7 @@ public class HttpRequest extends RestfulRequest {
 
     @Override
     public String getUrl() {
-        return path + (!Utils.CheckNull(queryString) ? "?" : "") + queryString;
+        return path + (!Utils.CheckNull(queryString) ? "?" + queryString : "");
     }
 
     @Override
@@ -267,4 +267,13 @@ public class HttpRequest extends RestfulRequest {
         return response;
     }
 
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(method).append(" ").append(getUrl());
+        sb.append("\n");
+        sb.append(getHeaders());
+
+        return sb.toString();
+    }
 }
