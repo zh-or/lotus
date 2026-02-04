@@ -165,6 +165,17 @@ public enum RestfulResponseStatus {
      */
     SERVER_ERROR_HTTP_VERSION_NOT_SUPPORTED(505, "HTTP/1.1 505 HTTP Version Not Supported");
 
+    public static RestfulResponseStatus codeOf(int code) {
+        RestfulResponseStatus[] arr = RestfulResponseStatus.values();
+        for(int i = 0; i < arr.length; i++) {
+            if(arr[i].code == code) {
+                return arr[i];
+            }
+        }
+        return SERVER_ERROR_INTERNAL_SERVER_ERROR;
+    }
+
+
     /** The code associated with this status, for example "404" for "Not Found". */
     private int code;
 

@@ -447,7 +447,13 @@ public class HttpServer extends RestfulContext {
                     dispatch(request, response);
                 } catch (Throwable e) {
                     Utils.closeable(response);
-                    throw new HttpServerException(500, request, null, e);
+                    //发生异常后 response 需要重新创建, 也许后面可以优化一下
+                    if(e instanceof HttpServerException) {
+                        ((HttpServerException) e).response = null;
+                        throw e;
+                    } else {
+                        throw new HttpServerException(500, request, null, e);
+                    }
                 } finally {
                     request.close();
                 }
@@ -472,7 +478,7 @@ public class HttpServer extends RestfulContext {
                     response = new HttpResponse(
                             HttpServer.this,
                             session,
-                            RestfulResponseStatus.SERVER_ERROR_INTERNAL_SERVER_ERROR);
+                            RestfulResponseStatus.codeOf(((HttpServerException) e).httpCode));
                 }
             }
 
