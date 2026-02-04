@@ -136,7 +136,7 @@ public class HttpResponse extends RestfulResponse {
                 //Content-Range: bytes 900-999/1000
                 if(range[0][0] == -1) {
                     if(range[0][1] <= 0 || range[0][1] >= fileLength) {
-                        throw new HttpServerException(416, request, this, "Range Not Satisfiable:" + Arrays.toString(range));
+                        throw new HttpServerException(416, request, this, "Range Not Satisfiable:" + Arrays.deepToString(range));
                     }
 
                     sb.append("bytes ")
@@ -150,7 +150,7 @@ public class HttpResponse extends RestfulResponse {
                 } else if(range[0][1] == -1) {
 
                     if(range[0][0] < 0 || range[0][0] >= fileLength - 1) {
-                        throw new HttpServerException(416, request, this, "Range Not Satisfiable:" + Arrays.toString(range));
+                        throw new HttpServerException(416, request, this, "Range Not Satisfiable:" + Arrays.deepToString(range));
                     }
                     sb.append("bytes ")
                             .append(range[0][0])
@@ -161,7 +161,7 @@ public class HttpResponse extends RestfulResponse {
                     headers.put(HttpHeaderNames.CONTENT_LENGTH, String.valueOf(fileLength - range[0][0]));
                 } else {
                     if(range[0][0] > range[0][1] || (range[0][1] - range[0][0]) > fileLength  || range[0][1] > fileLength - 1) {
-                        throw new HttpServerException(416, request, this, "Range Not Satisfiable:" + Arrays.toString(range));
+                        throw new HttpServerException(416, request, this, "Range Not Satisfiable:" + Arrays.deepToString(range));
                     }
                     sb.append("bytes ")
                             .append(range[0][0])
