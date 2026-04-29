@@ -456,7 +456,7 @@ public class LotusByteBuffer implements LotusByteBuf {
             }
             bufferPos = buffer.position();
             bufferLimit = buffer.limit();
-            int bufferLoss = Math.min(patternLength, (bufferLimit - bufferPos) + 1);//当前buffer能读取的数据
+            int bufferLoss = Math.min(patternLength, bufferLimit - bufferPos);//当前buffer能读取的数据
             for(; bufferPos < bufferLimit; bufferPos++) {
                 for(; patternIndex < bufferLoss; patternIndex++) {
                     if(buffer.get(bufferPos + patternIndex) != pattern[patternIndex]) {

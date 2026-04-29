@@ -1,11 +1,8 @@
 package or.lotus.core.nio;
 
-import or.lotus.core.nio.tcp.NioTcpServer;
-import or.lotus.core.nio.tcp.NioTcpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.channels.SocketChannel;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public abstract class IoProcess extends Thread {
