@@ -29,16 +29,16 @@ public class HttpRequest extends RestfulRequest {
         super(context);
         this.session = session;
         headers = new HashMap<>();
-        final String[] headerFields = headerString.split("\r\n");
+        final String[] headerFields = Utils.splitManual(headerString, "\r\n");
         if(headerFields.length > 0) {
             for(String line : headerFields) {
-                final String [] kv = line.split(": ");
+                final String [] kv = Utils.splitManual(line,": ");
                 if(kv.length >= 2) {
                     headers.put(kv[0].toLowerCase(), kv[1].trim());
                 }
             }
 
-            final String[] elements = headerFields[0].split(" ");
+            final String[] elements = Utils.splitManual(headerFields[0]," ");
             if(elements.length == 3) {
                 method = RestfulHttpMethod.byName(elements[0]);
                 rawPath = elements[1];
