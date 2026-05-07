@@ -18,7 +18,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class LotusDataSource implements DataSource {
+public class LotusDataSource implements DataSource, AutoCloseable {
     static final Logger log = LoggerFactory.getLogger(LotusDataSource.class);
     LinkedBlockingQueue<LotusConnection> pool = new LinkedBlockingQueue<>();
     HashSet<String> driverLoadState = new HashSet<>();
@@ -37,6 +37,7 @@ public class LotusDataSource implements DataSource {
         });
     }
 
+    @Override
     public void close() {
         isClosed = true;
         for(int i = 0; i < poolSize.intValue(); i++) {

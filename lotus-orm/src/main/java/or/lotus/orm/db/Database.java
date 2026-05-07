@@ -42,29 +42,6 @@ public class Database implements AutoCloseable {
         queueThread.start();
     }
 
-    /**如果每个DataSource的close方法不一样就多多调用几次, 数据源被关闭后将被移除注册*/
-    public void close(String dataSourceCloseMethodName, Object ... args) {
-        Utils.assets(dataSourceCloseMethodName, "dataSourceCloseMethodName is null");
-
-        if(dataSources != null) {
-            for(Map.Entry<String, DataSource> entry : dataSources.entrySet()) {
-                try {
-                    DataSource ds = entry.getValue();
-                    Method[] ms = ds.getClass().getMethods();
-
-                    for(Method m: ms) {
-                        if(dataSourceCloseMethodName.equals(m.getName())) {
-                            m.invoke(ds, args);
-                            dataSources.remove(entry.getKey());
-                        }
-                    }
-                } catch (Exception e) {
-                    log.error("关闭数据源 {} 出错:", entry.getKey(), e);
-                }
-            }
-        }
-    }
-
     public Database forName(String name) {
         Database db = new Database();
         db.name = name;
@@ -454,5 +431,19 @@ public class Database implements AutoCloseable {
         isRun = false;
         queueThread.interrupt();
         queueThread.join();
+
+        if(dataSources != null) {
+            for(Map.Entry<String, DataSource> entry : dataSources.entrySet()) {
+                try {
+                    DataSource ds = entry.getValue();
+                    if(ds instanceof AutoCloseable) {
+                        ((AutoCloseable) ds).close();
+                    }
+                } catch (Exception e) {
+                    log.error("关闭数据源 {} 出错:", entry.getKey(), e);
+                }
+            }
+        }
     }
+
 }
