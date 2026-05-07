@@ -471,18 +471,22 @@ public class HttpServer extends RestfulContext {
             session.removeAttr(HttpProtocolCodec.STATE);
             HttpRequest request = null;
             HttpResponse response = null;
+            boolean jumpFilter = false;
             if(e instanceof HttpServerException) {
-                request = ((HttpServerException) e).request;
-                response = ((HttpServerException) e).response;
+                HttpServerException hse = ((HttpServerException) e);
+                request = hse.request;
+                response = hse.response;
                 if(response == null) {
                     response = new HttpResponse(
                             HttpServer.this,
                             session,
                             RestfulResponseStatus.codeOf(((HttpServerException) e).httpCode));
                 }
+                //协议错误直接跳过过滤器
+                jumpFilter = (hse.httpCode == 431 || hse.httpCode == 416);
             }
 
-            if(filter != null) {
+            if(!jumpFilter && filter != null) {
                 try {
                     if(filter.exception(e, request, response)) {
                         return;
