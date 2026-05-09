@@ -41,7 +41,7 @@ public class WebSocketFrame {
         try {
             frame.body = str.getBytes("utf-8");
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
         return frame;
     }
