@@ -114,10 +114,10 @@ public class WebSocketFrame {
     public WebSocketFrame mask(byte[] mask) {
         this.mask = mask;
         this.masked = true;
-        //放到业务代码加密
         if(body == null) {
             throw new RuntimeException("请先设置内容再使用mask");
         }
+        //放到业务代码加密
         int pLen = body.length;
         for(int i = 0; i < pLen; i++) {
             body[i] = (byte) (body[i] ^ mask[i % 4]);
