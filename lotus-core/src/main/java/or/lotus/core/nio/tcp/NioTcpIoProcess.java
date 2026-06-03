@@ -37,6 +37,9 @@ public class NioTcpIoProcess extends IoProcess {
         }
     }
 
+    int selectorZeroEvent = 0;
+    long selectorZeroEventBeginDate = 0;
+
     @Override
     public void process() {
         //1. 处理连接的session
@@ -46,6 +49,52 @@ public class NioTcpIoProcess extends IoProcess {
         //2. 处理事件
         try {
             if(selector.select(context.getSelectTimeout()) == 0) {
+                selectorZeroEvent ++;
+                if(selectorZeroEventBeginDate == 0) {
+                    selectorZeroEventBeginDate = System.currentTimeMillis();
+                }
+
+                if(selectorZeroEvent > ((NioTcpServer) context).selectorZeroEvent) {
+                    if((System.currentTimeMillis() - selectorZeroEventBeginDate) < context.getSelectTimeout()) {
+                        //epoll bug
+                        try {
+                            Selector newSelector = Selector.open();
+                            Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
+                            while(keys.hasNext()) {
+                                if (!context.isRunning()) {
+                                    //已经停止了
+                                    return;
+                                }
+                                SelectionKey key = keys.next();
+                                if(!key.isValid()) {
+                                    continue;
+                                }
+                                Object attachment = key.attachment();
+                                int interestOps = key.interestOps();
+                                key.cancel();
+                                try {
+                                    key.channel().register(newSelector, interestOps, attachment);
+                                } catch (ClosedChannelException e) {
+                                    //log.trace("key 已经关闭:", e);
+                                }
+                            }
+                            try {
+                                selector.close();
+                            } catch (Throwable e) {
+                                log.error("epoll bug 关闭旧selector出错:", e);
+                            }
+
+                            selector = newSelector;
+                        } catch (Exception e) {
+                            log.error("触发了epoll bug, 重开Selector出错:", e);
+                            return;
+                        }
+                    }
+                    //reset
+                    selectorZeroEvent = 0;
+                    selectorZeroEventBeginDate = 0;
+                }
+
                 //空闲的时候处理? 先这样
                 if(context.getSessionIdleTime() != 0) {
                     handleIdle();
@@ -56,6 +105,9 @@ public class NioTcpIoProcess extends IoProcess {
         } catch (IOException e) {
             log.error("轮训事件出错:", e);
         }
+        selectorZeroEvent = 0;
+        selectorZeroEventBeginDate = 0;
+
 
         NioTcpSession session;
         Iterator<SelectionKey> keys = selector.selectedKeys().iterator();

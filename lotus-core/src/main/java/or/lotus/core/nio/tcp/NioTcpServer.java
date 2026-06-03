@@ -23,6 +23,7 @@ public class NioTcpServer extends NioContext {
     protected int socketSoTimeout = 3000;//设置 Socket 读取操作的超时时间（SO_TIMEOUT）
     protected boolean tcpNoDelay = false;
 
+    protected int selectorZeroEvent = 512;
 
     public NioTcpServer() {
         this(1024, 4 * 1024, false);
@@ -59,6 +60,13 @@ public class NioTcpServer extends NioContext {
     public NioTcpServer setTcpNoDelay(boolean tcpNoDelay) {
         this.tcpNoDelay = tcpNoDelay;
         return this;
+    }
+
+    /**
+     * 检测epoll空循环次数, 默认为512
+     * */
+    public void setSelectorZeroEventCount(int selectorZeroEvent) {
+        this.selectorZeroEvent = selectorZeroEvent;
     }
 
     @Override
