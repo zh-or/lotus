@@ -426,7 +426,7 @@ public class Database implements AutoCloseable {
         }
     };
 
-    /** 关闭自生, 并关闭所有注册的DataSource */
+    /** 关闭自身, 并关闭所有注册的DataSource */
     @Override
     public void close() throws Exception {
         isRun = false;
