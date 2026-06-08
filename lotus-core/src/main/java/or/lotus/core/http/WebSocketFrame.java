@@ -2,9 +2,8 @@ package or.lotus.core.http;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
-import or.lotus.core.common.Utils;
 
 public class WebSocketFrame {
 
@@ -89,7 +88,7 @@ public class WebSocketFrame {
         }
         return body;
     }
-    private static final Random maskRandom = new Random();
+    private static final ThreadLocalRandom maskRandom = ThreadLocalRandom.current();
     /**
      * 使用mask
      * 某些服务器必须加mask才能通讯
