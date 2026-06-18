@@ -803,14 +803,20 @@ public class Utils {
         if (target == null) {
             return null;
         } else {
-            StringTokenizer strTok = new StringTokenizer(target.toString(), separator);
-            int size = strTok.countTokens();
-            String[] array = new String[size];
-
-            for(int i = 0; i < size; ++i) {
-                array[i] = strTok.nextToken();
-            }
-            return array;
+            List<String> res = new ArrayList<>(2);
+            int p = -1, start = 0, len = target.length() - 1, spSize = separator.length();
+            do {
+                p = target.indexOf(separator, start);
+                if(p != -1) {
+                    if(p - start > 0) {
+                        res.add(target.substring(start, p));
+                    }
+                    start = p + spSize;
+                } else if(start < len) {
+                    res.add(target.substring(start, len));
+                }
+            } while(p != -1);
+            return res.toArray(new String[0]);
         }
     }
     /** 如果分隔符开始和结束那么将追加一个空字符串
