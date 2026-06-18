@@ -804,7 +804,7 @@ public class Utils {
             return null;
         } else {
             List<String> res = new ArrayList<>(2);
-            int p = -1, start = 0, len = target.length() - 1, spSize = separator.length();
+            int p = -1, start = 0, len = target.length(), spSize = separator.length();
             do {
                 p = target.indexOf(separator, start);
                 if(p != -1) {
@@ -812,7 +812,7 @@ public class Utils {
                         res.add(target.substring(start, p));
                     }
                     start = p + spSize;
-                } else if(start < len) {
+                } else if(start < len - 1) {
                     res.add(target.substring(start, len));
                 }
             } while(p != -1);

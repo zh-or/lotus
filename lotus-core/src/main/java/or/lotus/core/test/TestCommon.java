@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
 
 public class TestCommon {
     public static void main(String[] args) throws Exception {
-        String[] arr1 = Utils.splitManual(": a: b 123; ccc: ", ": ");
+        String[] arr1 = Utils.splitManual("a: b 123; ccc", ": ");
 
 
         UrlMatcher<String> uMatcher = new UrlMatcher<>();
