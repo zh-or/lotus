@@ -27,25 +27,19 @@ public class HttpTest {
 
     public static void main(String[] args) throws Exception {
         HttpServer server = new HttpServer();
-        byte[] b = new byte[50];
+        byte[] b = new byte[10];
         for(byte i = 0; i < b.length; i ++) {
             b[i] = (byte)i;
         }
-        byte[] b2 = new byte[127];
-        for(byte i = 0; i < b.length; i ++) {
-            b2[i] = (byte)(i + 50);
-        }
+
 
         LotusByteBuffer buf = (LotusByteBuffer) server.getNioTcpServer().pulledByteBuffer();
         buf.append(ByteBuffer.wrap(b));
-        buf.append(ByteBuffer.wrap(b2));
         //buf.flip();
-        int p0 = buf.search(new byte[]{10, 11, 12});
-        int p1 = buf.search(new byte[]{50, 51, 52});
-        int p2 = buf.search(new byte[]{90, 91});
-        int p3 = buf.search(new byte[]{90, 92});
+        int p0 = buf.search(new byte[]{ 5,6,7,8,9});
 
-        log.info("search p0:{}, p1:{}, p2:{}, p3:{}", p0, p1, p2, p3);
+
+        log.info("search p0:{}, ", p0);
 
         server.addStaticPath("./test");
         server.addController(HttpTest.class);
