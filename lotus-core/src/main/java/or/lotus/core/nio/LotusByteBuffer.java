@@ -438,28 +438,92 @@ public class LotusByteBuffer implements LotusByteBuf {
     /** 朴素搜索 */
     @Override
     public int search(int start, byte[] pattern) {
-        if(start < 0) {
-            throw new IndexOutOfBoundsException("起始位置不能小于0");
-        }
-        int total = getDataLength();
-        if(start >= total) {
-            throw new IndexOutOfBoundsException("起始位置" + start + " 大于 " + total);
-        }
         if (writeIndex == -1 || pattern == null || pattern.length == 0) {
             return -1;
         }
-        int end = total - pattern.length, j;
-        for (int i = start; i <= end; i++) {
-            j = 0;
-            while (j < pattern.length && get(i + j) == pattern[j]) {
+        if(start < 0) {
+            throw new IndexOutOfBoundsException("起始位置不能小于0");
+        }
+        int totalLen = getDataLength();
+        if(start >= totalLen) {
+            throw new IndexOutOfBoundsException("起始位置" + start + " 大于 " + totalLen);
+        }
+
+        if (start >= totalLen) {
+            return -1;
+        }
+
+        int[] next = buildNext(pattern);
+        int j = 0;// 模式串指针
+        int i = start;// 全局主串偏移
+        int m = pattern.length;
+
+        // 初始化主串读取游标到 start 位置
+        int bufIdx = 0;
+        int bufPos = 0;
+        int accum = 0;
+        // 定位第一个游标位置
+        for (int k = 0; k <= writeIndex; k++) {
+            ByteBuffer buf = buffers[k];
+            int rem = buf.remaining();
+            if (start < accum + rem) {
+                bufIdx = k;
+                bufPos = buf.position() + (start - accum);
+                break;
+            }
+            accum += rem;
+        }
+
+        // KMP 主循环：主串单向移动
+        while (i < totalLen) {
+            // 1. 读取当前字节（不修改 buffer 的 position）
+            ByteBuffer curBuf = buffers[bufIdx];
+            byte b = curBuf.get(bufPos);
+
+            // 2. KMP 状态转移
+            while (j > 0 && b != pattern[j]) {
+                j = next[j - 1];
+            }
+            if (b == pattern[j]) {
                 j++;
             }
-            if (j == pattern.length) {
-                return i;
+            if (j == m) {
+                return i - m + 1;// 匹配成功，返回起始偏移
+            }
+
+            // 3. 主串前进一个字节
+            i++;
+            bufPos++;
+            if (bufPos == curBuf.limit()) {      // 切换到下一个 buffer
+                bufIdx++;
+                if(bufIdx > writeIndex) {
+                    return -1;
+                }
+                // i < totalLen 保证了不会越界
+                bufPos = buffers[bufIdx].position();
             }
         }
 
         return -1;
     }
 
+    /**
+     * 构建 KMP 前缀表（next 数组）
+     */
+    private int[] buildNext(byte[] pattern) {
+        int m = pattern.length;
+        int[] next = new int[m];
+        int len = 0;
+        int i = 1;
+        while (i < m) {
+            if (pattern[i] == pattern[len]) {
+                next[i++] = ++len;
+            } else if (len > 0) {
+                len = next[len - 1];
+            } else {
+                next[i++] = 0;
+            }
+        }
+        return next;
+    }
 }

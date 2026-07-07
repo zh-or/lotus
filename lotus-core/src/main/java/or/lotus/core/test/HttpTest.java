@@ -1,5 +1,6 @@
 package or.lotus.core.test;
 
+import or.lotus.core.common.TestTime;
 import or.lotus.core.common.Utils;
 import or.lotus.core.files.FileSize;
 import or.lotus.core.http.WebSocketFrame;
@@ -34,10 +35,22 @@ public class HttpTest {
 
 
         LotusByteBuffer buf = (LotusByteBuffer) server.getNioTcpServer().pulledByteBuffer();
-        buf.append(ByteBuffer.wrap(b));
-        //buf.flip();
-        int p0 = buf.search(new byte[]{ 5,6,7,8,9});
+        int totalSearch = 10000;
 
+        TestTime tt = new TestTime();
+        tt.start("添加数据:");
+        for(int i = 0; i < totalSearch;i ++) {
+            buf.append(ByteBuffer.wrap(b));
+        }
+        tt.end();
+        tt.start(totalSearch + "次无结果:");
+        //buf.flip();
+        int p0 = -1;
+
+        for(int i = 0; i < totalSearch; i++) {
+            p0 = buf.search(new byte[]{9, 5,6,7,8,9});
+        }
+        tt.end();
 
         log.info("search p0:{}, ", p0);
 
@@ -45,10 +58,18 @@ public class HttpTest {
         buf.append(ByteBuffer.wrap(new byte[]{ 1, 2, 3} ));
         buf.append(ByteBuffer.wrap(new byte[]{ 4, 2, 3} ));
 
-        int p1 = buf.search(new byte[]{2, 3, 4, 2});
-
+        int p1 = -1;
+        tt.start(totalSearch + "次有结果:");
+        for(int i = 0; i < totalSearch; i++ ) {
+            p1 = buf.search(new byte[]{2, 3, 4, 2});
+        }
+        tt.end();
         log.info("search p1:{}, ", p1);
+        log.info("search p2:{}, ", buf.search(new byte[]{ 1,1,1,2}));
 
+        tt.print();
+        System.out.println("数据长度:" + new FileSize(buf.getDataLength()));
+System.exit(0);
         server.addStaticPath("./test");
         server.addController(HttpTest.class);
         server.setCacheContentToFileLimit(1024 * 5);
