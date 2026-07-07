@@ -681,7 +681,7 @@ public class Utils {
     }
 
     public static Calendar getCalendar() {
-        return Calendar.getInstance(TimeZone.getTimeZone("GTM+8"));
+        return Calendar.getInstance(TimeZone.getTimeZone("GMT+8"));
     }
 
     public static String getUploadFileName(String raw) {

@@ -93,11 +93,8 @@ public class TimeoutConcurrentHashMap<K, V> implements AutoCloseable, Runnable {
         ExpireWrap obj = map.get(k);
         if(obj != null) {
             synchronized (obj) {
+                obj.expire = sec > 0 ? System.currentTimeMillis() + sec * 1000 : -1;
                 if(sec > 0) {
-                    obj.expire = System.currentTimeMillis() + sec * 1000;
-                } else {
-                    //原本是不超时的对象, 设置超时
-                    obj.expire = sec;
                     delayQueue.add(obj);
                 }
             }
