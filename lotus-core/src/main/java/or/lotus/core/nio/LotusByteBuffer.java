@@ -364,21 +364,19 @@ public class LotusByteBuffer implements LotusByteBuf {
 
     @Override
     public byte get(int index) {
-        if (writeIndex == -1) {
-            throw new IndexOutOfBoundsException("index > dataLength");
+        if (index < 0) {
+            throw new IndexOutOfBoundsException("Index: " + index);
         }
-        ByteBuffer buff;
-        int size = 0, pos;
-        for(int i = 0; i <= writeIndex; i++) {
-            buff = buffers[i];
-            pos = buff.position();
-
-            if(index <= (size + pos)) {
-                return buff.get(index - size);
+        int offset = index;
+        for (int i = 0; i <= writeIndex; i++) {
+            ByteBuffer buf = buffers[i];
+            int remaining = buf.remaining();
+            if (offset < remaining) {
+                return buf.get(buf.position() + offset);
             }
-            size += pos;
+            offset -= remaining;
         }
-        throw new IndexOutOfBoundsException("index > dataLength");
+        throw new IndexOutOfBoundsException("Index: " + index);
     }
 
     @Override
@@ -440,69 +438,28 @@ public class LotusByteBuffer implements LotusByteBuf {
     /** 朴素搜索 */
     @Override
     public int search(int start, byte[] pattern) {
+        if(start < 0) {
+            throw new IndexOutOfBoundsException("起始位置不能小于0");
+        }
+        int total = getDataLength();
+        if(start >= total) {
+            throw new IndexOutOfBoundsException("起始位置" + start + " 大于 " + total);
+        }
         if (writeIndex == -1 || pattern == null || pattern.length == 0) {
             return -1;
         }
-        ByteBuffer buffer;
-        int patternLength = pattern.length;
-        int i = 0, remaining, globalPos = 0, bufferPos, bufferLimit, patternIndex = 0;
-
-        for(;i <= writeIndex; i++) {
-            buffer = buffers[i];
-            remaining = buffer.remaining();
-            globalPos += remaining;
-            if(globalPos <  start) {
-                continue;
+        int end = total - pattern.length, j;
+        for (int i = start; i <= end; i++) {
+            j = 0;
+            while (j < pattern.length && get(i + j) == pattern[j]) {
+                j++;
             }
-            bufferPos = buffer.position();
-            bufferLimit = buffer.limit();
-            for(; bufferPos < bufferLimit; bufferPos++) {
-                int bufferLoss = Math.min(patternLength, bufferLimit - bufferPos);//当前buffer能读取的数据
-                for(; patternIndex < bufferLoss; patternIndex++) {
-                    if(buffer.get(bufferPos + patternIndex) != pattern[patternIndex]) {
-                        patternIndex = 0;
-                        break;
-                    }
-                }
-                if(patternIndex >= patternLength) {
-                    return globalPos - (bufferLimit - bufferPos);
-                }
+            if (j == pattern.length) {
+                return i;
             }
         }
+
         return -1;
     }
-
-    /*
-    *
-    * 06-13 15:48:40.827 [lotus-http-service-pool] [ERROR] or.app.go.api.main.HttpRestfulFilter - 出现异常 [106.84.253.53]:
-java.lang.RuntimeException: 解码失败:null
-	at or.lotus.core.nio.http.HttpBodyData.decodeBodyData(HttpBodyData.java:202)
-	at or.lotus.core.nio.http.HttpBodyData.getFormDataItem(HttpBodyData.java:86)
-	at or.lotus.core.http.restful.RestfulFormData.getFormDataItemValue(RestfulFormData.java:24)
-	at or.app.go.api.controller.api.user.MarkerController.putMarker(MarkerController.java:126)
-	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
-	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
-	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
-	at java.lang.reflect.Method.invoke(Method.java:498)
-	at or.lotus.core.http.restful.RestfulDispatcher.dispatch(RestfulDispatcher.java:104)
-	at or.lotus.core.http.restful.RestfulContext.lambda$dispatch$0(RestfulContext.java:291)
-	at or.lotus.core.http.restful.RestfulContext.dispatch(RestfulContext.java:343)
-	at or.lotus.core.nio.http.HttpServer.access$100(HttpServer.java:44)
-	at or.lotus.core.nio.http.HttpServer$HttpIoHandler.onReceiveMessage(HttpServer.java:447)
-	at or.lotus.core.nio.IoEventRunnable.run(IoEventRunnable.java:44)
-	at or.lotus.core.nio.IoEventRunnable.run(IoEventRunnable.java:63)
-	..............
-	at or.lotus.core.nio.IoEventRunnable.run(IoEventRunnable.java:63)
-	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
-	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
-	at java.lang.Thread.run(Thread.java:750)
-Caused by: java.lang.IndexOutOfBoundsException: null
-	at java.nio.Buffer.checkIndex(Buffer.java:545)
-	at java.nio.HeapByteBuffer.get(HeapByteBuffer.java:142)
-	at or.lotus.core.nio.LotusByteBuffer.search(LotusByteBuffer.java:462)
-	at or.lotus.core.nio.LotusByteBuffer.search(LotusByteBuffer.java:437)
-	at or.lotus.core.nio.http.HttpBodyData.decodeBodyData(HttpBodyData.java:169)
-	... 80 common frames omitted
-    * */
 
 }

@@ -41,6 +41,14 @@ public class HttpTest {
 
         log.info("search p0:{}, ", p0);
 
+        buf.append(ByteBuffer.wrap(new byte[]{ 2, 3} ));
+        buf.append(ByteBuffer.wrap(new byte[]{ 1, 2, 3} ));
+        buf.append(ByteBuffer.wrap(new byte[]{ 4, 2, 3} ));
+
+        int p1 = buf.search(new byte[]{2, 3, 4, 2});
+
+        log.info("search p1:{}, ", p1);
+
         server.addStaticPath("./test");
         server.addController(HttpTest.class);
         server.setCacheContentToFileLimit(1024 * 5);
