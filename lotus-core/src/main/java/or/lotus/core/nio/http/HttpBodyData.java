@@ -59,8 +59,8 @@ Content-Type：MIME 类型（如 image/jpeg, application/pdf 等）
                 bodyFile = Files.createTempFile(Paths.get(setTmpPath), "req-", ".tmp").toFile();
             } else {
                 bodyFile = Files.createTempFile("req-", ".tmp").toFile();
-                fileChannel = FileChannel.open(bodyFile.toPath(), StandardOpenOption.APPEND);
             }
+            fileChannel = FileChannel.open(bodyFile.toPath(), StandardOpenOption.APPEND);
         }
     }
 

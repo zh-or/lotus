@@ -47,6 +47,12 @@ public abstract class V8Context implements Runnable {
         this(null, V8_MAX_SPACE_SIZE);
     }
 
+    /*
+    * 关于调试 使用 V8DebugServer 把当前的v8runtime传进去就可以了
+    * 一般使用端口 9222 9229
+    * chrome://inspect/#devices
+    * */
+
     public V8Context(String jniLibPath, String v8Flags) {
         this.jniLibPath = jniLibPath;
         this.jsQuit = false;
@@ -124,8 +130,8 @@ public abstract class V8Context implements Runnable {
      * @param lib
      * @throws Exception  如果未在 init 之前调用则会爆出异常
      */
-    public void addJavaLib(JavaLibBase lib) throws Exception{
-        if(jsRun){
+    public void addJavaLib(JavaLibBase lib) throws Exception {
+        if(jsRun) {
             throw new Exception("注册Java库需要在 init() 之前调用");
         }
 
