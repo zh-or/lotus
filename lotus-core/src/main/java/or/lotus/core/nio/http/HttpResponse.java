@@ -143,7 +143,7 @@ Range: <unit>=-<suffix-length>
 */
                 if(range[0][0] == -1) {
                     if(range[0][1] <= 0 || range[0][1] >= fileLength) {
-                        throw new HttpServerException(416, request, this, "Range Not Satisfiable:" + Arrays.deepToString(range));
+                        throw new HttpServerException(416, request, this, "Range Not Satisfiable:" + Arrays.deepToString(range) + " fileLength:" + fileLength);
                     }
 
                     sb.append("bytes ")
@@ -157,7 +157,7 @@ Range: <unit>=-<suffix-length>
                 } else if(range[0][1] == -1) {
 
                     if(range[0][0] < 0 || range[0][0] >= fileLength - 1) {
-                        throw new HttpServerException(416, request, this, "Range Not Satisfiable:" + Arrays.deepToString(range));
+                        throw new HttpServerException(416, request, this, "Range Not Satisfiable:" + Arrays.deepToString(range) + " fileLength:" + fileLength);
                     }
                     sb.append("bytes ")
                             .append(range[0][0])
@@ -169,7 +169,7 @@ Range: <unit>=-<suffix-length>
                 } else {
                     long len = (range[0][1] - range[0][0]) + 1;
                     if(range[0][0] > range[0][1] || len <= 0 || range[0][0] >= fileLength - 1) {
-                        throw new HttpServerException(416, request, this, "Range Not Satisfiable:" + Arrays.deepToString(range));
+                        throw new HttpServerException(416, request, this, "Range Not Satisfiable:" + Arrays.deepToString(range) + " fileLength:" + fileLength);
                     }
                     if(range[0][1] > fileLength - 1) {
                         range[0][1] = fileLength - 1;
@@ -192,7 +192,7 @@ Range: <unit>=-<suffix-length>
                 //在这里检查参数是否正确
                 for(long[] range : range) {
                     if(range[0] > range[1] || range[1] > fileLength - 1) {
-                        throw new HttpServerException(416, request, this, "Range Not Satisfiable:" + Arrays.toString(range));
+                        throw new HttpServerException(416, request, this, "Range Not Satisfiable:" + Arrays.toString(range) + " fileLength:" + fileLength);
                     }
                 }
             }
