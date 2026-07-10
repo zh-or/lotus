@@ -2,6 +2,7 @@ package or.lotus.core.nio.tcp;
 
 
 import or.lotus.core.nio.IoProcess;
+import or.lotus.core.nio.NioContext;
 import or.lotus.core.nio.Session;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -13,7 +14,7 @@ public class NioTcpSession  extends Session {
 	protected SelectionKey key;
 	protected boolean isCloseOnFlush = false;
 
-	public NioTcpSession(NioTcpServer context, SocketChannel channel, IoProcess ioProcess) {
+	public NioTcpSession(NioContext context, SocketChannel channel, IoProcess ioProcess) {
 		super(context, ioProcess);
 		this.channel = channel;
 	}

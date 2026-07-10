@@ -25,6 +25,7 @@ public abstract class NioContext {
     /** session无操作空闲间隔 毫秒 */
     protected int sessionIdleTime = 0;
 
+    protected int selectorZeroEvent = 512;
     protected int pooledBufferStepCount = 10;
     protected LinkedBlockingQueue<ByteBuffer> bufferList = null;
     protected LinkedBlockingQueue<ByteBuffer> directBufferList = null;
@@ -255,6 +256,13 @@ public abstract class NioContext {
         return retainMap;
     }
 
+    public int getSelectorZeroEvent() {
+        return selectorZeroEvent;
+    }
+
+    public void setSelectorZeroEvent(int selectorZeroEvent) {
+        this.selectorZeroEvent = selectorZeroEvent;
+    }
 
     public int getSelectTimeout() {
         return selectTimeout;

@@ -1,10 +1,13 @@
 package or.lotus.core.test;
 
+import or.lotus.core.common.DateUtils;
 import or.lotus.core.common.Utils;
 import or.lotus.core.nio.IoHandler;
 import or.lotus.core.nio.Session;
 import or.lotus.core.nio.support.LengthProtocolCode;
+import or.lotus.core.nio.tcp.NioTcpClient;
 import or.lotus.core.nio.tcp.NioTcpServer;
+import or.lotus.core.nio.tcp.NioTcpSession;
 import or.lotus.core.socket.SyncSocketClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +19,7 @@ import java.util.concurrent.Executors;
 public class SocketTest {
     public static final Logger log = LoggerFactory.getLogger(SocketTest.class);
     static NioTcpServer server;
+    static NioTcpClient nioClient;
     public static void main(String[] args) throws IOException {
         int port = 48299;
 
@@ -44,7 +48,15 @@ public class SocketTest {
                 log.error("data is null");
             }
         }
+        client.close();
 
+        nioClient = new NioTcpClient(1024, 5, false);
+        nioClient.setProtocolCodec(new LengthProtocolCode());
+        nioClient.setHandler(clientHandler);
+        nioClient.setSessionIdleTime(5000);
+
+        NioTcpSession session = nioClient.connection(new InetSocketAddress("127.0.0.1", port), 10000);
+        session.write("first".getBytes("utf-8"));
         //client.close();
     }
 
@@ -72,4 +84,29 @@ public class SocketTest {
         }
     };
 
+
+    static IoHandler clientHandler = new IoHandler() {
+        @Override
+        public void onConnection(Session session) throws Exception {
+            log.info("clientHandler session connect: {}", session.getId());
+        }
+
+        @Override
+        public void onIdle(Session session) throws Exception {
+            log.info("clientHandler session idle: {}", session.getId());
+
+            session.write(DateUtils.getDateFormat("yyyy-MM-dd HH:mm:ss").getBytes("utf-8"));
+        }
+
+        public void onReceiveMessage(Session session, Object msg) throws Exception {
+            log.info("clientHandler session receive: {}, msg: {}", session.getId(), new String((byte[]) msg));
+
+            //session.write(msg);
+        }
+
+        @Override
+        public void onClose(Session session) throws Exception {
+            log.info("clientHandler session close: {}", session.getId());
+        }
+    };
 }

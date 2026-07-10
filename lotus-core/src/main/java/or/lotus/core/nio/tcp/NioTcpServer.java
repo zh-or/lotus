@@ -3,6 +3,7 @@ package or.lotus.core.nio.tcp;
 
 import or.lotus.core.common.Utils;
 import or.lotus.core.nio.NioContext;
+import or.lotus.core.nio.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -102,6 +103,15 @@ public class NioTcpServer extends NioContext {
         }
         isRunning = false;
         acceptor.close();
+        int size = sessions.size();
+        for(int i = 0; i < size; i++) {
+            int key = sessions.keyAt(i);
+            Session session = sessions.get(key);
+            if(session != null) {
+                session.closeNow();
+            }
+        }
+
         for (int i = 0; i < selectorThreadTotal; i++) {
             ioProcesses[i].close();
         }
@@ -177,7 +187,7 @@ public class NioTcpServer extends NioContext {
                                     if(ioProcessBound >= ioProcesses.length) {
                                         ioProcessBound = 0;
                                     }
-                                    ioProcesses[ioProcessBound].putChannel(client);
+                                    ioProcesses[ioProcessBound].putChannel(client, false);
                                     ioProcessBound ++;
                                 } catch (Exception e) {
                                     log.debug("处理连接失败:", e);
