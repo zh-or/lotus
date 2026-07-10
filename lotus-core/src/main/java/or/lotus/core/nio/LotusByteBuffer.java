@@ -449,10 +449,6 @@ public class LotusByteBuffer implements LotusByteBuf {
             throw new IndexOutOfBoundsException("起始位置" + start + " 大于 " + totalLen);
         }
 
-        if (start >= totalLen) {
-            return -1;
-        }
-
         int[] next = buildNext(pattern);
         int j = 0;// 模式串指针
         int i = start;// 全局主串偏移

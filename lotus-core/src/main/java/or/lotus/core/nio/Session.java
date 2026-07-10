@@ -73,7 +73,9 @@ public abstract class Session {
                 while(readCache.release() == false);
             }
         });
-        pushEventRunnable(new IoEventRunnable(null, IoEventRunnable.IoEventType.SESSION_CLOSE, this, context));
+        if(context.isRunning) {
+            pushEventRunnable(new IoEventRunnable(null, IoEventRunnable.IoEventType.SESSION_CLOSE, this, context));
+        }
         waitSendMessageList.stream().forEach(obj -> {
             if(obj instanceof AutoCloseable) {
                 try {
