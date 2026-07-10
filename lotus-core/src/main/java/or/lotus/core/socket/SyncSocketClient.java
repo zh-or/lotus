@@ -150,7 +150,7 @@ public class SyncSocketClient implements AutoCloseable {
     }
 
     public boolean isConnected() {
-        if (socket != null || socket.isConnected())
+        if (socket != null && socket.isConnected())
             return true;
         return false;
     }
