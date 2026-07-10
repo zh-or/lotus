@@ -213,7 +213,7 @@ public abstract class RestfulContext {
 
         for(Object b : beansCache.values()) {
             try {
-                if(b.getClass().isAssignableFrom(AutoCloseable.class)) {
+                if(b instanceof AutoCloseable) {
                     AutoCloseable closeable = (AutoCloseable) b;
                     closeable.close();
                 }

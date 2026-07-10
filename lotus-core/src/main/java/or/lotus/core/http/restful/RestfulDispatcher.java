@@ -73,7 +73,7 @@ public class RestfulDispatcher {
                 ParameterizedType pt = (ParameterizedType) gt;
                 java.lang.reflect.Type[] actualTypeArguments = pt.getActualTypeArguments();
 
-                if(actualTypeArguments != null & actualTypeArguments.length > 0) {
+                if(actualTypeArguments != null && actualTypeArguments.length > 0) {
                     genericTypes[i] = (Class) actualTypeArguments[0];//取第一个
                 }
             }
