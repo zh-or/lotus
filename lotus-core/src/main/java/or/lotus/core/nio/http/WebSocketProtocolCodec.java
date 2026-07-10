@@ -61,6 +61,10 @@ public class WebSocketProtocolCodec  implements ProtocolCodec {
             packlen = frame.payload;
         }
 
+        if(packlen > context.getMaxWebSocketFrameSize()) {
+            throw new RuntimeException("包大小超过设定值 " + packlen + " > " + context.getMaxWebSocketFrameSize());
+        }
+
         if(remaining < packlen + headLen) {
             in.reset();
             return false;

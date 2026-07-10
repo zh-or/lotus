@@ -57,6 +57,8 @@ public class HttpServer extends RestfulContext {
     protected int keepLiveRequestCount = 10;
     protected int bufferCapacity = 1024 * 16;
 
+    protected int maxWebSocketFrameSize = 1024 * 16;
+
     protected HashMap<String, HttpWebSocketMessageHandler> webSocketHandlers = new HashMap<>();
 
     protected WebSocketProtocolCodec webSocketProtocolCodec = null;
@@ -506,5 +508,13 @@ public class HttpServer extends RestfulContext {
             Utils.closeable(response);
             session.closeNow();
         }
+    }
+
+    public int getMaxWebSocketFrameSize() {
+        return maxWebSocketFrameSize;
+    }
+
+    public void setMaxWebSocketFrameSize(int maxWebSocketFrameSize) {
+        this.maxWebSocketFrameSize = maxWebSocketFrameSize;
     }
 }
