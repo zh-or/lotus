@@ -103,7 +103,7 @@ public class HttpRequest extends RestfulRequest {
     public void rewriteUrl(String url) {
         int mid = url.lastIndexOf("?");
         if(mid != -1) {
-            queryString = url.substring(mid + 1, rawPath.length());
+            queryString = url.substring(mid + 1, url.length());
             path = url.substring(0, mid);
         } else {
             path = url;
