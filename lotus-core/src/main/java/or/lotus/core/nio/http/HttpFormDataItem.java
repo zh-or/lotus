@@ -71,7 +71,7 @@ public class HttpFormDataItem implements RestfulFormDataItem {
         try {
             if(file == null) {
                 String setTmpPath = request.getContext().getUploadTmpDir();
-                if(file != null) {
+                if(!Utils.CheckNull(setTmpPath)) {
                     file = Files.createTempFile(Paths.get(setTmpPath), "req-b-", ".tmp").toFile();
                 } else {
                     file = Files.createTempFile("req-b-", ".tmp").toFile();
