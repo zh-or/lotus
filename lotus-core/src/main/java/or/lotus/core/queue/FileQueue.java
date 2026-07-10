@@ -57,6 +57,7 @@ public class FileQueue implements AutoCloseable {
     private synchronized String poll()  {
         try {
             raf.seek(readPos);
+            //todo 乱码问题
             String line = raf.readLine();
             readPos = raf.getFilePointer();
             return line;
