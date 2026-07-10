@@ -172,8 +172,8 @@ public class TimeoutConcurrentHashMap<K, V> implements AutoCloseable, Runnable {
                     v = null;
                 }
             } while(v != null);
+            Utils.SLEEP(1);
         }
-        Utils.SLEEP(1);
     }
 
     @Override
