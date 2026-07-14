@@ -1,14 +1,9 @@
 package or.lotus.core.nio.udp;
 
 import or.lotus.core.common.Utils;
-import or.lotus.core.nio.LotusByteBuf;
-
-import javax.rmi.CORBA.Util;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 
@@ -24,7 +19,19 @@ public class UdpBroadcast implements AutoCloseable {
         int n = 0;
         UdpBroadcast ub = null;
         try {
-            ub = new UdpBroadcast();
+            ub = new UdpBroadcast(true);
+            n = ub.send(buff, host, port);
+        } finally {
+            Utils.closeable(ub);
+        }
+        return n;
+    }
+
+    public static int multicast(ByteBuffer buff, String host, int port) throws IOException {
+        int n = 0;
+        UdpBroadcast ub = null;
+        try {
+            ub = new UdpBroadcast(false);
             n = ub.send(buff, host, port);
         } finally {
             Utils.closeable(ub);
