@@ -41,8 +41,8 @@ public class NioTcpServer extends NioContext {
      * @param selectorThreadTotal io线程数量
      * @param useDirectBuffer 是否使用直接内存
      */
-    public NioTcpServer(int cacheBufferSize, int bufferCapacity, int selectorThreadTotal, boolean useDirectBuffer) {
-        super(cacheBufferSize, bufferCapacity, selectorThreadTotal, useDirectBuffer);
+    public NioTcpServer(int cacheBufferSize, int bufferCapacity, boolean useDirectBuffer, int selectorThreadTotal) {
+        super(cacheBufferSize, bufferCapacity, useDirectBuffer, selectorThreadTotal);
     }
 
     public int getSocketSoTimeout() {
@@ -80,6 +80,9 @@ public class NioTcpServer extends NioContext {
 
     @Override
     public synchronized void start() throws IOException {
+        if(isRunning) {
+            throw new RuntimeException("当前服务已启动");
+        }
         if(serverSocketChannel == null) {
             throw new RuntimeException("请先绑定端口");
         }

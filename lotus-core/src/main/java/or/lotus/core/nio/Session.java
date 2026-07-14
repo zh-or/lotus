@@ -24,6 +24,7 @@ public abstract class Session {
 
     protected IoProcess ioProcess = null;
     protected ReadWriteLock codecRwLock = new ReentrantReadWriteLock();
+
     public Session(NioContext context, IoProcess ioProcess) {
         this.context = context;
         this.ioProcess = ioProcess;

@@ -27,8 +27,8 @@ public class NioTcpClient extends NioContext {
         super(cacheBufferSize, bufferCapacity, useDirectBuffer);
     }
 
-    public NioTcpClient(int cacheBufferSize, int bufferCapacity, int selectorThreadTotal, boolean useDirectBuffer) {
-        super(cacheBufferSize, bufferCapacity, selectorThreadTotal, useDirectBuffer);
+    public NioTcpClient(int cacheBufferSize, int bufferCapacity, boolean useDirectBuffer, int selectorThreadTotal) {
+        super(cacheBufferSize, bufferCapacity, useDirectBuffer, selectorThreadTotal);
     }
 
     @Override
@@ -38,6 +38,9 @@ public class NioTcpClient extends NioContext {
 
     @Override
     public synchronized void start() throws IOException {
+        if(isRunning) {
+            throw new RuntimeException("当前服务已启动");
+        }
         isRunning = true;
         ioProcesses = new NioTcpIoProcess[selectorThreadTotal];
         for (int i = 0; i < selectorThreadTotal; i++) {

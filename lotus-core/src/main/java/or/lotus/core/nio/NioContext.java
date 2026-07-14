@@ -49,10 +49,10 @@ public abstract class NioContext {
     protected ConcurrentHashMap<LotusByteBuffer, List<String>> retainMap = new ConcurrentHashMap<>();
 
     public NioContext(int cacheBufferSize, int bufferCapacity, boolean useDirectBuffer) {
-        this(cacheBufferSize, bufferCapacity, Runtime.getRuntime().availableProcessors() + 1, useDirectBuffer);
+        this(cacheBufferSize, bufferCapacity, useDirectBuffer, Runtime.getRuntime().availableProcessors() + 1);
     }
 
-    public NioContext(int cacheBufferSize, int bufferCapacity, int selectorThreadTotal, boolean useDirectBuffer) {
+    public NioContext(int cacheBufferSize, int bufferCapacity, boolean useDirectBuffer, int selectorThreadTotal) {
         this.cacheBufferSize = cacheBufferSize;
         this.bufferCapacity = bufferCapacity;
 
