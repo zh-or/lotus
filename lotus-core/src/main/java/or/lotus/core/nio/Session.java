@@ -1,5 +1,6 @@
 package or.lotus.core.nio;
 
+import or.lotus.core.common.DateUtils;
 import or.lotus.core.nio.http.HttpServer;
 
 import java.net.InetSocketAddress;
@@ -42,6 +43,7 @@ public abstract class Session {
         handler = context.getHandler();
         eventList = new LinkedBlockingQueue<Runnable>();
         waitSendMessageList = new LinkedBlockingQueue<>(context.maxMessageSendListCapacity);
+        lastActive = System.currentTimeMillis();
     }
 
     /** 如果消息有需要释放的资源, 请实现 AutoCloseable 接口, 当消息编码完成并写出到socket后会调用 AutoCloseable.close() */
@@ -189,4 +191,15 @@ public abstract class Session {
 
     public abstract InetSocketAddress  getLocalAddress();
 
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("Session{");
+        sb.append("lastActive=").append(DateUtils.format(lastActive));
+        sb.append(", closed=").append(closed);
+        sb.append(", waitSendMessageList=").append(waitSendMessageList.size());
+        sb.append(", id=").append(id);
+        sb.append('}');
+        return sb.toString();
+    }
 }

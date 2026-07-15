@@ -1,5 +1,6 @@
 package or.lotus.core.nio;
 
+import or.lotus.core.common.Utils;
 import or.lotus.core.intmap.SparseArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +31,7 @@ public abstract class NioContext {
     protected LinkedBlockingQueue<ByteBuffer> bufferList = null;
     protected LinkedBlockingQueue<ByteBuffer> directBufferList = null;
 
-    protected int selectorThreadTotal = 0;
+    protected int ioThreadTotal = 0;
 
     /** 最小byteBuffer申请大小, 单个buffer大小不能超过int*/
     protected int bufferCapacity  = 2048;
@@ -52,11 +53,11 @@ public abstract class NioContext {
         this(cacheBufferSize, bufferCapacity, useDirectBuffer, Runtime.getRuntime().availableProcessors() + 1);
     }
 
-    public NioContext(int cacheBufferSize, int bufferCapacity, boolean useDirectBuffer, int selectorThreadTotal) {
+    public NioContext(int cacheBufferSize, int bufferCapacity, boolean useDirectBuffer, int ioThreadTotal) {
         this.cacheBufferSize = cacheBufferSize;
         this.bufferCapacity = bufferCapacity;
 
-        this.selectorThreadTotal = selectorThreadTotal;
+        this.ioThreadTotal = ioThreadTotal;
         isUseDirectBuffer = useDirectBuffer;
         bufferList = new LinkedBlockingQueue<ByteBuffer>(cacheBufferSize);
         directBufferList = new LinkedBlockingQueue<ByteBuffer>(cacheBufferSize);
@@ -236,7 +237,17 @@ public abstract class NioContext {
     public abstract void bind(InetSocketAddress address) throws IOException;
 
     /** 启动服务器 */
-    public abstract void start() throws IOException;
+    public void start() throws IOException {
+        Utils.assets(ioThreadTotal <= 0, "ioThreadTotal必须大于0");
+        Utils.assets(bufferCapacity <= 0, "bufferCapacity必须大于0");
+        Utils.assets(cacheBufferSize <= 0, "cacheBufferSize必须大于0");
+        Utils.assets(maxMessageSendListCapacity <= 0, "cacheBufferSize必须大于0");
+        if(isRunning) {
+            throw new RuntimeException("当前服务已启动.");
+        }
+        isRunning = true;
+
+    }
 
     public abstract void stop() throws IOException;
 
@@ -270,5 +281,13 @@ public abstract class NioContext {
 
     public void setSelectTimeout(int selectTimeout) {
         this.selectTimeout = selectTimeout;
+    }
+
+    public Session getSessionById(int id) {
+        return sessions.get(id);
+    }
+
+    public SparseArray<Session> getSessions() {
+        return sessions;
     }
 }

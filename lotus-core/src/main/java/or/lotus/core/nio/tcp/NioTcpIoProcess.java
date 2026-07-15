@@ -8,15 +8,11 @@ import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.util.Iterator;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class NioTcpIoProcess extends IoProcess {
 
     protected LinkedBlockingQueue<NioTcpSession> connectedSession = null;
     protected Selector selector = null;
-    protected ReadWriteLock selectorRWLock = new ReentrantReadWriteLock();
 
     public NioTcpIoProcess(NioContext context) throws IOException {
         super(context);
@@ -28,15 +24,13 @@ public class NioTcpIoProcess extends IoProcess {
 
         NioTcpSession session = new NioTcpSession(context, client, this);
         if(isClient) {
-            Lock lock = selectorRWLock.readLock();
-            lock.lock();
-            try {
-                session.key = session.channel.register(selector, SelectionKey.OP_CONNECT, /*atth*/session);
-            } catch (ClosedChannelException e) {
-                throw new RuntimeException(e);
-            } finally {
-                lock.unlock();
-            }
+            addPendingTask(() -> {
+                try {
+                    session.key = session.channel.register(selector, SelectionKey.OP_CONNECT, /*atth*/session);
+                } catch (ClosedChannelException e) {
+                    throw new RuntimeException(e);
+                }
+            });
         } else {
             if(!connectedSession.add(session)) {
                 throw new RuntimeException("待处理连接队列已满:" + connectedSession.size());
@@ -73,8 +67,6 @@ public class NioTcpIoProcess extends IoProcess {
                 if(selectorZeroEvent > context.getSelectorZeroEvent()) {
                     if((System.currentTimeMillis() - selectorZeroEventBeginDate) < context.getSelectTimeout()) {
                         //epoll bug
-                        Lock lock = selectorRWLock.writeLock();
-                        lock.lock();
                         try {
                             Selector newSelector = Selector.open();
                             Iterator<SelectionKey> keys = selector.keys().iterator();
@@ -106,8 +98,6 @@ public class NioTcpIoProcess extends IoProcess {
                         } catch (Exception e) {
                             log.error("触发了epoll bug, 重开Selector出错:", e);
                             return;
-                        } finally {
-                            lock.unlock();
                         }
                     }
                     //reset
@@ -176,8 +166,6 @@ public class NioTcpIoProcess extends IoProcess {
             }
 
             try {
-
-
                 if(key.isReadable() && !session.isClosed()) {/*call decode */
                     handleReadData(key, session);
                 }
@@ -196,45 +184,40 @@ public class NioTcpIoProcess extends IoProcess {
 
     protected void handleConnected() {
         NioTcpSession session;
-        Lock lock = selectorRWLock.readLock();
-        lock.lock();
-        try {
-            while((session = connectedSession.poll()) != null) {
-                try {
+        while((session = connectedSession.poll()) != null) {
+            try {
 
-                    IoHandler handler = session.getHandler();
-                    try {
-                        handler.onBeforeConnection(session);
-                    } catch (Exception e) {
-                        log.debug("连接前处理出错:", e);
-                        session.channel.close();
-                        session = null;
-                        continue;
-                    }
-                    session.channel.configureBlocking(false);
-                } catch (IOException e) {
-                    log.debug("连接 配置异步/关闭 出错:", e);
-                }
-
+                IoHandler handler = session.getHandler();
                 try {
-                    session.key = session.channel.register(selector, SelectionKey.OP_READ, /*atth*/session);
-                } catch (ClosedChannelException e) {
-                    log.debug("链接在连接成功之前关闭:", e);
+                    handler.onBeforeConnection(session);
+                } catch (Exception e) {
+                    log.debug("连接前处理出错:", e);
+                    session.channel.close();
+                    session = null;
                     continue;
                 }
-                session.pushEventRunnable(new IoEventRunnable(null, IoEventRunnable.IoEventType.SESSION_CONNECTION, session, context));
+                session.channel.configureBlocking(false);
+            } catch (IOException e) {
+                log.debug("连接 配置异步/关闭 出错:", e);
             }
-        } finally {
-            lock.unlock();
+
+            try {
+                session.key = session.channel.register(selector, SelectionKey.OP_READ, /*atth*/session);
+            } catch (ClosedChannelException e) {
+                log.debug("链接在连接成功之前关闭:", e);
+                continue;
+            }
+            session.pushEventRunnable(new IoEventRunnable(null, IoEventRunnable.IoEventType.SESSION_CONNECTION, session, context));
         }
     }
 
     protected void handleIdle() {
+        //todo 该方法需要优化为哈希时间轮(HashedWheelTimer )
         //只处理当前IoProcess注册的session
         Iterator<SelectionKey> keys = selector.keys().iterator();
         long nowTime = System.currentTimeMillis();
         while(keys.hasNext()) {
-            SelectionKey key = keys.next();/*这里报错?*/
+            SelectionKey key = keys.next();
             if(!context.isRunning()) break;
 
             if (key.channel() instanceof ServerSocketChannel) {

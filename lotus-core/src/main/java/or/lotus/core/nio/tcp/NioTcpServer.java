@@ -27,7 +27,7 @@ public class NioTcpServer extends NioContext {
     protected int selectorZeroEvent = 512;
 
     public NioTcpServer() {
-        this(1024, 4 * 1024, false);
+        this(1024 * 3, 4 * 1024, false);
     }
 
     public NioTcpServer(int cacheBufferSize, int bufferCapacity, boolean useDirectBuffer) {
@@ -38,11 +38,11 @@ public class NioTcpServer extends NioContext {
      * 创建一个TCP服务端
      * @param cacheBufferSize ByteBuffer缓存数量
      * @param bufferCapacity 单个ByteBuffer 最小大小
-     * @param selectorThreadTotal io线程数量
+     * @param ioThreadTotal io线程数量
      * @param useDirectBuffer 是否使用直接内存
      */
-    public NioTcpServer(int cacheBufferSize, int bufferCapacity, boolean useDirectBuffer, int selectorThreadTotal) {
-        super(cacheBufferSize, bufferCapacity, useDirectBuffer, selectorThreadTotal);
+    public NioTcpServer(int cacheBufferSize, int bufferCapacity, boolean useDirectBuffer, int ioThreadTotal) {
+        super(cacheBufferSize, bufferCapacity, useDirectBuffer, ioThreadTotal);
     }
 
     public int getSocketSoTimeout() {
@@ -80,17 +80,14 @@ public class NioTcpServer extends NioContext {
 
     @Override
     public synchronized void start() throws IOException {
-        if(isRunning) {
-            throw new RuntimeException("当前服务已启动");
-        }
         if(serverSocketChannel == null) {
             throw new RuntimeException("请先绑定端口");
         }
+        super.start();
         serverSocketChannel.configureBlocking(false);
-        isRunning = true;
 
-        ioProcesses = new NioTcpIoProcess[selectorThreadTotal];
-        for (int i = 0; i < selectorThreadTotal; i++) {
+        ioProcesses = new NioTcpIoProcess[ioThreadTotal];
+        for (int i = 0; i < ioThreadTotal; i++) {
             ioProcesses[i] = new NioTcpIoProcess(this);
             ioProcesses[i].start();
         }
@@ -106,16 +103,19 @@ public class NioTcpServer extends NioContext {
         }
         isRunning = false;
         acceptor.close();
-        int size = sessions.size();
-        for(int i = 0; i < size; i++) {
-            int key = sessions.keyAt(i);
-            Session session = sessions.get(key);
-            if(session != null) {
-                session.closeNow();
+        synchronized (sessions) {
+            int size = sessions.size();
+            for(int i = 0; i < size; i++) {
+                int key = sessions.keyAt(i);
+                Session session = sessions.get(key);
+                if(session != null) {
+                    session.closeNow();
+                }
             }
+            sessions.clear();
         }
 
-        for (int i = 0; i < selectorThreadTotal; i++) {
+        for (int i = 0; i < ioThreadTotal; i++) {
             ioProcesses[i].close();
         }
         if(serverSocketChannel != null) {
@@ -125,11 +125,6 @@ public class NioTcpServer extends NioContext {
                 log.debug("关闭serverSocketChannel出错:", e);
             }
         }
-        sessions.clear();
-    }
-
-    public NioTcpSession getSessionById(int id) {
-        return (NioTcpSession) sessions.get(id);
     }
 
     class NioTcpAcceptor extends Thread {

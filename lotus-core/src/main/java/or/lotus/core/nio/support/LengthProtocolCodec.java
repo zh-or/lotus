@@ -9,7 +9,7 @@ import or.lotus.core.nio.*;
  *
  * @author or
  */
-public class LengthProtocolCode implements ProtocolCodec {
+public class LengthProtocolCodec implements ProtocolCodec {
 
     @Override
     public boolean decode(Session session, LotusByteBuf in, ProtocolDecoderOutput out) throws Exception {
