@@ -8,10 +8,13 @@ public class EncodeOutByteBuffer {
     NioContext context;
     OutWrapper[] buffers;
     int writeIndex;
-    public EncodeOutByteBuffer(NioContext context) {
+    boolean canWriteFile;
+
+    public EncodeOutByteBuffer(NioContext context, boolean canWriteFile) {
         writeIndex = -1;
         buffers = new OutWrapper[context.pooledBufferStepCount];
         this.context = context;
+        this.canWriteFile = canWriteFile;
     }
 
     public EncodeOutByteBuffer append(ByteBuffer[] buff) {
@@ -57,9 +60,12 @@ public class EncodeOutByteBuffer {
 
     /**
      * 已0拷贝的方式发送文件, 发送完毕会自动调用FileChannel.close()
+     * 注意: udp不支持零拷贝, 请自行编码发送
      * */
     public EncodeOutByteBuffer append(FileChannel channel, long pos, long size) {
-
+        if(!canWriteFile) {
+            throw new RuntimeException("当前不支持发送文件, 请自行编码后发送!");
+        }
         checkAndExpansionBuffer();
         writeIndex ++;
         buffers[writeIndex] = new OutWrapper(channel, pos, size);
@@ -125,7 +131,6 @@ public class EncodeOutByteBuffer {
             this.buffer = buffer;
             isBuffer = true;
         }
-
 
         public OutWrapper(FileChannel fileChannel, long pos, long size) {
             this.fileChannel = fileChannel;

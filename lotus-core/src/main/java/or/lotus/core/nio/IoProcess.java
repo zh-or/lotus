@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
-public abstract class IoProcess extends Thread {
+public abstract class IoProcess extends Thread implements AutoCloseable{
     public static final Logger log = LoggerFactory.getLogger(IoProcess.class);
 
     protected NioContext context = null;

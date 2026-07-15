@@ -305,7 +305,7 @@ public class NioTcpIoProcess extends IoProcess {
             try {
                 boolean sent = true;
                 do {
-                    out = new EncodeOutByteBuffer(context);
+                    out = new EncodeOutByteBuffer(context, true);
                     try {
                         try {
                             sent = session.getCodec().encode(session, msg, out);
