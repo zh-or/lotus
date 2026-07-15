@@ -11,10 +11,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 import java.lang.management.ThreadMXBean;
 import java.math.BigDecimal;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
@@ -725,6 +722,23 @@ public class Utils {
         return ips;
 
     }
+
+    public static String getCurrentBroadcastAddress() throws SocketException, UnknownHostException {
+        Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+        while (interfaces.hasMoreElements()) {
+            NetworkInterface networkInterface = interfaces.nextElement();
+            if (networkInterface.isLoopback() || !networkInterface.isUp()) continue;
+
+            for (InterfaceAddress address : networkInterface.getInterfaceAddresses()) {
+                InetAddress broadcast = address.getBroadcast();
+                if (broadcast != null) {
+                    return broadcast.getHostAddress(); // 返回类似 192.168.1.255 的地址
+                }
+            }
+        }
+        return "255.255.255.255"; // 兜底使用有限广播
+    }
+
 
     public static String formatException(Throwable cause) {
         StackTraceElement[] stes = cause.getStackTrace();

@@ -22,6 +22,7 @@ public class NioUdpSession extends Session {
     @Override
     public boolean write(Object data) {
         boolean r = super.write(data);
+        Session that = this;
         ioProcess.addPendingTask(() -> {
             //在io线程运行并发送数据
             Object msg;
@@ -29,7 +30,7 @@ public class NioUdpSession extends Session {
             while((msg = waitSendMessageList.poll()) != null) {
                 boolean sent = true;
                 do {
-                    out = new EncodeOutByteBuffer(context);
+                    out = new EncodeOutByteBuffer(context, false);
                     try {
                         sent = getCodec().encode(this, msg, out);
                         if(isClosed()) {
@@ -40,30 +41,8 @@ public class NioUdpSession extends Session {
                             return;
                         }
                         for(EncodeOutByteBuffer.OutWrapper buff : buffers) {
-                            if(buff.isBuffer) {
-                                buff.buffer.flip();
-                                int send;
-                                while(buff.buffer.hasRemaining()) {//保证写完
-                                    send = channel.write(buff.buffer);
-                                    if(send == 0 && buff.buffer.hasRemaining()) {
-                                        //防止cpu 100%
-                                        Utils.SLEEP(1);
-                                    }
-                                }
-                            } else {
-                                long loss = buff.size;
-                                long start = buff.pos;
-                                long send;
-                                while(loss > 0) {//保证写完
-                                    send = buff.fileChannel.transferTo(start, loss, channel);
-                                    start += send;
-                                    loss -= send;
-                                    if(send == 0 && loss > 0) {
-                                        //防止cpu 100%
-                                        Utils.SLEEP(1);
-                                    }
-                                }
-                            }
+                            buff.buffer.flip();
+                            int send = channel.send(buff.buffer, remoteAddress);;
                         }
                     } catch (Exception e) {
                         pushEventRunnable(new IoEventRunnable(e, IoEventRunnable.IoEventType.SESSION_EXCEPTION, this, context));
@@ -71,6 +50,8 @@ public class NioUdpSession extends Session {
                         out.release();
                     }
                 } while (sent == false);
+                that.setLastActive(System.currentTimeMillis());
+                context.executeEvent(new IoEventRunnable(msg, IoEventRunnable.IoEventType.SESSION_SENT, that, context));
             }
         });
         ioProcess.wakeup();
