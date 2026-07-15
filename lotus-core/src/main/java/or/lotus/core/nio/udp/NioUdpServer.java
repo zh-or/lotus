@@ -92,5 +92,7 @@ public class NioUdpServer extends NioContext {
         for(DatagramChannel dc : serverChannel) {
             Utils.closeable(dc);
         }
+        sessions.clear();
+        udpSessions.clear();
     }
 }

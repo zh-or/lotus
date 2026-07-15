@@ -125,6 +125,7 @@ public class NioTcpServer extends NioContext {
                 log.debug("关闭serverSocketChannel出错:", e);
             }
         }
+        sessions.clear();
     }
 
     public NioTcpSession getSessionById(int id) {
