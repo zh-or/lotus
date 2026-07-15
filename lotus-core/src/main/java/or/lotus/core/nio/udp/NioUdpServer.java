@@ -2,12 +2,10 @@ package or.lotus.core.nio.udp;
 
 import or.lotus.core.common.Utils;
 import or.lotus.core.nio.NioContext;
-import or.lotus.core.nio.tcp.NioTcpIoProcess;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.net.StandardSocketOptions;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 import java.util.ArrayList;
@@ -21,19 +19,27 @@ public class NioUdpServer extends NioContext {
     protected List<InetSocketAddress> bindAddress;
     protected DatagramChannel[] serverChannel;
     protected NioUdpIoProcess[] ioProcess;
-
     protected ConcurrentHashMap<SocketAddress, NioUdpSession> udpSessions = new ConcurrentHashMap<>();
 
-    public NioUdpServer(int maxBufferCount, int bufferCapacity, boolean useDirectBuffer) {
-        super(maxBufferCount, bufferCapacity, useDirectBuffer);
+    public NioUdpServer() {
+        this(1024 * 3, 4 * 1024, false);
     }
 
-    public NioUdpServer(int maxBufferCount, int bufferCapacity, boolean useDirectBuffer, int selectorThreadTotal) {
-        super(maxBufferCount, bufferCapacity, useDirectBuffer, selectorThreadTotal);
+    public NioUdpServer(int cacheBufferSize, int bufferCapacity, boolean useDirectBuffer) {
+        this(cacheBufferSize, bufferCapacity, useDirectBuffer, Runtime.getRuntime().availableProcessors() + 1);
+    }
+
+    public NioUdpServer(int cacheBufferSize, int bufferCapacity, boolean useDirectBuffer, int ioThreadTotal) {
+        super(cacheBufferSize, bufferCapacity, useDirectBuffer, ioThreadTotal);
         if(bufferCapacity <= 0) {
             this.bufferCapacity = 65507;//udp 最大数据包大小
         }
         bindAddress = new ArrayList<>(2);
+    }
+
+    /** 根据远程地址端口获取session */
+    public NioUdpSession getSessionByAddress(SocketAddress address) {
+        return udpSessions.get(address);
     }
 
 
@@ -45,11 +51,7 @@ public class NioUdpServer extends NioContext {
 
     @Override
     public synchronized void start() throws IOException {
-        if(isRunning) {
-            throw new RuntimeException("当前服务已启动.");
-        }
-        isRunning = true;
-
+        super.start();
         int addressTotal = bindAddress.size();
 
         if(addressTotal == 0) {
@@ -64,12 +66,12 @@ public class NioUdpServer extends NioContext {
             serverChannel[i].setOption(java.net.StandardSocketOptions.SO_RCVBUF, bufferCapacity);
             serverChannel[i].bind(bindAddress.get(i));
         }
-        ioProcess = new NioUdpIoProcess[Math.min(selectorThreadTotal, addressTotal)];
+        ioProcess = new NioUdpIoProcess[Math.min(ioThreadTotal, addressTotal)];
 
         for(int i = 0; i < addressTotal; i++) {
-            int ioBound = ioProcess.length % addressTotal;
+            int ioBound = i % ioProcess.length;
             if(ioProcess[ioBound] == null) {
-                ioProcess[ioBound] = new NioUdpIoProcess(this);
+                ioProcess[ioBound] = new NioUdpIoProcess(this, i);
             }
             serverChannel[i].register(ioProcess[ioBound].selector, SelectionKey.OP_READ);
         }

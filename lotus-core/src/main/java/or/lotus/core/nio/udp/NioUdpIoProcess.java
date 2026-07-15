@@ -9,17 +9,20 @@ import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
 import java.util.Iterator;
 
 public class NioUdpIoProcess extends IoProcess {
     protected Selector selector = null;
-    protected NioUdpServer server;
+    protected NioUdpServer server = null;
+    protected int bound;
 
-    public NioUdpIoProcess(NioContext context) throws IOException {
+    public NioUdpIoProcess(NioContext context, int bound) throws IOException {
         super(context);
         selector = Selector.open();
-        server = (NioUdpServer) context;
+        this.bound = bound;
+        if(context instanceof NioUdpServer) {
+            server = (NioUdpServer) context;
+        }
     }
 
     @Override
@@ -64,13 +67,22 @@ public class NioUdpIoProcess extends IoProcess {
                             continue;
                         }
                     }
-
-                    session = server.udpSessions.get(clientAddress);
-                    if(session == null) {
-                        session = new NioUdpSession(context, dc, clientAddress, this);
-                        server.udpSessions.put(clientAddress, session);
-                        session.pushEventRunnable(new IoEventRunnable(null, IoEventRunnable.IoEventType.SESSION_CONNECTION, session, context));
+                    //当server不为空表示当前使用的NioUdpServer, session根据clientAddress从server.udpSessions中获取
+                    if(server != null) {
+                        session = server.udpSessions.get(clientAddress);
+                        if(session == null) {
+                            session = new NioUdpSession(context, dc, clientAddress, dc.getLocalAddress(), this);
+                            server.udpSessions.put(clientAddress, session);
+                            session.pushEventRunnable(new IoEventRunnable(null, IoEventRunnable.IoEventType.SESSION_CONNECTION, session, context));
+                        }
+                    } else {
+                        //当server为空表示当前使用的NioUdpClient, session从 SelectionKey的atth中获取
+                        session = (NioUdpSession) key.attachment();
+                        if(session == null) {
+                            continue;
+                        }
                     }
+
 
                     LotusByteBuffer readCache = session.getReadCache(buff);
                     if(readCache.getDataLength() > 0) {
@@ -92,32 +104,42 @@ public class NioUdpIoProcess extends IoProcess {
                 }
             }
 
-        } catch (IOException e) {
-            log.debug("读写取数据出错:" + session.getId(), e);
-            session.closeNow();
         } catch (Exception e) {
-            session.pushEventRunnable(new IoEventRunnable(e, IoEventRunnable.IoEventType.SESSION_EXCEPTION, session, context));
+            log.debug("读写取数据出错:" + session, e);
+            if(session != null) {
+                session.closeNow();
+                session.pushEventRunnable(new IoEventRunnable(e, IoEventRunnable.IoEventType.SESSION_EXCEPTION, session, context));
+            }
         }
     }
 
 
-
     protected void handleIdle() {
-        //只处理当前IoProcess注册的session
-        Iterator<SelectionKey> keys = selector.keys().iterator();
         long nowTime = System.currentTimeMillis();
-        while(keys.hasNext()) {
-            SelectionKey key = keys.next();/*这里报错?*/
-            if(!context.isRunning()) break;
-
-            if (key.isValid() == false) {
-                continue;
+        if(server != null) {
+            //只有第一个线程才处理空闲事件
+            if(bound == 0) {
+                server.udpSessions.forEach((key, session) -> {
+                    if(session != null && nowTime - session.getLastActive() >= context.getSessionIdleTime()) {
+                        /*call on idle */
+                        session.pushEventRunnable(new IoEventRunnable(null, IoEventRunnable.IoEventType.SESSION_IDLE, session, context));
+                    }
+                });
             }
-            NioUdpSession session = (NioUdpSession) key.attachment();
+        } else {
+            Iterator<SelectionKey> keys = selector.keys().iterator();
+            while(keys.hasNext()) {
+                SelectionKey key = keys.next();
+                if(!context.isRunning()) break;
 
-            if(session != null && nowTime - session.getLastActive() >= context.getSessionIdleTime()) {
-                /*call on idle */
-                session.pushEventRunnable(new IoEventRunnable(null, IoEventRunnable.IoEventType.SESSION_IDLE, session, context));
+                if (key.isValid() == false) {
+                    continue;
+                }
+                NioUdpSession session = (NioUdpSession) key.attachment();
+                if(session != null && !session.isClosed() && nowTime - session.getLastActive() >= context.getSessionIdleTime()) {
+                    /*call on idle */
+                    session.pushEventRunnable(new IoEventRunnable(null, IoEventRunnable.IoEventType.SESSION_IDLE, session, context));
+                }
             }
         }
     }
