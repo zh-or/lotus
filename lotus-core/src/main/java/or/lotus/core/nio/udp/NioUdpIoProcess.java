@@ -71,7 +71,7 @@ public class NioUdpIoProcess extends IoProcess {
                     if(server != null) {
                         session = server.udpSessions.get(clientAddress);
                         if(session == null) {
-                            session = new NioUdpSession(context, dc, clientAddress, dc.getLocalAddress(), this);
+                            session = new NioUdpSession(context, dc, clientAddress, dc.getLocalAddress(), this, false);
                             server.udpSessions.put(clientAddress, session);
                             session.pushEventRunnable(new IoEventRunnable(null, IoEventRunnable.IoEventType.SESSION_CONNECTION, session, context));
                         }
@@ -115,33 +115,7 @@ public class NioUdpIoProcess extends IoProcess {
 
 
     protected void handleIdle() {
-        long nowTime = System.currentTimeMillis();
-        if(server != null) {
-            //只有第一个线程才处理空闲事件
-            if(bound == 0) {
-                server.udpSessions.forEach((key, session) -> {
-                    if(session != null && nowTime - session.getLastActive() >= context.getSessionIdleTime()) {
-                        /*call on idle */
-                        session.pushEventRunnable(new IoEventRunnable(null, IoEventRunnable.IoEventType.SESSION_IDLE, session, context));
-                    }
-                });
-            }
-        } else {
-            Iterator<SelectionKey> keys = selector.keys().iterator();
-            while(keys.hasNext()) {
-                SelectionKey key = keys.next();
-                if(!context.isRunning()) break;
-
-                if (key.isValid() == false) {
-                    continue;
-                }
-                NioUdpSession session = (NioUdpSession) key.attachment();
-                if(session != null && !session.isClosed() && nowTime - session.getLastActive() >= context.getSessionIdleTime()) {
-                    /*call on idle */
-                    session.pushEventRunnable(new IoEventRunnable(null, IoEventRunnable.IoEventType.SESSION_IDLE, session, context));
-                }
-            }
-        }
+        // 空闲检测已由 HashedWheelTimer 接管, 此方法保留用于兼容
     }
 
 

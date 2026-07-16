@@ -60,7 +60,7 @@ public class NioUdpClient extends NioContext {
             dc.configureBlocking(false);
             dc.connect(remoteAddress);
 
-            session = new NioUdpSession(this, dc, remoteAddress, dc.getLocalAddress(), process);
+            session = new NioUdpSession(this, dc, remoteAddress, dc.getLocalAddress(), process, true);
 
             NioUdpSession finalSession = session;
             process.addPendingTask(() -> {
@@ -95,11 +95,12 @@ public class NioUdpClient extends NioContext {
     }
 
     @Override
-    public void stop() throws IOException {
-        if(!isRunning) {
+    public void stop() {
+
+        if (!isRunning) {
             return;
         }
-        isRunning = false;
+        super.stop();
         for (int i = 0; i < ioThreadTotal; i++) {
             Utils.closeable(ioProcess[i]);
         }

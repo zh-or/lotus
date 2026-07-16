@@ -216,7 +216,7 @@ public class WebSocketClient {
                  if(lastActiveTime != 0 && System.currentTimeMillis() - lastActiveTime > ideaTime) {
                      if(isConnection()) {
                          send(WebSocketFrame.ping());
-                         System.out.println("ping");
+                         //System.out.println("ping");
                      }
                  }
             }
@@ -411,7 +411,7 @@ public class WebSocketClient {
                             start += read;
                             t ++;
                             if(t >= 2){
-                                System.out.println("多次读入");
+                               // System.out.println("多次读入");
                             }
                         } while(start < len - 1);
                     }

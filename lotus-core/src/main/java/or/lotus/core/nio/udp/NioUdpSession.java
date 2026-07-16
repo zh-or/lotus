@@ -1,5 +1,6 @@
 package or.lotus.core.nio.udp;
 
+import or.lotus.core.common.Utils;
 import or.lotus.core.nio.*;
 
 import java.io.IOException;
@@ -12,15 +13,17 @@ import java.nio.channels.DatagramChannel;
 import java.nio.channels.MembershipKey;
 
 public class NioUdpSession extends Session {
-    DatagramChannel channel;
-    SocketAddress remoteAddress;
-    SocketAddress localAddress;
+    protected DatagramChannel channel;
+    protected SocketAddress remoteAddress;
+    protected SocketAddress localAddress;
+    protected boolean isClient;
 
-    public NioUdpSession(NioContext context, DatagramChannel datagramChannel, SocketAddress remoteAddress, SocketAddress localAddress, IoProcess ioProcess) {
+    public NioUdpSession(NioContext context, DatagramChannel datagramChannel, SocketAddress remoteAddress, SocketAddress localAddress, IoProcess ioProcess, boolean isClient) {
         super(context, ioProcess);
         this.remoteAddress = remoteAddress;
         this.localAddress = localAddress;
         channel = datagramChannel;
+        this.isClient = isClient;
     }
 
     @Override
@@ -48,7 +51,7 @@ public class NioUdpSession extends Session {
                             buff.buffer.flip();
                             int send = channel.send(buff.buffer, remoteAddress);
                             if(send <= 0) {
-                                System.out.println("发送为0");
+                                //System.out.println("发送为0");
                             }
                         }
                     } catch (Exception e) {
@@ -99,7 +102,9 @@ public class NioUdpSession extends Session {
 
     @Override
     public void closeNow() {
+        if(isClient) {
+            Utils.closeable(channel);
+        }
         super.closeNow();
-
     }
 }

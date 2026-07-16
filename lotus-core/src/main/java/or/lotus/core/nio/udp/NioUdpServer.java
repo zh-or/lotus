@@ -82,19 +82,21 @@ public class NioUdpServer extends NioContext {
     }
 
     @Override
-    public synchronized void stop() throws IOException {
-        if(!isRunning) {
+    public synchronized void stop() {
+
+        if (!isRunning) {
             return;
         }
-        isRunning = false;
-
+        super.stop();
         for(NioUdpIoProcess ip : ioProcess) {
             Utils.closeable(ip);
         }
         for(DatagramChannel dc : serverChannel) {
             Utils.closeable(dc);
         }
-        sessions.clear();
+        synchronized (sessions) {
+            sessions.clear();
+        }
         udpSessions.clear();
     }
 }

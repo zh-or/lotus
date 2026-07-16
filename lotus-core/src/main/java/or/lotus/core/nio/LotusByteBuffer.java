@@ -6,6 +6,7 @@ import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
 
+/** 不支持多线程 */
 public class LotusByteBuffer implements LotusByteBuf {
     private final NioContext context;
     private boolean isUseDirectBuffer = false;
@@ -416,7 +417,8 @@ public class LotusByteBuffer implements LotusByteBuf {
         do {
             buff = buffers[readIndex];
             if(buff == null) {
-                System.out.println("buff == null");
+                throw new RuntimeException("buff == null");
+                //System.out.println("buff == null");
             }
             if(buff.hasRemaining()) {
                 return buff.get();

@@ -38,7 +38,7 @@ public class IoEventRunnable implements Runnable {
                     break;
                 case SESSION_IDLE:
                     handler.onIdle(session);
-                    session.lastActive = System.currentTimeMillis();
+                    session.setLastActive(System.currentTimeMillis());
                     break;
                 case SESSION_RECEIVE_DATA:
                     handler.onReceiveMessage(session, att);

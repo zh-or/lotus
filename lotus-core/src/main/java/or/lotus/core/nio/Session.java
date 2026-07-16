@@ -25,6 +25,7 @@ public abstract class Session {
 
     protected IoProcess ioProcess = null;
     protected ReadWriteLock codecRwLock = new ReentrantReadWriteLock();
+    protected volatile HashedWheelTimer.HashedWheelTimeout wheelTimeout = null;
 
     public Session(NioContext context, IoProcess ioProcess) {
         this.context = context;
@@ -44,6 +45,11 @@ public abstract class Session {
         eventList = new LinkedBlockingQueue<Runnable>();
         waitSendMessageList = new LinkedBlockingQueue<>(context.maxMessageSendListCapacity);
         lastActive = System.currentTimeMillis();
+
+        // 将session加入哈希时间轮进行空闲检测
+        if(context.getWheelTimer() != null) {
+            context.getWheelTimer().addTimeout(this, context.getSessionIdleTime());
+        }
     }
 
     /** 如果消息有需要释放的资源, 请实现 AutoCloseable 接口, 当消息编码完成并写出到socket后会调用 AutoCloseable.close() */
@@ -66,6 +72,10 @@ public abstract class Session {
         synchronized (this) {
             if(closed) return ;
             closed = true;
+        }
+        // 从时间轮中移除空闲检测
+        if(context.getWheelTimer() != null) {
+            context.getWheelTimer().removeTimeout(this);
         }
         synchronized (context.sessions) {
             context.sessions.remove(id);
@@ -129,6 +139,10 @@ public abstract class Session {
 
     public void setLastActive(long timeMillis) {
         lastActive = timeMillis;
+        // 每次活跃时重置时间轮中的超时
+        if(context.getWheelTimer() != null) {
+            context.getWheelTimer().resetTimeout(this, context.getSessionIdleTime());
+        }
     }
 
     public long getLastActive() {

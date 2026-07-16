@@ -26,6 +26,12 @@ public abstract class NioContext {
     /** session无操作空闲间隔 毫秒 */
     protected int sessionIdleTime = 0;
 
+    /** 哈希时间轮每格精度(毫秒), 越小精度越高但CPU开销越大 */
+    protected long wheelTickDuration = 200;
+
+    /** 哈希时间轮定时器, 用于高效处理session空闲检测 */
+    protected HashedWheelTimer wheelTimer = null;
+
     protected int selectorZeroEvent = 512;
     protected int pooledBufferStepCount = 10;
     protected LinkedBlockingQueue<ByteBuffer> bufferList = null;
@@ -225,6 +231,18 @@ public abstract class NioContext {
         this.sessionIdleTime = sessionIdleTime;
     }
 
+    public long getWheelTickDuration() {
+        return wheelTickDuration;
+    }
+
+    public void setWheelTickDuration(long wheelTickDuration) {
+        this.wheelTickDuration = wheelTickDuration;
+    }
+
+    public HashedWheelTimer getWheelTimer() {
+        return wheelTimer;
+    }
+
     public boolean isRunning() {
         return isRunning;
     }
@@ -247,9 +265,25 @@ public abstract class NioContext {
         }
         isRunning = true;
 
+        // 初始化哈希时间轮定时器
+        if(sessionIdleTime > 0) {
+            wheelTimer = new HashedWheelTimer(wheelTickDuration, 512);
+            wheelTimer.start();
+        }
+
     }
 
-    public abstract void stop() throws IOException;
+    public void stop() {
+
+        if (!isRunning) {
+            return;
+        }
+        isRunning = false;
+        if(wheelTimer != null) {
+            wheelTimer.stop();
+            wheelTimer = null;
+        }
+    }
 
 
     public int getMaxMessageSendListCapacity() {

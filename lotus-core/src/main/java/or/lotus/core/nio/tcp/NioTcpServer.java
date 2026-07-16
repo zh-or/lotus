@@ -98,10 +98,11 @@ public class NioTcpServer extends NioContext {
 
     @Override
     public synchronized void stop()  {
-        if(!isRunning) {
+
+        if (!isRunning) {
             return;
         }
-        isRunning = false;
+        super.stop();
         acceptor.close();
         synchronized (sessions) {
             int size = sessions.size();

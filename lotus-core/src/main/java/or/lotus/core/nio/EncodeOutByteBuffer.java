@@ -59,7 +59,7 @@ public class EncodeOutByteBuffer {
     }
 
     /**
-     * 已0拷贝的方式发送文件, 发送完毕会自动调用FileChannel.close()
+     * 以0拷贝的方式发送文件, 发送完毕会自动调用FileChannel.close()
      * 注意: udp不支持零拷贝, 请自行编码发送
      * */
     public EncodeOutByteBuffer append(FileChannel channel, long pos, long size) {

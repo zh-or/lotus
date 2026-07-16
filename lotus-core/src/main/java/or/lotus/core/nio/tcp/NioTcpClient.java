@@ -51,7 +51,7 @@ public class NioTcpClient extends NioContext {
         if (!isRunning) {
             return;
         }
-        isRunning = false;
+        super.stop();
         synchronized (sessions) {
             int size = sessions.size();
             for(int i = 0; i < size; i++) {

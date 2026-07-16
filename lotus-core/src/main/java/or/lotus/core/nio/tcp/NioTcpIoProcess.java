@@ -212,28 +212,7 @@ public class NioTcpIoProcess extends IoProcess {
     }
 
     protected void handleIdle() {
-        //todo 该方法需要优化为哈希时间轮(HashedWheelTimer )
-        //只处理当前IoProcess注册的session
-        Iterator<SelectionKey> keys = selector.keys().iterator();
-        long nowTime = System.currentTimeMillis();
-        while(keys.hasNext()) {
-            SelectionKey key = keys.next();
-            if(!context.isRunning()) break;
-
-            if (key.channel() instanceof ServerSocketChannel) {
-                continue;
-            }
-
-            if (key.isValid() == false) {
-                continue;
-            }
-            NioTcpSession session = (NioTcpSession) key.attachment();
-
-            if(session != null && !session.isClosed() && nowTime - session.getLastActive() >= context.getSessionIdleTime()) {
-                /*call on idle */
-                session.pushEventRunnable(new IoEventRunnable(null, IoEventRunnable.IoEventType.SESSION_IDLE, session, context));
-            }
-        }
+        // 空闲检测已由 HashedWheelTimer 接管, 此方法保留用于兼容
     }
 
     protected ByteBuffer ioProcessByteBuffer = null;
