@@ -70,7 +70,7 @@ public class NioUdpClient extends NioContext {
                     throw new RuntimeException(e);
                 }
             });
-
+            process.wakeup();
             ioProcessBound++;
             return session;
         } catch (Exception e) {

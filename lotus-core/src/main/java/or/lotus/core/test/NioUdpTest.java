@@ -35,7 +35,7 @@ public class NioUdpTest {
         client.setHandler(clientHandler);
         client.setSessionIdleTime(5000);
         log.info("开始连接");
-        for(int i = 0; i < 2; i++) {
+        for(int i = 0; i < 1000; i++) {
             long start = System.currentTimeMillis();
             NioUdpSession session = client.connection(new InetSocketAddress("127.0.01", 62215), null);
             long end = System.currentTimeMillis() - start;
