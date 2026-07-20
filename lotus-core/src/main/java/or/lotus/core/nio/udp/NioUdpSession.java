@@ -102,9 +102,11 @@ public class NioUdpSession extends Session {
 
     @Override
     public void closeNow() {
+        super.closeNow();
         if(isClient) {
             Utils.closeable(channel);
+        } else {
+            ((NioUdpServer) context).udpSessions.remove(remoteAddress);
         }
-        super.closeNow();
     }
 }
