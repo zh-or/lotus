@@ -7,18 +7,18 @@ import or.lotus.core.http.WebSocketFrame;
 import or.lotus.core.http.restful.RestfulFilter;
 import or.lotus.core.http.restful.RestfulRequest;
 import or.lotus.core.http.restful.RestfulResponse;
-import or.lotus.core.http.restful.ann.Get;
-import or.lotus.core.http.restful.ann.Parameter;
-import or.lotus.core.http.restful.ann.Post;
-import or.lotus.core.http.restful.ann.RestfulController;
+import or.lotus.core.http.restful.ann.*;
 import or.lotus.core.nio.LotusByteBuffer;
 import or.lotus.core.nio.Session;
 import or.lotus.core.nio.http.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.thymeleaf.util.StringUtils;
 
 import java.io.File;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -69,7 +69,7 @@ public class HttpTest {
 
         tt.print();
         System.out.println("数据长度:" + new FileSize(buf.getDataLength()));
-System.exit(0);
+//System.exit(0);
         server.addStaticPath("./test");
         server.addController(HttpTest.class);
         server.setCacheContentToFileLimit(1024 * 5);
@@ -102,7 +102,10 @@ System.exit(0);
             }
         }, 1000, 500);
     }
-
+    @Post("/pv/{a}")
+    public String pathVar(@PathVar("a") String a, @Parameter("b") List<String> arr) {
+        return "PathVar:->" + a + "\narr:" + StringUtils.join(arr, ",");
+    }
 
     @Get("/haha")
     public String haha(@Parameter("t") String t) {

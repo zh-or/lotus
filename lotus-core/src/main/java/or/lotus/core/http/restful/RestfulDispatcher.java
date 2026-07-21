@@ -1,6 +1,7 @@
 package or.lotus.core.http.restful;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import or.lotus.core.common.BeanUtils;
 import or.lotus.core.common.Utils;
@@ -156,7 +157,7 @@ public class RestfulDispatcher {
                             }
 
                             if(type.isArray()) {
-                                return  RestfulUtils.valueToArray(
+                                return RestfulUtils.valueToArray(
                                         type.getComponentType(),
                                         Utils.splitManual(val,","));
                             }
@@ -190,9 +191,12 @@ public class RestfulDispatcher {
                             }
                             /** list */
                             if(type.isAssignableFrom(List.class)) {
-                                return BeanUtils.OBJECT_MAPPER.readValue(
+                                JavaType listType = BeanUtils.OBJECT_MAPPER.getTypeFactory().constructCollectionType(List.class, childType);
+                                return BeanUtils.OBJECT_MAPPER.treeToValue(val, listType);
+
+                                /*return BeanUtils.OBJECT_MAPPER.readValue(
                                         val.toString(),
-                                        new TypeReferenceDynamic<List>(List.class, childType));
+                                        new TypeReferenceDynamic<List>(List.class, childType));*/
                             }
                             /** 对象 */
                             return BeanUtils.JsonToObj(type, val.toString());
