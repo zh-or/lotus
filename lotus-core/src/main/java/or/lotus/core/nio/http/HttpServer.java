@@ -430,6 +430,12 @@ public class HttpServer extends RestfulContext {
             HttpRequest request = (HttpRequest) session.removeAttr(HttpProtocolCodec.REQUEST);
 
             Utils.closeable(request);
+
+            HttpResponse response = (HttpResponse) session.removeAttr(HttpProtocolCodec.RESPONSE);
+            if(response != null && response.isOpenSync()) {
+                Utils.closeable(response.syncResponse);
+            }
+            Utils.closeable(response);
         }
 
         @Override
@@ -446,8 +452,12 @@ public class HttpServer extends RestfulContext {
                 HttpResponse response = null;
                 try {
                     response = request.createResponse();
+                    session.setAttr(response, HttpProtocolCodec.RESPONSE);
                     dispatch(request, response);
                 } catch (Throwable e) {
+                    if(response != null && response.isOpenSync()) {
+                        Utils.closeable(response.syncResponse);
+                    }
                     Utils.closeable(response);
                     //发生异常后 response 需要重新创建, 也许后面可以优化一下
                     if(e instanceof HttpServerException) {

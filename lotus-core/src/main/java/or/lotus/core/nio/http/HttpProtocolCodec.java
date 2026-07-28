@@ -14,6 +14,7 @@ import java.nio.file.StandardOpenOption;
 public class HttpProtocolCodec implements ProtocolCodec {
     public static final String STATE = "http-state";
     public static final String REQUEST = "http-request";
+    public static final String RESPONSE = "http-response";
     private HttpServer context;
     private static final byte[] lineChars = "\r\n".getBytes();
     private static final byte[] headerChars = "\r\n\r\n".getBytes();

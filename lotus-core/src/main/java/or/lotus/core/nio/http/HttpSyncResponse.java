@@ -3,12 +3,14 @@ package or.lotus.core.nio.http;
 import or.lotus.core.nio.LotusByteBuffer;
 import or.lotus.core.nio.Session;
 
+/** 如果打开了Response的异步, 必须手动释放, 否则将导致内存泄漏 */
 public class HttpSyncResponse implements AutoCloseable {
     protected HttpServer context;
     protected Session session;
     protected LotusByteBuffer buffer;
     protected boolean isEnd = false;
     protected long lastSendData = 0;
+    protected boolean isClosed = false;
 
     public HttpSyncResponse(HttpServer context, Session session) {
         this.context = context;
@@ -38,7 +40,9 @@ public class HttpSyncResponse implements AutoCloseable {
         }
         lastSendData = System.currentTimeMillis();
         if(!session.write(obj)) {
-            obj.buffer.release();
+            if(obj.buffer != null) {
+                obj.buffer.release();
+            }
         }
     }
 
@@ -53,6 +57,9 @@ public class HttpSyncResponse implements AutoCloseable {
 
 
     private void checkBuffer() {
+        if(isClosed) {
+            throw new RuntimeException("当前HttpSyncResponse已被关闭");
+        }
         if(buffer == null) {
             buffer = (LotusByteBuffer) context.server.pulledByteBuffer();
         }
@@ -62,6 +69,8 @@ public class HttpSyncResponse implements AutoCloseable {
     public void close() throws Exception {
         if(buffer != null) {
             buffer.release();
+            buffer = null;
         }
+        isClosed = true;
     }
 }
