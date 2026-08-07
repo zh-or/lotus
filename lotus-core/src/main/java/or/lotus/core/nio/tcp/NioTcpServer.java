@@ -7,12 +7,18 @@ import or.lotus.core.nio.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.security.KeyStore;
+import java.security.SecureRandom;
 import java.util.Iterator;
 
 public class NioTcpServer extends NioContext {
@@ -23,6 +29,8 @@ public class NioTcpServer extends NioContext {
     protected NioTcpAcceptor acceptor;
     protected int socketSoTimeout = 3000;//设置 Socket 读取操作的超时时间（SO_TIMEOUT）
     protected boolean tcpNoDelay = false;
+    protected boolean enableSSL = false;
+    protected SSLContext sslContext = null;
 
     protected int selectorZeroEvent = 512;
 
@@ -126,6 +134,51 @@ public class NioTcpServer extends NioContext {
                 log.debug("关闭serverSocketChannel出错:", e);
             }
         }
+    }
+
+
+
+    /***
+     * @param keystore 路径
+     * @param password 密码
+     * @param keyStoreType 私钥类型 JKS 或 PKCS12）, 推荐 PKCS12
+     * @param protocol  jdk8(SSL,SSLv2,SSLv3,TLS,TLSv1,TLSv1.1,TLSv1.2) the standard name of the requested protocol.
+     *          See the SSLContext section in the <a href=
+     * "{@docRoot}/../technotes/guides/security/StandardNames.html#SSLContext">
+     *          Java Cryptography Architecture Standard Algorithm Name
+     *          Documentation</a>
+     *          for information about standard protocol names.
+     */
+    public void setKeyStoreAndEnableSSL(String keystore, String password, String keyStoreType, String protocol) throws Exception {
+        char[] pwdCharArr = password.toCharArray();
+        KeyStore ks = KeyStore.getInstance(keyStoreType); // 加载服务端证书密钥库（JKS 或 PKCS12）, 推荐 PKCS12
+        try (FileInputStream fis = new FileInputStream(keystore)) {
+            ks.load(fis, pwdCharArr);
+        }
+
+        KeyManagerFactory kmf = KeyManagerFactory.getInstance(
+                KeyManagerFactory.getDefaultAlgorithm()
+        );
+        kmf.init(ks, pwdCharArr);
+
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance(
+                TrustManagerFactory.getDefaultAlgorithm()
+        );
+        tmf.init((KeyStore) null);
+
+        sslContext = SSLContext.getInstance(protocol);
+        sslContext.init(
+                kmf.getKeyManagers(),
+                tmf.getTrustManagers(),
+                new SecureRandom()
+        );
+
+        enableSSL = true;
+        throw new RuntimeException("暂时没有实现, 因为目前都是在用nginx代理");
+    }
+
+    public boolean isEnableSSL() {
+        return enableSSL;
     }
 
     class NioTcpAcceptor extends Thread {

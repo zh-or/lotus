@@ -48,8 +48,6 @@ public class HttpServer extends RestfulContext {
     protected List<String> staticPath = new ArrayList<>(3);
     protected boolean isSupportSymbolicLink = false;
     protected String defaultIndexFile = "index.html";
-    protected boolean enableSSL = false;
-    protected SSLContext sslContext = null;
     /** 如果http内容超过此值, 则缓存到文件 */
     protected int cacheContentToFileLimit = 1024 * 1024 * 4;
 
@@ -117,45 +115,6 @@ public class HttpServer extends RestfulContext {
         server.stop();
     }
 
-    /***
-     * @param keystore 路径
-     * @param password 密码
-     * @param keyStoreType 私钥类型 JKS 或 PKCS12）, 推荐 PKCS12
-     * @param protocol  jdk8(SSL,SSLv2,SSLv3,TLS,TLSv1,TLSv1.1,TLSv1.2) the standard name of the requested protocol.
-     *          See the SSLContext section in the <a href=
-     * "{@docRoot}/../technotes/guides/security/StandardNames.html#SSLContext">
-     *          Java Cryptography Architecture Standard Algorithm Name
-     *          Documentation</a>
-     *          for information about standard protocol names.
-     */
-    public void setKeyStoreAndEnableSSL(String keystore, String password, String keyStoreType, String protocol) throws Exception {
-        char[] pwdCharArr = password.toCharArray();
-        KeyStore ks = KeyStore.getInstance(keyStoreType); // 加载服务端证书密钥库（JKS 或 PKCS12）, 推荐 PKCS12
-        try (FileInputStream fis = new FileInputStream(keystore)) {
-            ks.load(fis, pwdCharArr);
-        }
-
-        KeyManagerFactory kmf = KeyManagerFactory.getInstance(
-                KeyManagerFactory.getDefaultAlgorithm()
-        );
-        kmf.init(ks, pwdCharArr);
-
-        TrustManagerFactory tmf = TrustManagerFactory.getInstance(
-                TrustManagerFactory.getDefaultAlgorithm()
-        );
-        tmf.init((KeyStore) null);
-
-        sslContext = SSLContext.getInstance(protocol);
-        sslContext.init(
-                kmf.getKeyManagers(),
-                tmf.getTrustManagers(),
-                null
-        );
-
-        enableSSL = true;
-        throw new RuntimeException("暂时没有实现, 因为目前都是在用nginx代理");
-    }
-
     public int getBufferCapacity() {
         return bufferCapacity;
     }
@@ -163,10 +122,6 @@ public class HttpServer extends RestfulContext {
     /** 单个ByteBuffer大小, 默认16kb */
     public void setBufferCapacity(int bufferCapacity) {
         this.bufferCapacity = bufferCapacity;
-    }
-
-    public boolean isEnableSSL() {
-        return enableSSL;
     }
 
     public boolean isEnableWebSocket() {
@@ -237,7 +192,6 @@ public class HttpServer extends RestfulContext {
 
     public void removeWebSocketMessageHandler(HttpWebSocketMessageHandler webSocketMessageHandler) {
         webSocketHandlers.remove(webSocketMessageHandler.getPath());
-
     }
 
     @Override
