@@ -10,10 +10,10 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 
@@ -34,8 +34,8 @@ public abstract class NioContext {
 
     protected int selectorZeroEvent = 512;
     protected int pooledBufferStepCount = 10;
-    protected LinkedBlockingQueue<ByteBuffer> bufferList = null;
-    protected LinkedBlockingQueue<ByteBuffer> directBufferList = null;
+    protected ArrayBlockingQueue<ByteBuffer> bufferList = null;
+    protected ArrayBlockingQueue<ByteBuffer> directBufferList = null;
 
     protected int ioThreadTotal = 0;
 
@@ -65,8 +65,8 @@ public abstract class NioContext {
 
         this.ioThreadTotal = ioThreadTotal;
         isUseDirectBuffer = useDirectBuffer;
-        bufferList = new LinkedBlockingQueue<ByteBuffer>(cacheBufferSize);
-        directBufferList = new LinkedBlockingQueue<ByteBuffer>(cacheBufferSize);
+        bufferList = new ArrayBlockingQueue<ByteBuffer>(cacheBufferSize);
+        directBufferList = new ArrayBlockingQueue<ByteBuffer>(cacheBufferSize);
     }
 
     public int nextSessionId() {
@@ -145,10 +145,15 @@ public abstract class NioContext {
                 flyByteBuffer.add(-buffer.capacity());
                 if((buffer.capacity() == bufferCapacity) && (bufferList.size() < cacheBufferSize)) {
                     buffer.clear();
-                    if(buffer.isDirect()) {
-                        directBufferList.add(buffer);
-                    } else {
-                        bufferList.add(buffer);
+                    try {
+                        if(buffer.isDirect()) {
+                            directBufferList.add(buffer);
+                        } else {
+                            bufferList.add(buffer);
+                        }
+                    } catch (Exception e) {
+                        /*如果队列已满则 会抛出异常*/
+                        log.error("队列已满, size: {} \n{}", cacheBufferSize, e);
                     }
                 }
             }

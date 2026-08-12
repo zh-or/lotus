@@ -14,13 +14,16 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.util.HashSet;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ *
+ * */
 public class LotusDataSource implements DataSource, AutoCloseable {
     static final Logger log = LoggerFactory.getLogger(LotusDataSource.class);
-    LinkedBlockingQueue<LotusConnection> pool = new LinkedBlockingQueue<>();
+    ArrayBlockingQueue<LotusConnection> pool = null;
     HashSet<String> driverLoadState = new HashSet<>();
 
     protected AtomicInteger poolSize = new AtomicInteger(0);
@@ -77,6 +80,9 @@ public class LotusDataSource implements DataSource, AutoCloseable {
     }
 
     protected void initDataSource() throws SQLException {
+        if(pool == null) {
+            pool = new ArrayBlockingQueue<>(config.maxConnection);
+        }
         do {
             LotusConnection conn = pool.poll();
             if(conn == null) {
