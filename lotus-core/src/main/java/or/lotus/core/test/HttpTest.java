@@ -112,6 +112,11 @@ public class HttpTest {
         return "test-haha:->" + t;
     }
 
+    @Post("/str")
+    public String postStr(@Parameter String t) {
+        return "test-haha:->" + t;
+    }
+
     @Get("/sync")
     public void sync(HttpResponse response) {
         HttpSyncResponse sync = response.openSync();
