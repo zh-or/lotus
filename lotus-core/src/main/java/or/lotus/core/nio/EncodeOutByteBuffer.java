@@ -73,6 +73,7 @@ public class EncodeOutByteBuffer {
     }
 
     public ByteBuffer getCurrentWriteBuffer() {
+        checkAndExpansionBuffer();
         if(writeIndex == -1) {
             writeIndex++;
             buffers[writeIndex] = new OutWrapper(context.getByteBufferFormCache(0, context.isUseDirectBuffer));
