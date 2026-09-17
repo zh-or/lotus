@@ -447,6 +447,9 @@ public class LotusByteBuffer implements LotusByteBuf {
             throw new IndexOutOfBoundsException("起始位置不能小于0");
         }
         int totalLen = getDataLength();
+        if(totalLen == 0) {
+            return -1;
+        }
         if(start >= totalLen) {
             throw new IndexOutOfBoundsException("起始位置" + start + " 大于 " + totalLen);
         }
