@@ -80,7 +80,6 @@ public abstract class Session {
         synchronized (context.sessions) {
             context.sessions.remove(id);
         }
-        attrs.clear();
         ioProcess.addPendingTask(() -> {
             if(readCache != null) {
                 while(readCache.release() == false);

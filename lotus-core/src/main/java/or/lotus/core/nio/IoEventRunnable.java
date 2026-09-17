@@ -48,6 +48,7 @@ public class IoEventRunnable implements Runnable {
                     break;
                 case SESSION_CLOSE:
                     handler.onClose(session);
+                    session.attrs.clear();
                     break;
                 case SESSION_EXCEPTION:
                     try{
